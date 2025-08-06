@@ -1,0 +1,82 @@
+# Points the config file localation, adjust as needed
+configfile: "config/config.yaml" # Centralizes parameters, making it easir to change as needed
+import re
+
+# Standartize organism names
+def sanitize_filename(name):
+    return re.sub(r'[^A-Za-z0-9_]', '_', name)
+
+organisms = config["organisms"]
+ks = config["k"]
+
+# Caminhos padronizados
+path_genomes = "data/genomes/"
+path_results = "results/{k}/"
+path_final = "runs/{k}/"
+path_log = "logs/"
+path_bench = "benchmarks/"
+
+# Establishes expected outputs at the pipeline's end
+# This rule is used to ensure that all organisms and k values are processed
+
+rule all:
+    input:
+        expand("results/{k}/.dir_created", k=ks) +
+        expand(path_final + "{organismo}_done.txt", organismo=organisms, k=ks)
+# Create needed directories, assuring the pipeline can run smoothly
+rule create_directories:
+    output:
+        touch("results/{k}/.dir_created")
+    shell:
+        """
+        mkdir -p results/{wildcards.k} runs logs benchmarks results/checked
+        """
+# Checagem do genoma
+rule check_genome:
+    input:
+        genome=path_genomes + "{organismo}",
+        dirs="results/{k}/.dir_created"
+    output:
+        checked="results/checked/{organismo}_{k}.txt"
+    log:
+        path_log + "check_genome_{organismo}_{k}.log"
+    resources:
+        cores=2
+    script:
+        "../scripts/python/check_genome.py"
+
+rule build_fasta_kmers:
+    input:
+        "scripts/c/fasta_parsing.c"
+    output:
+        "fasta_kmers_novo"
+    shell:
+        "gcc {input} -o {output} -O3"
+
+# Cálculo dos nulômeros (exemplo: integração C+Python)
+rule calculate_nullomers:
+    input:
+        checked="results/checked/{organismo}_{k}.txt",
+        genome=path_genomes + "{organismo}",
+        bin="fasta_kmers_novo"
+    output:
+        nullomers=path_results + "{organismo}/nullomers_{organismo}_{k}.txt"
+    params:
+        k="{k}"
+    resources:
+        cores=4
+    benchmark:
+        path_bench + "{organismo}/calculate_nullomers_{organismo}_{k}.txt"
+    script:
+        "../scripts/python/novo_fluxo_c_e_py.py"
+
+# Finalização (marca que terminou para cada organismo/k)
+rule finalize:
+    input:
+        nullomers=path_results + "{organismo}/nullomers_{organismo}_{k}.txt"
+    output:
+        done=path_final + "{organismo}_done.txt"
+    shell:
+        """
+        echo "Done for {wildcards.organismo} k={wildcards.k}" > {output}
+        """
