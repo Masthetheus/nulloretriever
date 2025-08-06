@@ -1,8 +1,3 @@
-﻿organisms:
-- GCF_000009045_1
-- GCF_002055965_1
+organisms:
 k:
-  - 14
-  - 16
-  - 18 
 imp: false

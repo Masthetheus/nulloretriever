@@ -38,7 +38,7 @@ gcc scripts/c/fasta_parsing.c -o fasta_kmers_novo -O3
 
 ## 2. ESTRUTURA DE DIRETÓRIOS E CONFIGURAÇÃO
 
-### 2.1 Verificação de Diretórios
+### 2.1 Verificação de Diretórios -- OK
 ⚠️ **ATENÇÃO CRÍTICA**: O diretório `data/` não existe atualmente
 
 **Estrutura necessária para criar**:
