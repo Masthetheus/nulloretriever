@@ -4,17 +4,17 @@ set -e
 echo "==== [Nullomer Pipeline Setup] ===="
 
 # 1. Checks if Conda is available
-if ! command -v conda & /dev/null; then
+if ! command -v conda >/dev/null 2>&1; then
 	echo "Conda wasn't found. Please, install Miniforge or Miniconda and try again. If already installed, check PATH"
 	exit 1
 fi
 
 # 2. Creates conda environment if not already present
-ENV_NAME="nullomner-env"
+ENV_NAME="nullomer-env"
 if ! conda info --envs | grep -q "$ENV_NAME"; then
-	if [ -f environment.yml ]; then
-		echo "Creating conda environment '$ENV_NAME' sourcing environment.yml..."
-		conda env create -f environment.yml
+	if [ -f environment.yaml ]; then
+		echo "Creating conda environment '$ENV_NAME' sourcing environment.yaml..."
+		conda env create -f environment.yaml
 	else
 		echo "No environment file found. Creating conda environment with basic packages."
 		conda create -y -n $ENV_NAME python=3.11 numpy pandas biopython bitarray pyyaml psutil
@@ -43,5 +43,10 @@ for cfile in $C_DIR/*.c; do
 	echo "$exe correctly compiled!"
 done
 
+# 6. Create data directory structure
+echo "Creating data directory structure..."
+DATA_DIR="data"
+mkdir -p "$DATA_DIR"/{genomes,raw,processed} results logs benchmarks runs
+echo "Data directory structure created at $DATA_DIR and under the root directory."
 echo "==== Setup completed ===="
 echo "For pipeline usage, remember to activate the conda environment with: conda activate $ENV_NAME"

@@ -8,7 +8,7 @@
 
 ## 1. VERIFICAÇÃO DO AMBIENTE E DEPENDÊNCIAS
 
-### 1.1 Ambiente Python
+### 1.1 Ambiente Python -- OK
 - **Verificar se o ambiente conda está ativo** (`nullomer-env`)
 - **Validar instalação de dependências**:
   - Verificar `requirements.txt` vs pacotes instalados
@@ -22,7 +22,7 @@ pip list
 python -c "import numpy, pandas, biopython, bitarray, yaml, snakemake; print('Todas as dependências OK')"
 ```
 
-### 1.2 Compilação C
+### 1.2 Compilação C -- OK
 - **Verificar se o compilador C está disponível** (`gcc`)
 - **Compilar o programa C**: `gcc scripts/c/fasta_parsing.c -o fasta_kmers_novo -O3`
 - **Testar execução básica** do binário
