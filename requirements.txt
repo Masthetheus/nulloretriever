@@ -1,0 +1,10 @@
+numpy
+pandas
+biopython
+bitarray
+pyyaml
+psutil
+memory_profiler
+snakemake
+pytest
+filelock
