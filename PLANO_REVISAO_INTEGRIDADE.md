@@ -59,7 +59,7 @@ mkdir -p data/{genomes,raw,processed}
 mkdir -p results logs benchmarks runs
 ```
 
-### 2.2 Configuração
+### 2.2 Configuração -- OK
 - **Revisar `config/config.yaml`**:
   - Verificar se organismos listados correspondem aos arquivos FASTA disponíveis
   - Validar valores de k (atualmente apenas k=14)
