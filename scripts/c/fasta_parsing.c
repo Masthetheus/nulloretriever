@@ -6,9 +6,7 @@
 #define MAX_SEQ 40000000
 #define MAX_K 20
 
-// ...cabeçalho e defines...
-
-// Função para codificar um k-mer linear em índice
+// Code a kmer into an index
 uint64_t encode_kmer(const char* seq, int k) {
     uint64_t val = 0;
     for (int i = 0; i < k; i++) {
@@ -52,11 +50,12 @@ void process_kmers(const char* seq, int seqlen, int k, char* seen) {
 }
 
 int main(int argc, char* argv[]) {
-    // ...parsing de argumentos, abertura de arquivo, etc...
+    // Args parsing and doc manipulation
     if (argc != 3) {
-        fprintf(stderr, "Uso: %s <arquivo_fasta> <k>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <arquivo_fasta> <k>\n", argv[0]);
         return 1;
     }
+    // Checks file existence and opens it
     FILE* f = fopen(argv[1], "r");
     if (!f) {
         perror("Erro ao abrir arquivo");
