@@ -22,5 +22,16 @@
 - GCA_039620435.1
 - GCF_039620435.1
 k:
-- 14
-imp: false
+  - 14
+paths:
+  genomes: "data/genomes/"
+  results: "results/"
+  final: "runs/"
+  log: "logs/"
+  bench: "benchmarks/"
+  checked: "results/checked/"
+scripts:
+  check_genome: "scripts/python/check_genome.py"
+  novo_fluxo: "scripts/python/novo_fluxo_c_e_py.py"
+c_scripts:
+  fasta_parsing: "scripts/c/fasta_parsing.c"
