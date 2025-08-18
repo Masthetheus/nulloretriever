@@ -1,2 +1,3 @@
 testing/data/*
 testing/misc/__pycache__
+testing/for_benchmark
