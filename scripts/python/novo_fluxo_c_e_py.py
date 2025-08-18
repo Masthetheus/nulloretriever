@@ -3,65 +3,69 @@ import re,os,sys,glob
 import subprocess
 
 
-genoma = snakemake.input.genome
+genome = snakemake.input.genome
 output = snakemake.output.nullomers
-org = genoma.split("/")[-1]
+org = genome.split("/")[-1]
 k = int(snakemake.params.k)
 l = int(k / 2)
 m = 4**l
-base_values = {'A': 0, 'T': 1, 'C': 2, 'G': 3}
-saida_kmers = f"/tmp/{org}_kmers.txt"
 
-# Inicializa a trie
-trie = inicializar_triebit_teste(l, m)
+def read_kmers_binary(genome_path, k):
+    """Read k-mers in binary format - reading actual bytes"""
+    proc = subprocess.Popen(
+        ['./fasta_teste_parsing', genome_path, str(k)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    total = 0
+    l = k // 2
+    trie = inicializar_triebit_teste(l, 4**l)
+    
+    print(f"DEBUG: Starting to read k-mers, l={l}, m={4**l}")
+    
+    bits_per_kmer = k * 2  # Each k-mer is k*2 bits = k*2 bytes
+    
+    # Read all output as bytes
+    all_output = proc.stdout.read()
+    
+    # Process k-mers from the continuous byte stream
+    pos = 0
+    while pos + bits_per_kmer <= len(all_output):
+        # Extract one k-mer (k*2 bytes, each byte is 0 or 1)
+        kmer_bytes = all_output[pos:pos + bits_per_kmer]
+        
+        # Split into v1 and v2 bit sequences
+        v1_bits = kmer_bytes[:l * 2]  # First l nucleotides (l*2 bits)
+        v2_bits = kmer_bytes[l * 2:]  # Last l nucleotides (l*2 bits)
+        
+        # Convert v1 bits to base array (for trie navigation)
+        v1_bases = []
+        for i in range(0, len(v1_bits), 2):
+            bit1 = v1_bits[i]      
+            bit2 = v1_bits[i+1]    
+            nucleotide_code = (bit1 << 1) | bit2
+            v1_bases.append(nucleotide_code)
+        
+        # Convert v2 bits directly back to lexicographic index
+        v2_index = 0
+        for i, bit in enumerate(v2_bits):
+            if bit == 1:
+                v2_index |= (1 << (len(v2_bits) - 1 - i))
+        
+        # Insert into trie
+        trie.insert(tuple(v1_bases), v2_index)
+        total += 1
+        
+        # Move to next k-mer
+        pos += bits_per_kmer
+    
+    proc.wait()
+    return trie, total
 
-# Executa o programa C e lê os k-mers do stdout
-proc = subprocess.Popen(
-    ['/home/leveduras/integranteslab/matheus/Mestradoteste/./fasta_kmers_novo', genoma, str(k)],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    text=True
-)
-
-kmers_inseridos = 0
-print("DEBUG: Lendo k-mers do programa C...")
-for line in proc.stdout:
-    line = line.strip()
-    if line:
-        # Dividir por espaço para obter k-mers individuais
-        kmers_na_linha = line.split(' ')
-        for kmer_str in kmers_na_linha:
-            if kmer_str.strip():
-                try:
-                    kmer_array = [int(x) for x in kmer_str.split(',')]
-                    if len(kmer_array) == k:
-                        v1 = tuple(kmer_array[:l])
-                        v2_array = kmer_array[l:]
-                        
-                        # Converte v2_array em um índice único
-                        v2 = 0
-                        for base in v2_array:
-                            v2 = (v2 << 2) | base
-                        
-                        trie.insert(v1, v2)
-                        kmers_inseridos += 1
-                        if kmers_inseridos <= 5:
-                            print(f"DEBUG: K-mer {kmers_inseridos} inserido - v1={v1}, v2={v2}")
-                except Exception as e:
-                    print(f"DEBUG: Erro ao processar k-mer '{kmer_str}': {e}")
-                    continue
-
-proc.wait()
-print(f"DEBUG: Programa C terminou com código {proc.returncode}")
-print(f"DEBUG: Total k-mers inseridos: {kmers_inseridos}")
-
-
-print(f"Total de k-mers inseridos na trie: {kmers_inseridos}")
-print(f"Valores calculados: k={k}, l={l}, m={m}")
-
-print("Iniciando a escrita da trie em arquivo...")
+print(f"Generating the k-mer Trie.")
+trie, total = read_kmers_binary(genome, k)
+print(f"Writing found nullomers in custom txt format.")
 escrever_trie_em_txt_bitarray(trie, output, l)
-tot = contar_nulomeros_trie_bit_novo(trie, l)
-print("Trie escrita com sucesso!")
-print("Contagem de nulômeros concluída com sucesso!")
-print(f"Total de nulômeros encontrados: {tot}")
+print(f"Counting found nullomers.")
+tot = contar_nulomeros_trie_bit_novo(trie,l)
+print(tot)

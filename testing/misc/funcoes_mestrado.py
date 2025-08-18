@@ -20,7 +20,6 @@ from memory_profiler import memory_usage
 # Funções em teste
 # ---------------------------------------------------------------------------------------------------------------#
 
-
 # ---------------------------------------------------------------------------------------------------------------# 
 # Funções ocasionais
 # ---------------------------------------------------------------------------------------------------------------#  
@@ -251,6 +250,28 @@ def contar_nulomeros_trie_bit_novo(trie_bit, l):
                 total += dfs(child, depth + 1)
         return total
     return dfs(trie_bit.root, 0)
+
+def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
+    """
+    Escreve os caminhos e valores de uma Trie baseada em bitarray (apenas v2_set) em um arquivo de texto no formato:
+    >indice_lexicografico_v1
+    v2_1,v2_2,v2_3,...
+    """
+    with open(arquivo_saida, 'w') as f:
+        def dfs(node, path):
+            # Verifica se há nullômeros (bits 0) neste nó
+            if len(path) == l:  # Só processa nós folha (profundidade l)
+                nullomeros = [i for i, bit in enumerate(node.v2_set) if not bit]
+                if nullomeros:  # Se há nullômeros para escrever
+                    # Calcula o índice lexicográfico de v1 (o caminho atual)
+                    indice_lexicografico = sum(base * (4 ** (l - i - 1)) for i, base in enumerate(path))
+                    f.write(f">{indice_lexicografico}\n")
+                    valores = ",".join(str(i) for i in nullomeros)
+                    f.write(f"{valores}\n")
+            for child_value, child_node in enumerate(node.children):
+                if child_node is not None:
+                    dfs(child_node, path + [child_value])
+        dfs(trie.root, [])
 
 def importar_triebit_teste_txt(arquivo_entrada, l, m):
     """

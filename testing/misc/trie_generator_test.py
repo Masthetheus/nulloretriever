@@ -3,15 +3,16 @@ import re,os,sys,glob
 import subprocess
 import numpy as np
 
-genoma = "../data/cerevisiae.fna"
-k =12
+genoma = "../data/bsubtilis"
+k = 12
 l = int(k / 2)
 m = 4**l
+out = "../data/trie_test"
 
 def read_kmers_binary(genome_path, k):
     """Read k-mers in binary format - reading actual bytes"""
     proc = subprocess.Popen(
-        ['/home/matheus/gitmatheus/nulloretriever/scripts/c/fasta_teste_parsing', genome_path, str(k)],
+        ['./fasta_teste_parsing', genome_path, str(k)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
@@ -25,7 +26,6 @@ def read_kmers_binary(genome_path, k):
     
     # Read all output as bytes
     all_output = proc.stdout.read()
-    print(f"DEBUG: Total output length: {len(all_output)} bytes")
     
     # Process k-mers from the continuous byte stream
     pos = 0
@@ -51,12 +51,6 @@ def read_kmers_binary(genome_path, k):
             if bit == 1:
                 v2_index |= (1 << (len(v2_bits) - 1 - i))
         
-        # Debug first few k-mers
-        if total < 5:
-            print(f"DEBUG: K-mer {total + 1}")
-            print(f"  v1_bits: {list(v1_bits)} -> v1_bases: {v1_bases}")
-            print(f"  v2_bits: {list(v2_bits)} -> v2_index: {v2_index}")
-        
         # Insert into trie
         trie.insert(tuple(v1_bases), v2_index)
         total += 1
@@ -68,6 +62,6 @@ def read_kmers_binary(genome_path, k):
     return trie, total
 
 trie, total = read_kmers_binary(genoma, k)
-print(f"DEBUG: Total k-mers inserted: {total}")
 tot = contar_nulomeros_trie_bit_novo(trie,l)
+escrever_trie_em_txt_bitarray(trie,out,l)
 print(tot)
