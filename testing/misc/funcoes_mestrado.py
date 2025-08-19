@@ -15,6 +15,7 @@ import time
 import subprocess
 import psutil
 from memory_profiler import memory_usage
+import struct
 
 # ---------------------------------------------------------------------------------------------------------------#
 # Funções em teste
@@ -272,6 +273,65 @@ def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
                 if child_node is not None:
                     dfs(child_node, path + [child_value])
         dfs(trie.root, [])
+
+def write_trie_bit_format(trie, output, l):
+    """
+    Saves TrieBitTeste to a compact binary format.
+    Format: [header][nodes...]
+    Each node: [path_index(4bytes)][nullomer_count(2bytes)][genome_ids(2bytes each)]
+    """
+    with open(output, 'wb') as f:
+        f.write(b'TRIE')  # Magic number
+        f.write(struct.pack('<HHI', 1, l, len(trie.root.v2_set)))  # version, l, m
+        
+        # Note: No node count in this version since we write directly
+        def collect_nodes(node, path):
+            if len(path) == l:
+                nullomers = [i for i, bit in enumerate(node.v2_set) if not bit]
+                if nullomers:
+                    index = sum(base * (4 ** (l - i - 1)) for i, base in enumerate(path))
+                    f.write(struct.pack('<I', index))  # 4 bytes for index
+                    f.write(struct.pack('<H', len(nullomers)))  # 2 bytes for count
+                    for genome_id in nullomers:
+                        f.write(struct.pack('<H', genome_id))  # 2 bytes per genome ID
+            for child_value, child_node in enumerate(node.children):
+                if child_node is not None:
+                    collect_nodes(child_node, path + [child_value])
+        
+        collect_nodes(trie.root, [])
+        
+
+def quick_nullomer_count(filename):
+    """
+    Fastest way to just get the count of nullomer k-mers.
+    """
+    count = 0
+    with open(filename, 'rb') as f:
+        # Skip header
+        f.seek(12)  # Skip magic(4) + version(2) + l(2) + m(4)
+        
+        try:
+            while True:
+                # Read index (4 bytes)
+                if len(f.read(4)) < 4:
+                    break
+                
+                # Read nullomer count
+                nullomer_count_bytes = f.read(2)
+                if len(nullomer_count_bytes) < 2:
+                    break
+                
+                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                
+                # Skip genome IDs
+                f.seek(nullomer_count * 2, 1)
+                
+                count += 1
+                
+        except (struct.error, OSError):
+            pass
+    
+    return count
 
 def importar_triebit_teste_txt(arquivo_entrada, l, m):
     """

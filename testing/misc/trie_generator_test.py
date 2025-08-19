@@ -3,11 +3,19 @@ import re,os,sys,glob
 import subprocess
 import numpy as np
 
-genoma = "../data/bsubtilis"
-k = 12
+org = input("Which genome to test? (default = teste)")
+if not org:
+    genome = "../data/teste"
+    org = "teste"
+else:
+    genome = "../data/" + org
+k = input("Which k value? (default for testing = 10)")
+if not k:
+    k = 10
+k = int(k)
 l = int(k / 2)
 m = 4**l
-out = "../data/trie_test"
+out = "../data/"+org+"_test_run"
 
 def read_kmers_binary(genome_path, k):
     """Read k-mers in binary format - reading actual bytes"""
@@ -19,8 +27,6 @@ def read_kmers_binary(genome_path, k):
     total = 0
     l = k // 2
     trie = inicializar_triebit_teste(l, 4**l)
-    
-    print(f"DEBUG: Starting to read k-mers, l={l}, m={4**l}")
     
     bits_per_kmer = k * 2  # Each k-mer is k*2 bits = k*2 bytes
     
@@ -61,7 +67,9 @@ def read_kmers_binary(genome_path, k):
     proc.wait()
     return trie, total
 
-trie, total = read_kmers_binary(genoma, k)
+trie, total = read_kmers_binary(genome, k)
+write_trie_bit_format(trie,out,l)
 tot = contar_nulomeros_trie_bit_novo(trie,l)
-escrever_trie_em_txt_bitarray(trie,out,l)
+print(tot)
+tot = quick_nullomer_count(out)
 print(tot)
