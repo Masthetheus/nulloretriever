@@ -274,36 +274,40 @@ def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
                     dfs(child_node, path + [child_value])
         dfs(trie.root, [])
 
+
 def write_trie_bit_format(trie, output, l):
     """
     Saves TrieBitTeste to a compact binary format.
     Format: [header][nodes...]
-    Each node: [path_index(4bytes)][nullomer_count(2bytes)][genome_ids(2bytes each)]
+    Header: b'TRIE'[4] + version(2) + l(2) + m(4)
+    Each node: [path_index(4bytes)][nullomer_count(2bytes)][v2_index(2bytes each)]
     """
     with open(output, 'wb') as f:
         f.write(b'TRIE')  # Magic number
-        f.write(struct.pack('<HHI', 1, l, len(trie.root.v2_set)))  # version, l, m
+        version = 1
+        m = len(trie.root.v2_set)
+        f.write(struct.pack('<HHI', version, l, m))  # version, l, m
         
-        # Note: No node count in this version since we write directly
         def collect_nodes(node, path):
             if len(path) == l:
                 nullomers = [i for i, bit in enumerate(node.v2_set) if not bit]
                 if nullomers:
+                    # Compute lexicographic index for v1 path
                     index = sum(base * (4 ** (l - i - 1)) for i, base in enumerate(path))
                     f.write(struct.pack('<I', index))  # 4 bytes for index
                     f.write(struct.pack('<H', len(nullomers)))  # 2 bytes for count
-                    for genome_id in nullomers:
-                        f.write(struct.pack('<H', genome_id))  # 2 bytes per genome ID
+                    for v2_index in nullomers:
+                        f.write(struct.pack('<H', v2_index))  # 2 bytes per v2 index
             for child_value, child_node in enumerate(node.children):
                 if child_node is not None:
                     collect_nodes(child_node, path + [child_value])
         
         collect_nodes(trie.root, [])
         
-
 def quick_nullomer_count(filename):
     """
-    Fastest way to just get the count of nullomer k-mers.
+    Fastest way to get the total count of nullomer k-mers.
+    Sums all nullomer counts across all v1 blocks in the file.
     """
     count = 0
     with open(filename, 'rb') as f:
@@ -313,20 +317,22 @@ def quick_nullomer_count(filename):
         try:
             while True:
                 # Read index (4 bytes)
-                if len(f.read(4)) < 4:
+                index_bytes = f.read(4)
+                if len(index_bytes) < 4:
                     break
                 
-                # Read nullomer count
+                # Read nullomer count (2 bytes)
                 nullomer_count_bytes = f.read(2)
                 if len(nullomer_count_bytes) < 2:
                     break
                 
                 nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
                 
-                # Skip genome IDs
+                # Skip v2 indices (nullomer IDs)
                 f.seek(nullomer_count * 2, 1)
                 
-                count += 1
+                # Add the number of nullomers for this v1
+                count += nullomer_count
                 
         except (struct.error, OSError):
             pass

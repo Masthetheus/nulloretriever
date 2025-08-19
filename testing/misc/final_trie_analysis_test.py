@@ -35,16 +35,25 @@ def final_analysis_testing(
             writer.writeheader()
             writer.writerows(resultados)
 
-config_file = "../../config/config.yaml"
-k = input("Which k value was used?")
-if not k:
-    k = 10
-org = input("Which organism to perform the final analysis?")
+# config_file = "../../config/config.yaml"
+# k = input("Which k value was used?")
+# if not k:
+#     k = 10
+# org = input("Which organism to perform the final analysis?")
+# if not org:
+#     null_file = "../data/teste_test_run"
+#     org = "teste"
+# else:
+#     null_file = "../data/" + org + "_test_run"
+# csv_out = "../data/" + org + "_data.csv"
+# final_analysis_testing(csv_out,null_file,k,org,config_file)
+
+org = input("Which genome to test? (default = teste)")
 if not org:
-    null_file = "../data/teste_test_run"
+    genome = "../data/teste"
     org = "teste"
 else:
-    null_file = "../data/" + org + "_test_run"
-csv_out = "../data/" + org + "_data.csv"
-final_analysis_testing(csv_out,null_file,k,org,config_file)
-
+    genome = "../data/" + org
+out = "../data/"+org+"_test_run"
+tot = quick_nullomer_count(out)
+print(tot)
