@@ -69,7 +69,7 @@ def read_kmers_binary(genome_path, k):
 
 trie, total = read_kmers_binary(genome, k)
 write_trie_bit_format(trie,out,l)
-tot = contar_nulomeros_trie_bit_novo(trie,l)
+tot = count_trie_nullomers(trie,l)
 print(tot)
 tot = quick_nullomer_count(out)
 print(tot)

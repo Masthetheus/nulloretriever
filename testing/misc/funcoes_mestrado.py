@@ -17,13 +17,127 @@ import psutil
 from memory_profiler import memory_usage
 import struct
 
-# ---------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------#
 # Funções em teste
-# ---------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------#
+def bit_manipulation_template(filename):
+    """
+    Fastest way to get the total count of nullomer k-mers.
+    Sums all nullomer counts across all v1 blocks in the file.
+    """
+    count = 0
+    with open(filename, 'rb') as f:
+        # Skip header
+        f.seek(8)  # Skip magic(4) + version(2) + l(2)
+        
+        try:
+            while True:
+                # Read index (4 bytes)
+                index_bytes = f.read(4)
+                if len(index_bytes) < 4:
+                    break
+                
+                # Read nullomer count (2 bytes)
+                nullomer_count_bytes = f.read(2)
+                if len(nullomer_count_bytes) < 2:
+                    break
+                
+                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                # Skip v2 indices (nullomer IDs)
+                f.seek(nullomer_count * 2, 1)
+                
+                # Add the number of nullomers for this v1
+                count += nullomer_count
+                
+        except (struct.error, OSError):
+            pass
+    
+    return count
 
-# ---------------------------------------------------------------------------------------------------------------# 
+def calculate_gpc_index(index, l):
+    cpg = 0
+    c = 0
+    g = 0
+    for i in range(l):
+        base = (index // (4 ** (l - i - 1))) % 4
+        if i == 0 and base == 3:
+            g = 1
+        if base == 2:
+            c = 1
+        elif base == 3 and c:
+            cpg += 1
+            c = 0
+        else:
+            c = 0
+    return cpg,c,g
+
+def generate_cpg_dict(l):
+    cpg_dict = {}
+    for index in range(4**l):
+        cpg, c, g = calculate_gpc_index(index, l)
+        cpg_dict[index] = (cpg,c,g)
+    return cpg_dict
+
+def nullomers_cpg_presence_mean(filename):
+    """
+    Counts the percentage of nullomers that have at least 1 CpG dinucleotide.
+    """
+    count = 0
+    with open(filename, 'rb') as f:
+        # Skip header
+        f.seek(6)
+        l_value = struct.unpack('<H',f.read(2))[0]
+        l = int(l_value)  
+        cpg_dict = generate_cpg_dict(l)
+        cpg_tot = 0
+        cpg_exists = 0
+
+        try:
+            while True:
+                end_c = 0
+                exist_v1 = 0
+                # Read index (4 bytes)
+                index_bytes = f.read(4)
+                if len(index_bytes) < 4:
+                    break
+                v1 = struct.unpack('<I', index_bytes)[0]
+                if cpg_dict[v1][1] == 1:
+                    end_c = 1
+                if cpg_dict[v1][0] != 0:
+                    cpg_tot += int(cpg_dict[v1][0])
+                    exist_v1 = 1
+                # Read nullomer count (2 bytes)
+                nullomer_count_bytes = f.read(2)
+                if len(nullomer_count_bytes) < 2:
+                    break
+                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                i = 0
+                while i < nullomer_count:
+                    if exist_v1:
+                        cpg_exists += 1
+                        cpg_tot += int(cpg_dict[nullomer_index][0])
+                        if cpg_dict[nullomer_index][2] == 1 and end_c:
+                            cpg_tot += 1
+                    else:
+                        nullomer_byte = f.read(2)
+                        nullomer_index = struct.unpack('<H', nullomer_byte)[0]
+                        if cpg_dict[nullomer_index][2] == 1 and end_c:
+                            cpg_tot += 1
+                            if not exist_v1:
+                                cpg_exists += 1
+                        if cpg_dict[nullomer_index][0] != 0:
+                            cpg_tot += int(cpg_dict[nullomer_index][0])
+                            cpg_exists += 1
+                    i += 1
+                # Add the number of nullomers for this v1
+                count += nullomer_count       
+        except (struct.error, OSError):
+            pass
+    return cpg_tot, cpg_exists
+
+#----------------------------------------------------------------------#
 # Funções ocasionais
-# ---------------------------------------------------------------------------------------------------------------#  
+#----------------------------------------------------------------------#
 
 def genome_random(lengthsG, genomaaleatorio): #apenas para testes
     genoma=""
@@ -187,9 +301,11 @@ def barra_progresso_tempo(atual, total, inicio, tamanho=30):
     if atual == total:
         print()  # Garante quebra de linha ao final
 
-# ---------------------------------------------------------------------------------------------------------------#
-# Abordagem via TrieBit direto do genoma
-# ---------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------#
+# TrieBit approach
+#----------------------------------------------------------------------#
+
+# Base definitions
 
 class TrieNodeBitTeste:
     def __init__(self, m):
@@ -236,7 +352,9 @@ def revcomp(seq):
     comp = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
     return ''.join(comp.get(b, 'N') for b in reversed(seq))
 
-def contar_nulomeros_trie_bit_novo(trie_bit, l):
+# Misc
+
+def count_trie_nullomers(trie_bit, l):
     def dfs(node, depth):
         total = 0
         if depth == l:
@@ -252,7 +370,9 @@ def contar_nulomeros_trie_bit_novo(trie_bit, l):
         return total
     return dfs(trie_bit.root, 0)
 
-def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
+# Output functions (bit or compact txt format)
+
+def write_trie_compact_txt(trie, arquivo_saida, l):
     """
     Escreve os caminhos e valores de uma Trie baseada em bitarray (apenas v2_set) em um arquivo de texto no formato:
     >indice_lexicografico_v1
@@ -274,19 +394,18 @@ def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
                     dfs(child_node, path + [child_value])
         dfs(trie.root, [])
 
-
 def write_trie_bit_format(trie, output, l):
     """
     Saves TrieBitTeste to a compact binary format.
     Format: [header][nodes...]
-    Header: b'TRIE'[4] + version(2) + l(2) + m(4)
+    Header: b'TRIE'[4] + version(2) + l(2)
     Each node: [path_index(4bytes)][nullomer_count(2bytes)][v2_index(2bytes each)]
     """
     with open(output, 'wb') as f:
         f.write(b'TRIE')  # Magic number
         version = 1
         m = len(trie.root.v2_set)
-        f.write(struct.pack('<HHI', version, l, m))  # version, l, m
+        f.write(struct.pack('<HH', version, l))  # version, l
         
         def collect_nodes(node, path):
             if len(path) == l:
@@ -303,7 +422,10 @@ def write_trie_bit_format(trie, output, l):
                     collect_nodes(child_node, path + [child_value])
         
         collect_nodes(trie.root, [])
-        
+
+## Nullomer output analysis (bit output)
+
+# Counter
 def quick_nullomer_count(filename):
     """
     Fastest way to get the total count of nullomer k-mers.
@@ -312,7 +434,7 @@ def quick_nullomer_count(filename):
     count = 0
     with open(filename, 'rb') as f:
         # Skip header
-        f.seek(12)  # Skip magic(4) + version(2) + l(2) + m(4)
+        f.seek(8)  # Skip magic(4) + version(2) + l(2)
         
         try:
             while True:
@@ -327,7 +449,6 @@ def quick_nullomer_count(filename):
                     break
                 
                 nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
-                
                 # Skip v2 indices (nullomer IDs)
                 f.seek(nullomer_count * 2, 1)
                 
@@ -339,332 +460,67 @@ def quick_nullomer_count(filename):
     
     return count
 
-def importar_triebit_teste_txt(arquivo_entrada, l, m):
+# GC counter
+def calculate_gc_index(index, l):
+    gc = 0
+    for i in range(l):
+        base = (index // (4 ** (l - i - 1))) % 4
+        if base == 2 or base == 3:
+            gc += 1
+    return gc
+
+def generate_gc_dict(l):
+    gc_dict = {}
+    for index in range(4**l):
+        gc = calculate_gc_index(index, l)
+        gc_dict[index] = gc
+    return gc_dict
+
+def nullomers_gc_mean(filename):
     """
-    Lê um arquivo no formato exportado por escrever_trie_em_txt_bitarray e reconstrói uma TrieBitTeste.
-    :param arquivo_entrada: Caminho do arquivo .txt.
-    :param l: Comprimento de v1.
-    :param m: Comprimento de v2 (tamanho do bitarray).
-    :return: Instância de TrieBitTeste reconstruída.
+    Counts GC% of given set of nullomers
     """
-    trie = TrieBitTeste(m)
-    with open(arquivo_entrada, 'r') as f:
-        v1_lexico = None
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('>'):
-                v1_lexico = int(line[1:])
-            else:
-                if v1_lexico is not None and line:
-                    # Converte o índice lexicográfico para o caminho v1
-                    v1 = []
-                    temp = v1_lexico
-                    for _ in range(l):
-                        div = 4 ** (l - len(v1) - 1)
-                        v1.append(temp // div)
-                        temp = temp % div
-                    for v2 in line.split(','):
-                        if v2:
-                            trie.insert(v1, int(v2))
-    return trie
+    count = 0
+    with open(filename, 'rb') as f:
+        # Skip header
+        f.seek(6)  # Skip magic(4) + version(2)
+        l_bytes = f.read(2)
+        l = struct.unpack('<H', l_bytes)[0]
+        print(f"l detected as {l}.")
+        gc_dict = generate_gc_dict(l)
+        gc_tot = 0
+        v1_count = 0
+        try:
+            while True:
+                # Read index (4 bytes)
+                index_bytes = f.read(4)
+                if len(index_bytes) < 4:
+                    break
+                v1 = struct.unpack('<I', index_bytes)[0]
+                v1_count += 1
+                gc_tot += gc_dict[v1]
+                # Read nullomer count (2 bytes)
+                nullomer_count_bytes = f.read(2)
+                if len(nullomer_count_bytes) < 2:
+                    break
+                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                i = 0
+                while i < nullomer_count:
+                    nullomer_byte = f.read(2)
+                    nullomer_index = struct.unpack('<H', nullomer_byte)[0]
+                    gc_tot += gc_dict[nullomer_index]
+                    i += 1
+                # Add the number of nullomers for this v1
+                count += nullomer_count    
+        except (struct.error, OSError):
+            pass
+    total_bases = (v1_count*l)+(count*l)
+    gc_percent = (gc_tot/total_bases)*100
+    return gc_percent
 
-def media_gc_por_organismo_triebit_txt(arquivo_txt, l, k):
-    """
-    Calcula a média de GC% para cada organismo a partir de um arquivo trie_bit_txt_novo.
-    :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
-    :param k: Tamanho total do k-mer.
-    :return: Float com a média de GC%, 4 casas decimais.
-    """
-    soma_gc = 0
-    total_pares = 0
-    gc_dict = precomputar_gc_cpg(l)  # {indice_lexico_v1: [total_gc, total_seqs]}
-    with open(arquivo_txt, 'r') as f:
-        v1_lexico = None
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('>'):
-                v1_lexico = int(line[1:])
-            else:
-                if v1_lexico is not None and line:
-                    v2_indices = [int(x) for x in line.split(',') if x]
-                    for v2 in v2_indices:
-                        soma_gc += gc_dict[v1_lexico][0] + gc_dict[v2][0]  # Soma GC% de v1 e v2
-                        total_pares += 1
-    media_gc = media_gc = (soma_gc / (total_pares * k)) * 100 if total_pares > 0 else 0
-
-    return round(media_gc,4)
-
-def total_palindromo_organismo_triebit_txt(arquivo_txt, l):
-    """
-    Conta o total de palíndromos em um arquivo trie_bit_txt_novo.
-    :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
-    :return: Inteiro com o total de palíndromos.
-    """
-    ind_reversos = criar_dic_reversos(l)
-    total_palindromos = 0
-    with open(arquivo_txt, 'r') as f:
-        v1_lexico = None
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('>'):
-                v1_lexico = int(line[1:])
-            else:
-                if v1_lexico is not None and line:
-                    v1 = ind_reversos[v1_lexico]  # Obtém o índice reverso de v1
-                    v2_indices = set(int(x) for x in line.split(',') if x)
-                    if v1 in v2_indices:
-                        total_palindromos += 1
-    return total_palindromos
-
-def total_homopolimeros_organismo_triebit_txt(arquivo_txt, l):
-    """
-    Conta o total de homopolímeros em um arquivo trie_bit_txt_novo.
-    :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
-    :return: Inteiro com o total de homopolímeros.
-    """
-    homopolimeros = indices_homopolimeros(l)
-    total_homopolimeros = 0
-    with open(arquivo_txt, 'r') as f:
-        v1_lexico = None
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('>'):
-                v1_lexico = int(line[1:])
-            else:
-                if v1_lexico is not None and line:
-                    if v1_lexico in homopolimeros:
-                        v2_indices = set(int(x) for x in line.split(',') if x)
-                        if v1_lexico in v2_indices:
-                            total_homopolimeros += 1
-    return total_homopolimeros
-
-def total_null_txt(arquivo_txt, l):
-    """
-    Conta o total de nulômeros em um arquivo trie_bit_txt_novo.
-    :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
-    :return: Inteiro com o total de nulômeros.
-    """
-    total_nulomeros = 0
-    with open(arquivo_txt, 'r') as f:
-        v1_lexico = None
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('>'):
-                v1_lexico = int(line[1:])
-            else:
-                if v1_lexico is not None and line:
-                    v2_indices = set(int(x) for x in line.split(',') if x)
-                    total_nulomeros += len(v2_indices)  # Conta cada v2 como um nulômero
-    return total_nulomeros
-
-def total_cpg_organismo_triebit_txt(arquivo_txt, l):
-    cpg_dict, cg_dict = precomputar_cpg_terminaC_comecaG(l)
-    total_cpg = 0
-    with open(arquivo_txt) as f:
-        v1_lexico = None
-        for line in f:
-            line = line.strip()
-            if not line: continue
-            if line.startswith('>'):
-                v1_lexico = int(line[1:])
-            else:
-                if v1_lexico is not None:
-                    v2_indices = [int(x) for x in line.split(',') if x]
-                    for v2 in v2_indices:
-                        total_cpg += cpg_dict[v1_lexico] + cpg_dict[v2]
-                        if cg_dict[v1_lexico][0] and cg_dict[v2][1]:
-                            total_cpg += 1
-    return total_cpg
-
-def total_cpg_triebit_por_cpg(arquivo_txt, l):
-    cpg_dict, cg_dict = precomputar_cpg_terminaC_comecaG(l)
-    cpg_counter = Counter()
-    with open(arquivo_txt) as f:
-        v1_lexico = None
-        for line in f:
-            line = line.strip()
-            if not line: continue
-            if line.startswith('>'):
-                v1_lexico = int(line[1:])
-            else:
-                if v1_lexico is not None:
-                    total_cpg = 0
-                    v2_indices = [int(x) for x in line.split(',') if x]
-                    for v2 in v2_indices:
-                        total_cpg += cpg_dict[v1_lexico] + cpg_dict[v2]
-                        if cg_dict[v1_lexico][0] and cg_dict[v2][1]:
-                            total_cpg += 1
-                        cpg_counter[total_cpg] += 1
-                        total_cpg = 0
-    return dict(cpg_counter)
-
-def parametros_cpg(arquivo_txt, l, total_null):
-    total_cpg= total_cpg_organismo_triebit_txt(arquivo_txt, l)
-    if total_null != 0:
-        cpg_relativo_total = (total_cpg * 100) / total_null
-    else:
-        cpg_relativo_total = 0
-    cpg_counter = total_cpg_triebit_por_cpg(arquivo_txt, l)
-    return {
-        "total_cpg": total_cpg,
-        "cpg_total": cpg_relativo_total,
-        "cpg_counter": cpg_counter
-    }
-
-def parametros_nulomeros(arquivo_txt, l):
-    """
-    Calcula os parâmetros de nulômeros a partir de um arquivo trie_bit_txt_novo.
-    :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
-    :return: Dicionário com os parâmetros calculados.
-    """
-    total_nulomeros = total_null_txt(arquivo_txt, l)
-    total_palindromos = total_palindromo_organismo_triebit_txt(arquivo_txt, l)
-    total_homopolimeros = total_homopolimeros_organismo_triebit_txt(arquivo_txt, l)
-    total_gc = media_gc_por_organismo_triebit_txt(arquivo_txt, l, 2*l)  # k = 2*l para o cálculo de GC%
-    total_cpg = parametros_cpg(arquivo_txt, l, total_nulomeros)
-    return {
-        "total_nulomeros": total_nulomeros,
-        "total_palindromos": total_palindromos,
-        "total_homopolimeros": total_homopolimeros,
-        "total_gc": total_gc,
-        "total_cpg": total_cpg["total_cpg"],
-        "cpg_relativo": total_cpg["cpg_total"],
-        "cpg_counter": total_cpg["cpg_counter"]
-    }
-
-def processar_null_batch(
-        csv_saida,
-        base_path,
-        config_file
-):
-    """
-    Recebe múltiplos arquivos de texto contendo tries compactadas,
-    Remonta elas em memória e conta o total de nulômeros para cada,
-    retornando o total de nulômeros encontrados em um arquivo csv.
-    :param csv_saida: especifica caminho para gerar resultados.
-    :param base_path: especifica caminho base para os arquivos de tries.
-    :param k_values: lista de valores de k para os quais as tries foram geradas, referente às subpastas do caminho base_path.
-    :param config_file: caminho para o arquivo de configuração YAML contendo a lista de organismos.
-    """
-    orgs_bruto = obter_lista_org(config_file)
-    orgs = [ajustar_nome_orgs(org) for org in orgs_bruto]
-    erros = []
-    resultados = []
-    k_values = obter_ks_analisados(base_path)
-    for k in k_values:
-        l = int(k // 2)
-        k_path = base_path + str(k) + '/'
-        if not os.path.exists(k_path):
-            print(f"Diretório {k_path} não existe.")
-        cont = 0
-        for org in orgs:
-            org_path = k_path + org + '/'
-            arquivo_txt = org_path + f'nulomerostrie_{org}_{k}.txt'
-            if not os.path.exists(arquivo_txt):
-                print(f"Arquivo {arquivo_txt} não existe. Pulando.")
-                cont += 1
-                erros.append([org, k, 'Arquivo não encontrado'])
-                continue
-
-            if not os.path.exists(org_path):
-                print(f"Diretório {org_path} não existe.")
-                erros.append([org, k, 'Diretório não encontrado'])
-            else:
-                cont += 1
-                print(f"Processando organismo {org}. {cont} de um total de {len(orgs)} organismos para k = {k}.")
-                org_path = org_path + 'nulomerostrie_' + org + '_' + str(k) + '.txt'
-                parametros = parametros_nulomeros(org_path, l)
-                print(f"Total de nulômeros encontrados para {org} com k={k}: {parametros['total_nulomeros']}")
-                linha = {'Organismo': org, 'k': k}
-                for chave, valor in parametros.items():
-                    linha[chave] = valor
-                resultados.append(linha)
-
-    if resultados:
-        colunas = ['Organismo', 'k'] + [k for k in resultados[0].keys() if k not in ['Organismo', 'k']]
-        with open(csv_saida, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=colunas)
-            writer.writeheader()
-            writer.writerows(resultados)
-        # writer.writerows(media_gc_lista)
-    with open(base_path + 'erros_nulomeros.txt', 'w') as f:
-        for erro in erros:
-            f.write(f"{erro[0]}, {erro[1]}, {erro[2]}\n")
-    print(f"Organismos não encontrados: {erros}")
-
-# ---------------------------------------------------------------------------------------------------------------#
-# Verificação de possíveis nulômeros (k-mers que podem tornar-se nulômeros por mutação de ponto)
-# ---------------------------------------------------------------------------------------------------------------#
-
-def medir_memoria_worker(args):
-    return max(memory_usage((processa_organismo, (args,)), interval=0.1))
-
-def calcula_workers_ajustado(mem_por_worker_gb=2, max_workers_user=4):
-    # Memória total disponível em GB
-    mem_total_gb = psutil.virtual_memory().available / (1024 ** 3)
-    # Calcula quantos workers cabem, deixando 2GB livres para o sistema
-    max_workers_mem = max(1, int((mem_total_gb - 2) // mem_por_worker_gb))
-    # Usa o menor entre o pedido pelo usuário e o limite pela RAM
-    return min(max_workers_user, max_workers_mem)
-
-def processa_organismo(args):
-    genoma, arquivo_txt, l, m, k = args
-    trie = importar_triebit_teste_txt(arquivo_txt, l, m)
-    proc = subprocess.Popen(
-        ['/home/leveduras/integranteslab/matheus/Mestradoteste/./fasta_kmers_novo', genoma, str(k)],
-        stdout=subprocess.PIPE,
-        text=True
-    )
-    results = []
-    for line in proc.stdout:
-        for kmer in line.strip().split():
-            kmer_indices = kmer_str_para_indices(kmer)
-            min_mut = busca_min_mutacoes(trie, kmer_indices, 3)
-            if min_mut is not None:
-                results.append(("".join(kmer), min_mut))
-    proc.wait()
-    return results
-
-def kmer_str_para_indices(kmer_str):
-    return [int(x) for x in kmer_str.split(',')]
-
-def busca_min_mutacoes(trie, kmer, max_mut):
-    min_mut = None
-    def dfs(node, pos, mismatches):
-        nonlocal min_mut
-        if mismatches > max_mut:
-            return
-        if pos == len(kmer):
-            for v2 in range(len(node.v2_set)):
-                if node.v2_set[v2]:
-                    if min_mut is None or mismatches < min_mut:
-                        min_mut = mismatches
-            return
-        base = kmer[pos]
-        for i in range(4):
-            if node.children[i] is not None:
-                dfs(node.children[i], pos+1, mismatches + (i != base))
-    dfs(trie.root, 0, 0)
-    return min_mut
-
-# ----------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------#
 # Funções em comum
-# ----------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------#
 
 def checar_genoma(entrada):
     """
@@ -701,24 +557,6 @@ def ler_organismos(caminho_arquivo): # retorna lista de organismos que serão an
         organismos = [linha.strip() for linha in file.readlines()]  # Remove espaços e quebras de linha
     return organismos
 
-def calcular_gc(sequencia):
-    """
-    Calcula a porcentagem de conteúdo GC em uma sequência, formatada com 4 casas decimais.
-    :param sequencia: Sequência de nucleotídeos.
-    :return: Porcentagem de GC com 4 casas decimais.
-    """
-    gc_count = sequencia.count('G') + sequencia.count('C')
-    return round((gc_count / len(sequencia)) * 100, 1)
-
-def calcular_gc_total(sequencia):
-    """
-    Calcula a porcentagem de conteúdo GC em uma sequência, formatada com 4 casas decimais.
-    :param sequencia: Sequência de nucleotídeos.
-    :return: Porcentagem de GC com 4 casas decimais.
-    """
-    gc_count = sequencia.count('G') + sequencia.count('C')
-    return gc_count
-
 def calcular_cpg(sequencia):
     """
     Conta o número de dinucleotídeos CG em uma sequência.
@@ -731,6 +569,3 @@ def calcular_cpg(sequencia):
             cpg_count += 1
     return cpg_count
 
-# ---------------------------------------------------------------------------------------------------------------#
-# Funções "aposentadas"
-# ---------------------------------------------------------------------------------------------------------------#

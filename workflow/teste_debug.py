@@ -67,7 +67,7 @@ print(f"DEBUG: Total k-mers inseridos: {kmers_inseridos}")
 
 # Escreve nullomers
 print("DEBUG: Escrevendo nullomers...")
-escrever_trie_em_txt_bitarray(trie, output, l, m)
+write_trie_compact_txt(trie, output, l, m)
 
 print(f"DEBUG: Arquivo gerado: {output}")
 print("DEBUG: Primeiras linhas do arquivo:")
