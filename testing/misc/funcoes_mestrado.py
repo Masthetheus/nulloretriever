@@ -54,7 +54,11 @@ def bit_manipulation_template(filename):
     
     return count
 
-def retrieve_palindromy_stats(filename):
+def generate_palindromes_dict(l):
+
+    return palindromy_dict
+
+def retrieve_palindrome_stats(filename):
     """
     Fastest way to get the total count of nullomer k-mers.
     Sums all nullomer counts across all v1 blocks in the file.
