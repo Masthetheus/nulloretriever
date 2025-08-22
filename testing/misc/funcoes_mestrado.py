@@ -90,12 +90,11 @@ def nullomers_cpg_presence_mean(filename):
         l = int(l_value)  
         cpg_dict = generate_cpg_dict(l)
         cpg_tot = 0
-        cpg_exists = 0
-
+        null_with_cpg = 0
         try:
             while True:
                 end_c = 0
-                exist_v1 = 0
+                cpg_exists = 0
                 # Read index (4 bytes)
                 index_bytes = f.read(4)
                 if len(index_bytes) < 4:
@@ -104,8 +103,7 @@ def nullomers_cpg_presence_mean(filename):
                 if cpg_dict[v1][1] == 1:
                     end_c = 1
                 if cpg_dict[v1][0] != 0:
-                    cpg_tot += int(cpg_dict[v1][0])
-                    exist_v1 = 1
+                    cpg_exists = 1
                 # Read nullomer count (2 bytes)
                 nullomer_count_bytes = f.read(2)
                 if len(nullomer_count_bytes) < 2:
@@ -113,27 +111,29 @@ def nullomers_cpg_presence_mean(filename):
                 nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
                 i = 0
                 while i < nullomer_count:
-                    if exist_v1:
-                        cpg_exists += 1
-                        cpg_tot += int(cpg_dict[nullomer_index][0])
-                        if cpg_dict[nullomer_index][2] == 1 and end_c:
-                            cpg_tot += 1
+                    end_g = 0
+                    nullomer_byte = f.read(2)
+                    nullomer_index = struct.unpack('<H', nullomer_byte)[0]
+                    cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
+                    if cpg_dict[nullomer_index][2] == 1:
+                        end_g = 1
+                    if end_c and end_g:
+                            cpg_tot +=1
+                    if cpg_exists:
+                        null_with_cpg += 1
+                    elif end_c and end_g:
+                        null_with_cpg += 1
                     else:
-                        nullomer_byte = f.read(2)
-                        nullomer_index = struct.unpack('<H', nullomer_byte)[0]
-                        if cpg_dict[nullomer_index][2] == 1 and end_c:
-                            cpg_tot += 1
-                            if not exist_v1:
-                                cpg_exists += 1
-                        if cpg_dict[nullomer_index][0] != 0:
-                            cpg_tot += int(cpg_dict[nullomer_index][0])
-                            cpg_exists += 1
+                        if cpg_dict[nullomer_index][0] > 0:
+                            null_with_cpg += 1
                     i += 1
-                # Add the number of nullomers for this v1
-                count += nullomer_count       
+                count += nullomer_count     
         except (struct.error, OSError):
             pass
-    return cpg_tot, cpg_exists
+    cpg_count_mean = cpg_tot/null_with_cpg
+    cpg_global_mean = (null_with_cpg/count)*100
+    cpg_stats = [cpg_tot, null_with_cpg, cpg_global_mean, cpg_count_mean]
+    return cpg_stats
 
 #----------------------------------------------------------------------#
 # Funções ocasionais
