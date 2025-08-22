@@ -54,86 +54,39 @@ def bit_manipulation_template(filename):
     
     return count
 
-def calculate_gpc_index(index, l):
-    cpg = 0
-    c = 0
-    g = 0
-    for i in range(l):
-        base = (index // (4 ** (l - i - 1))) % 4
-        if i == 0 and base == 3:
-            g = 1
-        if base == 2:
-            c = 1
-        elif base == 3 and c:
-            cpg += 1
-            c = 0
-        else:
-            c = 0
-    return cpg,c,g
-
-def generate_cpg_dict(l):
-    cpg_dict = {}
-    for index in range(4**l):
-        cpg, c, g = calculate_gpc_index(index, l)
-        cpg_dict[index] = (cpg,c,g)
-    return cpg_dict
-
-def nullomers_cpg_presence_mean(filename):
+def retrieve_palindromy_stats(filename):
     """
-    Counts the percentage of nullomers that have at least 1 CpG dinucleotide.
+    Fastest way to get the total count of nullomer k-mers.
+    Sums all nullomer counts across all v1 blocks in the file.
     """
     count = 0
     with open(filename, 'rb') as f:
         # Skip header
-        f.seek(6)
-        l_value = struct.unpack('<H',f.read(2))[0]
-        l = int(l_value)  
-        cpg_dict = generate_cpg_dict(l)
-        cpg_tot = 0
-        null_with_cpg = 0
+        f.seek(8)  # Skip magic(4) + version(2) + l(2)
+        
         try:
             while True:
-                end_c = 0
-                cpg_exists = 0
                 # Read index (4 bytes)
                 index_bytes = f.read(4)
                 if len(index_bytes) < 4:
                     break
-                v1 = struct.unpack('<I', index_bytes)[0]
-                if cpg_dict[v1][1] == 1:
-                    end_c = 1
-                if cpg_dict[v1][0] != 0:
-                    cpg_exists = 1
+                
                 # Read nullomer count (2 bytes)
                 nullomer_count_bytes = f.read(2)
                 if len(nullomer_count_bytes) < 2:
                     break
+                
                 nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
-                i = 0
-                while i < nullomer_count:
-                    end_g = 0
-                    nullomer_byte = f.read(2)
-                    nullomer_index = struct.unpack('<H', nullomer_byte)[0]
-                    cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
-                    if cpg_dict[nullomer_index][2] == 1:
-                        end_g = 1
-                    if end_c and end_g:
-                            cpg_tot +=1
-                    if cpg_exists:
-                        null_with_cpg += 1
-                    elif end_c and end_g:
-                        null_with_cpg += 1
-                    else:
-                        if cpg_dict[nullomer_index][0] > 0:
-                            null_with_cpg += 1
-                    i += 1
-                count += nullomer_count     
+                # Skip v2 indices (nullomer IDs)
+                f.seek(nullomer_count * 2, 1)
+                
+                # Add the number of nullomers for this v1
+                count += nullomer_count
+                
         except (struct.error, OSError):
             pass
-    cpg_count_mean = cpg_tot/null_with_cpg
-    cpg_global_mean = (null_with_cpg/count)*100
-    cpg_stats = [cpg_tot, null_with_cpg, cpg_global_mean, cpg_count_mean]
-    return cpg_stats
+    
+    return count
 
 #----------------------------------------------------------------------#
 # Funções ocasionais
@@ -517,6 +470,87 @@ def nullomers_gc_mean(filename):
     total_bases = (v1_count*l)+(count*l)
     gc_percent = (gc_tot/total_bases)*100
     return gc_percent
+
+def calculate_gpc_index(index, l):
+    cpg = 0
+    c = 0
+    g = 0
+    for i in range(l):
+        base = (index // (4 ** (l - i - 1))) % 4
+        if i == 0 and base == 3:
+            g = 1
+        if base == 2:
+            c = 1
+        elif base == 3 and c:
+            cpg += 1
+            c = 0
+        else:
+            c = 0
+    return cpg,c,g
+
+def generate_cpg_dict(l):
+    cpg_dict = {}
+    for index in range(4**l):
+        cpg, c, g = calculate_gpc_index(index, l)
+        cpg_dict[index] = (cpg,c,g)
+    return cpg_dict
+
+def retrieve_nullomers_cpg_stats(filename):
+    """
+    Counts the percentage of nullomers that have at least 1 CpG dinucleotide.
+    """
+    count = 0
+    with open(filename, 'rb') as f:
+        # Skip header
+        f.seek(6)
+        l_value = struct.unpack('<H',f.read(2))[0]
+        l = int(l_value)  
+        cpg_dict = generate_cpg_dict(l)
+        cpg_tot = 0
+        null_with_cpg = 0
+        try:
+            while True:
+                end_c = 0
+                cpg_exists = 0
+                # Read index (4 bytes)
+                index_bytes = f.read(4)
+                if len(index_bytes) < 4:
+                    break
+                v1 = struct.unpack('<I', index_bytes)[0]
+                if cpg_dict[v1][1] == 1:
+                    end_c = 1
+                if cpg_dict[v1][0] != 0:
+                    cpg_exists = 1
+                # Read nullomer count (2 bytes)
+                nullomer_count_bytes = f.read(2)
+                if len(nullomer_count_bytes) < 2:
+                    break
+                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                i = 0
+                while i < nullomer_count:
+                    end_g = 0
+                    nullomer_byte = f.read(2)
+                    nullomer_index = struct.unpack('<H', nullomer_byte)[0]
+                    cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
+                    if cpg_dict[nullomer_index][2] == 1:
+                        end_g = 1
+                    if end_c and end_g:
+                            cpg_tot +=1
+                    if cpg_exists:
+                        null_with_cpg += 1
+                    elif end_c and end_g:
+                        null_with_cpg += 1
+                    else:
+                        if cpg_dict[nullomer_index][0] > 0:
+                            null_with_cpg += 1
+                    i += 1
+                count += nullomer_count     
+        except (struct.error, OSError):
+            pass
+    cpg_count_mean = cpg_tot/null_with_cpg
+    cpg_global_mean = (null_with_cpg/count)*100
+    cpg_stats = [cpg_tot, null_with_cpg, cpg_global_mean, cpg_count_mean]
+    return cpg_stats
 
 #----------------------------------------------------------------------#
 # Funções em comum
