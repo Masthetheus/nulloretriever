@@ -54,8 +54,18 @@ def bit_manipulation_template(filename):
     
     return count
 
-def generate_palindromes_dict(l):
-
+def generate_complement_index_dict(l):
+    complement = {0: 1, 1: 0, 2: 3, 3: 2}
+    bases = []
+    for _ in range(l):
+        bases.append(i1 % 4)
+        i1 //= 4
+    bases = bases[::-1]
+    bases_complementares = [complement[base] for base in bases]
+    indice_complementar = 0
+    for i, base in enumerate(bases_complementares):
+        indice_complementar += base * (4 ** (l - i - 1))
+    return indice_complementar
     return palindromy_dict
 
 def retrieve_palindrome_stats(filename):
