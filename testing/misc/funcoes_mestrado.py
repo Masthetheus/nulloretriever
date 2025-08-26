@@ -384,22 +384,34 @@ def write_trie_bit_format(trie, output, l):
     Header: b'TRIE'[4] + version(2) + l(2)
     Each node: [path_index(4bytes)][nullomer_count(2bytes)][v2_index(2bytes each)]
     """
+    m = 4**l
+    if m <= 256:
+        index_format = 'B'
+        format_code = 1
+    elif m <= 65536:
+        index_format = 'H' 
+        format_code = 2
+    elif m <= 4294967296:
+        index_format = 'I'
+        format_code = 4
+    else:
+        index_format = 'Q'
+        format_code = 8
+
     with open(output, 'wb') as f:
         f.write(b'TRIE')  # Magic number
         version = 1
-        m = len(trie.root.v2_set)
-        f.write(struct.pack('<HH', version, l))  # version, l
-        
+        f.write(struct.pack('<HHB', version, l, format_code))  # version, l, byte_size
         def collect_nodes(node, path):
             if len(path) == l:
                 nullomers = [i for i, bit in enumerate(node.v2_set) if not bit]
                 if nullomers:
                     # Compute lexicographic index for v1 path
                     index = sum(base * (4 ** (l - i - 1)) for i, base in enumerate(path))
-                    f.write(struct.pack('<I', index))  # 4 bytes for index
-                    f.write(struct.pack('<H', len(nullomers)))  # 2 bytes for count
+                    f.write(struct.pack(f'<{index_format}', index))
+                    f.write(struct.pack(f'<{index_format}', len(nullomers)))
                     for v2_index in nullomers:
-                        f.write(struct.pack('<H', v2_index))  # 2 bytes per v2 index
+                        f.write(struct.pack(f'<{index_format}', v2_index))
             for child_value, child_node in enumerate(node.children):
                 if child_node is not None:
                     collect_nodes(child_node, path + [child_value])
@@ -415,25 +427,25 @@ def quick_nullomer_count(filename):
     Sums all nullomer counts across all v1 blocks in the file.
     """
     count = 0
+    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
     with open(filename, 'rb') as f:
         # Skip header
-        f.seek(8)  # Skip magic(4) + version(2) + l(2)
-        
+        f.seek(6)  # Skip magic(4) + version(2)
+        l = struct.unpack('<H', f.read(2))[0]
+        l = int(l)
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
         try:
             while True:
-                # Read index (4 bytes)
-                index_bytes = f.read(4)
-                if len(index_bytes) < 4:
+                index_bytes = f.read(byte_size)
+                if len(index_bytes) < byte_size:
                     break
-                
-                # Read nullomer count (2 bytes)
-                nullomer_count_bytes = f.read(2)
-                if len(nullomer_count_bytes) < 2:
+                nullomer_count_bytes = f.read(byte_size)
+                if len(nullomer_count_bytes) < byte_size:
                     break
-                
-                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
                 # Skip v2 indices (nullomer IDs)
-                f.seek(nullomer_count * 2, 1)
+                f.seek(nullomer_count * byte_size, 1)
                 
                 # Add the number of nullomers for this v1
                 count += nullomer_count
