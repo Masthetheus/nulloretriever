@@ -10,7 +10,7 @@ import yaml
 import re
 import pandas as pd
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 import time
 import subprocess
 import psutil
@@ -54,54 +54,70 @@ def bit_manipulation_template(filename):
     
     return count
 
-def generate_complement_index_dict(l):
-    complement = {0: 1, 1: 0, 2: 3, 3: 2}
-    bases = []
-    for _ in range(l):
-        bases.append(i1 % 4)
-        i1 //= 4
-    bases = bases[::-1]
-    bases_complementares = [complement[base] for base in bases]
-    indice_complementar = 0
-    for i, base in enumerate(bases_complementares):
-        indice_complementar += base * (4 ** (l - i - 1))
-    return indice_complementar
-    return palindromy_dict
+def index_to_sequence_array(index,l):
+    seq = np.zeros(l, dtype=np.uint8)
+    for i in range(l-1, -1, -1):
+        seq[i] = index % 4
+        index //= 4
+    return seq
 
-def retrieve_palindrome_stats(filename):
+def generate_homopolymer_dict(l):
+
+    homopolymer_dict = {}
+    for number in range(4):
+        homopolymer_dict[number] = number
+    bases.append(temp % 4)
+    temp //= 4
+    return homopolymer_dict
+
+def retrieve_homopolymer_stats(filename):
     """
-    Fastest way to get the total count of nullomer k-mers.
-    Sums all nullomer counts across all v1 blocks in the file.
     """
     count = 0
     with open(filename, 'rb') as f:
         # Skip header
-        f.seek(8)  # Skip magic(4) + version(2) + l(2)
-        
+        f.seek(6)  # Skip magic(4) + version(2)
+        l_value = struct.unpack('<H',f.read(2))[0]
+        l = int(l_value)
         try:
             while True:
                 # Read index (4 bytes)
                 index_bytes = f.read(4)
                 if len(index_bytes) < 4:
                     break
-                
+                v1 = struct.unpack('<I',index_bytes)[0]
+                seq1 = index_to_sequence_array(v1,l)
                 # Read nullomer count (2 bytes)
                 nullomer_count_bytes = f.read(2)
                 if len(nullomer_count_bytes) < 2:
                     break
-                
                 nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
-                # Skip v2 indices (nullomer IDs)
-                f.seek(nullomer_count * 2, 1)
-                
-                # Add the number of nullomers for this v1
-                count += nullomer_count
+                i = 0
+                while i < nullomer_count:
+                    homopolymers = []
+                    v2 = struct.unpack('<H', f.read(2))[0]
+                    seq2 = index_to_sequence_array(v2,l)
+                    sequence = np.concatenate([seq1, seq2])
+                    changes = np.concatenate(([True], sequence[1:] != sequence[:-1], [True]))
+                    change_indices = np.where(changes)[0]
+                    
+                    # Calculate run lengths
+                    run_lengths = np.diff(change_indices)
+                    run_starts = change_indices[:-1]
+                    
+                    # Filter by minimum length
+                    valid_runs = run_lengths >= 4
+                    
+                    # Extract base values and lengths for valid runs
+                    bases = sequence[run_starts[valid_runs]]
+                    lengths = run_lengths[valid_runs]
+                    print(list(zip(bases, lengths)))
+                    i += 1
                 
         except (struct.error, OSError):
             pass
     
-    return count
-
+    return "hi"
 #----------------------------------------------------------------------#
 # Funções ocasionais
 #----------------------------------------------------------------------#
@@ -485,6 +501,7 @@ def nullomers_gc_mean(filename):
     gc_percent = (gc_tot/total_bases)*100
     return gc_percent
 
+# CpG dinucleotides counter and stats calculation
 def calculate_gpc_index(index, l):
     cpg = 0
     c = 0
@@ -565,6 +582,67 @@ def retrieve_nullomers_cpg_stats(filename):
     cpg_global_mean = (null_with_cpg/count)*100
     cpg_stats = [cpg_tot, null_with_cpg, cpg_global_mean, cpg_count_mean]
     return cpg_stats
+
+# Palindrome stats generation
+def generate_complement_index_dict(l):
+    complement = {0: 1, 1: 0, 2: 3, 3: 2}
+    complement_index_dict = {}
+    m = 4**l
+    for number in range(m):
+        temp = number
+        bases = []
+        for _ in range(l):
+            bases.append(temp % 4)
+            temp //= 4
+        comp_bases = [complement[base] for base in bases]
+        comp_index = 0
+        for i, base in enumerate(comp_bases):
+            comp_index += base * (4 ** (l - i - 1))
+        complement_index_dict[number] = comp_index
+    return complement_index_dict
+
+def retrieve_palindrome_stats(filename):
+    """
+
+    """
+    palindrome_count = 0
+    with open(filename, 'rb') as f:
+        # Skip header
+        f.seek(6)  # Skip magic(4) + version(2)
+        l_value = struct.unpack('<H',f.read(2))[0]
+        l = int(l_value)
+        total_null = 0 
+        complement_index_dict = generate_complement_index_dict(l)
+        try:
+            while True:
+                # Read index (4 bytes)
+                index_bytes = f.read(4)
+                if len(index_bytes) < 4:
+                    break
+                v1 = struct.unpack('<I', index_bytes)[0]
+                v1_comp = complement_index_dict[v1]
+                # Read nullomer count (2 bytes)
+                nullomer_count_bytes = f.read(2)
+                if len(nullomer_count_bytes) < 2:
+                    break
+                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                total_null += nullomer_count
+                # Skip v2 indices (nullomer IDs)
+                total_bytes = nullomer_count * 2
+                i = 0
+                while i < nullomer_count:
+                    nullomer_byte = f.read(2)
+                    total_bytes -= 2
+                    v2_index = struct.unpack('<H', nullomer_byte)[0]
+                    if v2_index == v1_comp:
+                        palindrome_count += 1
+                        f.seek(total_bytes,1)
+                        break
+                    i += 1                
+        except (struct.error, OSError):
+            pass
+        palindrome_relative = (palindrome_count/total_null) * 100
+    return palindrome_count, palindrome_relative
 
 #----------------------------------------------------------------------#
 # Funções em comum
