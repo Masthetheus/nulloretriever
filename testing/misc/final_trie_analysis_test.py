@@ -23,16 +23,16 @@ if not org:
 else:
     genome = "../data/" + org
 out = "../data/"+org+"_test_run"
-# tot = quick_nullomer_count(out)
-# print(tot)
-# gc = nullomers_gc_mean(out)
-# print(gc)
-# cpg_stats = retrieve_nullomers_cpg_stats(out)
-# print(cpg_stats)
-# palindrome_total, palindrome_relative = retrieve_palindrome_stats(out)
-# print(palindrome_total, palindrome_relative)
+tot = quick_nullomer_count(out)
+print(tot)
+gc = nullomers_gc_mean(out)
+print(gc)
+cpg_stats = retrieve_nullomers_cpg_stats(out)
+print(cpg_stats)
+palindrome_total, palindrome_relative = retrieve_palindrome_stats(out)
+print(palindrome_total, palindrome_relative)
 
 # homopolymer_dict = generate_homopolymer_dict(l)
 # print(homopolymer_dict)
 
-test = retrieve_homopolymer_stats(out)
+# test = retrieve_homopolymer_stats(out)

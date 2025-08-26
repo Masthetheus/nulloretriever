@@ -381,8 +381,7 @@ def write_trie_bit_format(trie, output, l):
     """
     Saves TrieBitTeste to a compact binary format.
     Format: [header][nodes...]
-    Header: b'TRIE'[4] + version(2) + l(2)
-    Each node: [path_index(4bytes)][nullomer_count(2bytes)][v2_index(2bytes each)]
+    Header: b'TRIE'[4] + version(2) + l(2) + format_code(1)
     """
     m = 4**l
     if m <= 256:
@@ -481,31 +480,30 @@ def nullomers_gc_mean(filename):
         f.seek(6)  # Skip magic(4) + version(2)
         l_bytes = f.read(2)
         l = struct.unpack('<H', l_bytes)[0]
-        print(f"l detected as {l}.")
+        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
         gc_dict = generate_gc_dict(l)
         gc_tot = 0
         v1_count = 0
         try:
             while True:
-                # Read index (4 bytes)
-                index_bytes = f.read(4)
-                if len(index_bytes) < 4:
+                index_bytes = f.read(byte_size)
+                if len(index_bytes) < byte_size:
                     break
-                v1 = struct.unpack('<I', index_bytes)[0]
+                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
                 v1_count += 1
                 gc_tot += gc_dict[v1]
-                # Read nullomer count (2 bytes)
-                nullomer_count_bytes = f.read(2)
-                if len(nullomer_count_bytes) < 2:
+                nullomer_count_bytes = f.read(byte_size)
+                if len(nullomer_count_bytes) < byte_size:
                     break
-                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
                 i = 0
                 while i < nullomer_count:
-                    nullomer_byte = f.read(2)
-                    nullomer_index = struct.unpack('<H', nullomer_byte)[0]
+                    nullomer_byte = f.read(byte_size)
+                    nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
                     gc_tot += gc_dict[nullomer_index]
                     i += 1
-                # Add the number of nullomers for this v1
                 count += nullomer_count    
         except (struct.error, OSError):
             pass
@@ -545,9 +543,12 @@ def retrieve_nullomers_cpg_stats(filename):
     count = 0
     with open(filename, 'rb') as f:
         # Skip header
-        f.seek(6)
-        l_value = struct.unpack('<H',f.read(2))[0]
-        l = int(l_value)  
+        f.seek(6)  # Skip magic(4) + version(2)
+        l_bytes = f.read(2)
+        l = struct.unpack('<H', l_bytes)[0]
+        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
         cpg_dict = generate_cpg_dict(l)
         cpg_tot = 0
         null_with_cpg = 0
@@ -555,25 +556,23 @@ def retrieve_nullomers_cpg_stats(filename):
             while True:
                 end_c = 0
                 cpg_exists = 0
-                # Read index (4 bytes)
-                index_bytes = f.read(4)
-                if len(index_bytes) < 4:
+                index_bytes = f.read(byte_size)
+                if len(index_bytes) < byte_size:
                     break
-                v1 = struct.unpack('<I', index_bytes)[0]
+                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
                 if cpg_dict[v1][1] == 1:
                     end_c = 1
                 if cpg_dict[v1][0] != 0:
                     cpg_exists = 1
-                # Read nullomer count (2 bytes)
-                nullomer_count_bytes = f.read(2)
-                if len(nullomer_count_bytes) < 2:
+                nullomer_count_bytes = f.read(byte_size)
+                if len(nullomer_count_bytes) < byte_size:
                     break
-                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
                 i = 0
                 while i < nullomer_count:
                     end_g = 0
-                    nullomer_byte = f.read(2)
-                    nullomer_index = struct.unpack('<H', nullomer_byte)[0]
+                    nullomer_byte = f.read(byte_size)
+                    nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
                     cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
                     if cpg_dict[nullomer_index][2] == 1:
                         end_g = 1
@@ -621,31 +620,32 @@ def retrieve_palindrome_stats(filename):
     with open(filename, 'rb') as f:
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
-        l_value = struct.unpack('<H',f.read(2))[0]
-        l = int(l_value)
+        l_bytes = f.read(2)
+        l = struct.unpack('<H', l_bytes)[0]
+        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
         total_null = 0 
         complement_index_dict = generate_complement_index_dict(l)
         try:
             while True:
-                # Read index (4 bytes)
-                index_bytes = f.read(4)
-                if len(index_bytes) < 4:
+                index_bytes = f.read(byte_size)
+                if len(index_bytes) < byte_size:
                     break
-                v1 = struct.unpack('<I', index_bytes)[0]
+                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
                 v1_comp = complement_index_dict[v1]
-                # Read nullomer count (2 bytes)
-                nullomer_count_bytes = f.read(2)
-                if len(nullomer_count_bytes) < 2:
+                nullomer_count_bytes = f.read(byte_size)
+                if len(nullomer_count_bytes) < byte_size:
                     break
-                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
                 total_null += nullomer_count
                 # Skip v2 indices (nullomer IDs)
-                total_bytes = nullomer_count * 2
+                total_bytes = nullomer_count * byte_size
                 i = 0
                 while i < nullomer_count:
-                    nullomer_byte = f.read(2)
-                    total_bytes -= 2
-                    v2_index = struct.unpack('<H', nullomer_byte)[0]
+                    nullomer_byte = f.read(byte_size)
+                    total_bytes -= byte_size
+                    v2_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
                     if v2_index == v1_comp:
                         palindrome_count += 1
                         f.seek(total_bytes,1)
