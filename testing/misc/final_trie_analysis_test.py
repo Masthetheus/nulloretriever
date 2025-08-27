@@ -15,7 +15,7 @@ import pandas as pd
 #     null_file = "../data/" + org + "_test_run"
 # csv_out = "../data/" + org + "_data.csv"
 # final_analysis_testing(csv_out,null_file,k,org,config_file)
-l = 4
+l = 6
 org = input("Which genome to test? (default = teste)")
 if not org:
     genome = "../data/teste"
@@ -23,16 +23,18 @@ if not org:
 else:
     genome = "../data/" + org
 out = "../data/"+org+"_test_run"
-tot = quick_nullomer_count(out)
-print(tot)
-gc = nullomers_gc_mean(out)
-print(gc)
-cpg_stats = retrieve_nullomers_cpg_stats(out)
-print(cpg_stats)
-palindrome_total, palindrome_relative = retrieve_palindrome_stats(out)
-print(palindrome_total, palindrome_relative)
+# tot = quick_nullomer_count(out)
+# print(tot)
+# gc = nullomers_gc_mean(out)
+# print(gc)
+# cpg_stats = retrieve_nullomers_cpg_stats(out)
+# print(cpg_stats)
+# palindrome_total, palindrome_relative = retrieve_palindrome_stats(out)
+# print(palindrome_total, palindrome_relative)
 
 # homopolymer_dict = generate_homopolymer_dict(l)
 # print(homopolymer_dict)
 
 # test = retrieve_homopolymer_stats(out)
+found_homopolymers = retrieve_homopolymer_stats(out)
+print(found_homopolymers)

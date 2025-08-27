@@ -20,31 +20,31 @@ import struct
 #----------------------------------------------------------------------#
 # Funções em teste
 #----------------------------------------------------------------------#
-def bit_manipulation_template(filename):
+def bit_file_stat_retrieve_template(filename):
     """
     Fastest way to get the total count of nullomer k-mers.
     Sums all nullomer counts across all v1 blocks in the file.
     """
     count = 0
+    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
     with open(filename, 'rb') as f:
         # Skip header
-        f.seek(8)  # Skip magic(4) + version(2) + l(2)
-        
+        f.seek(6)  # Skip magic(4) + version(2)
+        l = struct.unpack('<H', f.read(2))[0]
+        l = int(l)
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
         try:
             while True:
-                # Read index (4 bytes)
-                index_bytes = f.read(4)
-                if len(index_bytes) < 4:
+                index_bytes = f.read(byte_size)
+                if len(index_bytes) < byte_size:
                     break
-                
-                # Read nullomer count (2 bytes)
-                nullomer_count_bytes = f.read(2)
-                if len(nullomer_count_bytes) < 2:
+                nullomer_count_bytes = f.read(byte_size)
+                if len(nullomer_count_bytes) < byte_size:
                     break
-                
-                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
                 # Skip v2 indices (nullomer IDs)
-                f.seek(nullomer_count * 2, 1)
+                f.seek(nullomer_count * byte_size, 1)
                 
                 # Add the number of nullomers for this v1
                 count += nullomer_count
@@ -54,70 +54,7 @@ def bit_manipulation_template(filename):
     
     return count
 
-def index_to_sequence_array(index,l):
-    seq = np.zeros(l, dtype=np.uint8)
-    for i in range(l-1, -1, -1):
-        seq[i] = index % 4
-        index //= 4
-    return seq
 
-def generate_homopolymer_dict(l):
-
-    homopolymer_dict = {}
-    for number in range(4):
-        homopolymer_dict[number] = number
-    bases.append(temp % 4)
-    temp //= 4
-    return homopolymer_dict
-
-def retrieve_homopolymer_stats(filename):
-    """
-    """
-    count = 0
-    with open(filename, 'rb') as f:
-        # Skip header
-        f.seek(6)  # Skip magic(4) + version(2)
-        l_value = struct.unpack('<H',f.read(2))[0]
-        l = int(l_value)
-        try:
-            while True:
-                # Read index (4 bytes)
-                index_bytes = f.read(4)
-                if len(index_bytes) < 4:
-                    break
-                v1 = struct.unpack('<I',index_bytes)[0]
-                seq1 = index_to_sequence_array(v1,l)
-                # Read nullomer count (2 bytes)
-                nullomer_count_bytes = f.read(2)
-                if len(nullomer_count_bytes) < 2:
-                    break
-                nullomer_count = struct.unpack('<H', nullomer_count_bytes)[0]
-                i = 0
-                while i < nullomer_count:
-                    homopolymers = []
-                    v2 = struct.unpack('<H', f.read(2))[0]
-                    seq2 = index_to_sequence_array(v2,l)
-                    sequence = np.concatenate([seq1, seq2])
-                    changes = np.concatenate(([True], sequence[1:] != sequence[:-1], [True]))
-                    change_indices = np.where(changes)[0]
-                    
-                    # Calculate run lengths
-                    run_lengths = np.diff(change_indices)
-                    run_starts = change_indices[:-1]
-                    
-                    # Filter by minimum length
-                    valid_runs = run_lengths >= 4
-                    
-                    # Extract base values and lengths for valid runs
-                    bases = sequence[run_starts[valid_runs]]
-                    lengths = run_lengths[valid_runs]
-                    print(list(zip(bases, lengths)))
-                    i += 1
-                
-        except (struct.error, OSError):
-            pass
-    
-    return "hi"
 #----------------------------------------------------------------------#
 # Funções ocasionais
 #----------------------------------------------------------------------#
@@ -198,32 +135,6 @@ def adicionar_grupo_por_organismo(csv_principal, csv_grupos, saida_csv):
 
     # Salva o resultado
     df_merged.to_csv(saida_csv, index=False)
-
-def criar_dic_reversos(l):
-    """
-    Cria um dicionário onde cada índice lexicográfico está relacionado ao índice
-    lexicográfico da sua sequência reversa, sem duplicidade (ou seja, só um dos pares é registrado).
-    Exemplo: se ATCG (i) pareia com GCTA (j), só (i: j) estará no dicionário, não (j: i).
-
-    :param l: Comprimento da sequência.
-    :return: Dicionário {indice_lexico: indice_lexico_reverso}
-    """
-    dic_reversos = {}
-    for i in range(4**l):
-        seq = indice_para_seq(i, l)
-        seq_rev = seq[::-1]
-        j = calc_ind_lexicografico(seq_rev, l)
-        dic_reversos[i] = j
-    return dic_reversos
-
-def indices_homopolimeros(l):
-    """
-    Retorna um array com os índices lexicográficos das sequências homopolímeras (AAAA..., TTTT..., CCCC..., GGGG...).
-    :param l: Comprimento da sequência.
-    :return: Lista de índices lexicográficos.
-    """
-    bases = ['A', 'T', 'C', 'G']
-    return [calc_ind_lexicografico(base * l, l) for base in bases]
 
 def obter_ks_analisados(base_path):
     """
@@ -655,6 +566,72 @@ def retrieve_palindrome_stats(filename):
             pass
         palindrome_relative = (palindrome_count/total_null) * 100
     return palindrome_count, palindrome_relative
+
+# Homopolymers search
+def is_homopolymer(index,l):
+    same = 0
+    current = 0
+    for i in range(l):
+        base = (index // (4 ** (l - i - 1))) % 4
+        if i == 0:
+            current = base
+        if base == current:
+            same += 1
+        else:
+            same = 0
+            break
+    return same
+
+def generate_homopolymer_array(l):
+    homopolymer_array = []
+    for i in range(4**l):
+        homopolymer = is_homopolymer(i, l)
+        if homopolymer:
+            homopolymer_array.append(i)
+    return homopolymer_array
+
+def retrieve_homopolymer_stats(filename):
+    """
+    """
+    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+    found_homopolymers = []
+    with open(filename, 'rb') as f:
+        # Skip header
+        f.seek(6)  # Skip magic(4) + version(2)
+        l = struct.unpack('<H', f.read(2))[0]
+        l = int(l)
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
+        homopolymers = generate_homopolymer_array(l)
+        try:
+            while True:
+                index_bytes = f.read(byte_size)
+                if len(index_bytes) < byte_size:
+                    break
+                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
+                nullomer_count_bytes = f.read(byte_size)
+                if len(nullomer_count_bytes) < byte_size:
+                    break
+                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
+                total_bytes = nullomer_count * byte_size
+                i = 0
+                if v1 in homopolymers:
+                    while i < nullomer_count:
+                        nullomer_byte = f.read(byte_size)
+                        total_bytes -= byte_size
+                        v2_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
+                        if v2_index == v1:
+                            found_homopolymers.append(v1)
+                            f.seek(total_bytes,1)
+                            break
+                        i += 1
+                else:
+                    f.seek(total_bytes,1)
+        except (struct.error, OSError):
+            pass
+    return found_homopolymers
+
+# Output analysis management
 
 #----------------------------------------------------------------------#
 # Funções em comum
