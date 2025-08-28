@@ -41,3 +41,16 @@ class TrieBit:
 
     def iterate(self):
         yield from self.root.iterate([])
+
+    def count_nullomers(self, target_length=None):
+        l = target_length or self.l
+        def dfs(node, depth):
+            if depth == l:
+                return sum(1 for genome_id in range(len(node.v2_set)) 
+                        if not node.v2_set[genome_id])
+            
+            return sum(dfs(child, depth + 1) 
+                    for child in node.children 
+                    if child is not None)
+        return dfs(self.root, 0)
+
