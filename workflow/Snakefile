@@ -6,24 +6,36 @@ def sanitize_filename(name):
 
 organisms = config["organisms"]
 ks = config["k"]
+results_directories = expand("results/k{k}/{organism}", k=ks, organism=organisms)
+paths = list(config["paths"].values())
 
 rule all:
     input:
-        expand(path_results + ".dir_created", k=ks)
+        expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
 
-rule check_config_paths:
-    input:
-        config="config/config.yaml"
+rule create_base_directories:
     output:
-        "not_found.txt"
-    shell:
-        "python scripts/check_config_paths.py --config {input.config} --output {output} --checklist scripts"
-rule create_directories:
-    input:
-        "not_foud.txt"
-    output:
-        touch(path_results + ".dir_created")
+        ".directories_created"
+    params:
+        dirs = paths
     shell:
         """
-        mkdir -p {path_results} {path_final} {path_log} {path_bench} {path_checked}
+        mkdir -p {params.dirs}
+        touch {output}
         """
+rule create_results_directories:
+    input:
+        ".directories_created"
+    output:
+        expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
+    params:
+        dirs = results_directories
+    shell:
+        """
+        mkdir -p {params.dirs}
+        touch {output}
+        """
+rule check_genome_integrity:
+    input:
+        expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
+    output:

@@ -32,8 +32,10 @@ def main():
     list_for_checking = args.checklist
     if list_for_checking == 'snakemake':
         yaml_variables = ['paths']
-    else:
+    elif list_for_checking == 'scripts':
         yaml_variables = ['py_scripts','c_scripts']
+    else:
+        yaml_variables = ['paths','py_scripts','c_scripts']
     missing_paths = check_config_paths_existence(config_file, yaml_variables)
     if missing_paths:
         with open(not_found_out, 'w') as f:

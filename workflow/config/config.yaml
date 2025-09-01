@@ -22,7 +22,7 @@ organisms:
 - GCA_039620435.1
 - GCF_039620435.1
 k:
-  - 14
+  - 12
 paths:
   genomes: "data/genomes/"
   results: "results/"
