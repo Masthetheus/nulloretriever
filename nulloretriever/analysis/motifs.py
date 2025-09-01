@@ -46,7 +46,7 @@ def retrieve_nullomers_cpg_stats(filename):
     Args:
         filename(str): location of bit file containing the nullomeric sequences
     Returns:
-        cpg_stats(dict): dictionary containing the following statistics:
+        cpg_stats(arr): array containing the following statistics:
             cpg_tot(int): total occurences of CpG dinucleotides
             null_with_cpg(int): total number of nullomers with at least one CpG dinucleotide occurrence
             cpg_global_mean(float): relation between null_with_cpg and total nullomer count
@@ -218,7 +218,13 @@ def generate_homopolymer_array(l):
     return homopolymer_array
 
 def retrieve_homopolymer_stats(filename):
-    """
+    """Retrieves which homopolymers can be found as nullomers of given organism
+    Args:
+        filename(str): path to nullomer data in binary
+    Returns:
+        found_homopolymers(arr): which homopolymers are present in the nullomer collection of given organism
+    Obs:
+        In this initial approach, a homopolymer is considered only if all bases of the sequence with length k are the same
     """
     byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
     found_homopolymers = []

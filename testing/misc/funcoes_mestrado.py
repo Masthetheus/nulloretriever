@@ -73,14 +73,6 @@ def revcomp(seq):
     comp = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
     return ''.join(comp.get(b, 'N') for b in reversed(seq))
 
-# Misc
-
-## Nullomer output analysis (bit output)
-
-
-
-# Output analysis management
-
 #----------------------------------------------------------------------#
 # Funções em comum
 #----------------------------------------------------------------------#
@@ -100,14 +92,6 @@ def checar_genoma(entrada):
                 return False
     return True
 
-def eh_palindromo(sequence): # checa se a sequência é palíndroma
-
-    for i in range(len(sequence) // 2):
-        # Compara o caractere na posição i com o caractere simétrico
-        if sequence[i] != sequence[-(i + 1)]:
-            return False
-    return True
-
 def ler_arquivo_caixa_alta(caminho_arquivo): # retorna o arquivo em caixa alta para leitura adequada do genoma
     with open(caminho_arquivo, 'r') as file:
         conteudo = file.read()
@@ -119,16 +103,3 @@ def ler_organismos(caminho_arquivo): # retorna lista de organismos que serão an
     with open(caminho_arquivo, 'r') as file:
         organismos = [linha.strip() for linha in file.readlines()]  # Remove espaços e quebras de linha
     return organismos
-
-def calcular_cpg(sequencia):
-    """
-    Conta o número de dinucleotídeos CG em uma sequência.
-    :param sequencia: Sequência de nucleotídeos.
-    :return: Número de dinucleotídeos CG.
-    """
-    cpg_count = 0
-    for i in range(len(sequencia) - 1):
-        if sequencia[i] == 'C' and sequencia[i + 1] == 'G':
-            cpg_count += 1
-    return cpg_count
-
