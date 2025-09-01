@@ -7,75 +7,23 @@ def sanitize_filename(name):
 organisms = config["organisms"]
 ks = config["k"]
 
-# Use paths from config
-path_genomes = config["paths"]["genomes"]
-path_results = config["paths"]["results"]
-path_final = config["paths"]["final"]
-path_log = config["paths"]["log"]
-path_bench = config["paths"]["bench"]
-path_checked = config["paths"]["checked"]
-
-# Use scripts from config
-check_genome_script = config["scripts"]["check_genome"]
-novo_fluxo_script = config["scripts"]["novo_fluxo"]
-fasta_parsing_c = config["c_scripts"]["fasta_parsing"]
-
 rule all:
     input:
-        expand(path_results + ".dir_created", k=ks) +
-        expand(path_final + "{organismo}_done.txt", organismo=organisms, k=ks)
+        expand(path_results + ".dir_created", k=ks)
 
+rule check_config_paths:
+    input:
+        config="config/config.yaml"
+    output:
+        "not_found.txt"
+    shell:
+        "python scripts/check_config_paths.py --config {input.config} --output {output} --checklist scripts"
 rule create_directories:
+    input:
+        "not_foud.txt"
     output:
         touch(path_results + ".dir_created")
     shell:
         """
         mkdir -p {path_results} {path_final} {path_log} {path_bench} {path_checked}
-        """
-
-rule check_genome:
-    input:
-        genome=path_genomes + "{organismo}",
-        dirs=path_results + ".dir_created"
-    output:
-        checked=path_checked + "{organismo}_{k}.txt"
-    log:
-        path_log + "check_genome_{organismo}_{k}.log"
-    resources:
-        cores=2
-    script:
-        check_genome_script
-
-rule build_fasta_kmers:
-    input:
-        fasta_parsing_c
-    output:
-        "fasta_kmers_novo"
-    shell:
-        "gcc {input} -o {output} -O3"
-
-rule calculate_nullomers:
-    input:
-        checked=path_checked + "{organismo}_{k}.txt",
-        genome=path_genomes + "{organismo}",
-        bin="fasta_kmers_novo"
-    output:
-        nullomers=path_results + "{organismo}/nullomers_{organismo}_{k}.txt"
-    params:
-        k="{k}"
-    resources:
-        cores=4
-    benchmark:
-        path_bench + "{organismo}/calculate_nullomers_{organismo}_{k}.txt"
-    script:
-        novo_fluxo_script
-
-rule finalize:
-    input:
-        nullomers=path_results + "{organismo}/nullomers_{organismo}_{k}.txt"
-    output:
-        done=path_final + "{organismo}_done.txt"
-    shell:
-        """
-        echo "Done for {wildcards.organismo} k={wildcards.k}" > {output}
         """

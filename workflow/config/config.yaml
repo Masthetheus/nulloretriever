@@ -1,3 +1,39 @@
 organisms:
+- GCA_000009045.1
+- GCF_000009045.1
+- GCA_029537415.2
+- GCF_029537415.2
+- GCA_002055965.1
+- GCF_002055965.1
+- GCA_013009385.1
+- GCF_013009385.1
+- GCA_001697265.1
+- GCF_001697265.1
+- GCA_006741845.1
+- GCF_006741845.1
+- GCA_006088795.1
+- GCF_006088795.1
+- GCA_000344745.1
+- GCF_000344745.1
+- GCA_047273435.1
+- GCF_047273435.1
+- GCA_041053155.1
+- GCF_041053155.1
+- GCA_039620435.1
+- GCF_039620435.1
 k:
-imp: false
+  - 14
+paths:
+  genomes: "data/genomes/"
+  results: "results/"
+  final: "runs/"
+  log: "logs/"
+  bench: "benchmarks/"
+  checked: "results/checked/"
+py_scripts:
+  check_genome: "scripts/python/check_genome.py"
+  novo_fluxo: "scripts/python/novo_fluxo_c_e_py.py"
+c_scripts:
+  fasta_parsing: "scripts/c/fasta_parsing.c"
+gather_genomes_NCBI: False
+compile_nullomer_analysis: False

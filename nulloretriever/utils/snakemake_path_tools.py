@@ -9,6 +9,29 @@ UNDER DEVELOPMENT:
 import os
 import yaml
 
+def check_config_paths_existence(config_file,yaml_variables):
+    """Check if the paths on the config.yaml file exists
+    Args:
+        config_file(str): path to the config.yaml file
+    Returns:
+        missing_paths(array): paths in the config.yaml file that couldn't be found
+    """
+    missing_paths = []
+    yaml_variables = yaml_variables
+    try:
+        with open(config_file, 'r') as f:
+            config_data = yaml.safe_load(f)
+        for variable in config_data:
+            if variable in yaml_variables:
+                for path in config_data[variable]:     
+                    current_path = config_data[variable][path]
+                    if not os.path.exists(current_path):
+                        missing_paths.append(current_path)
+    except IOError as e:
+        print("The following error has occurred:",e)
+        print("Please, check you config file integrity and location!")
+    return missing_paths
+
 def retrieve_analyzed_k_values(base_path):
     """Obtains k values analyzed via snakemake pipeline
     Args:

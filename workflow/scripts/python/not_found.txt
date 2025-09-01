@@ -1,0 +1,6 @@
+data/genomes/
+results/
+runs/
+logs/
+benchmarks/
+results/checked/

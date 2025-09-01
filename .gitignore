@@ -4,3 +4,4 @@ testing/for_benchmark
 nulloretriever.egg-info
 __pycache__/
 testing/module-testing/data/*
+.snakemake

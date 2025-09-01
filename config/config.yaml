@@ -35,3 +35,5 @@ scripts:
   novo_fluxo: "scripts/python/novo_fluxo_c_e_py.py"
 c_scripts:
   fasta_parsing: "scripts/c/fasta_parsing.c"
+gather_genomes_NCBI: False
+compile_nullomer_analysis: False
