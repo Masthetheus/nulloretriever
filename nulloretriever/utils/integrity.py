@@ -12,7 +12,7 @@ def unzip_fasta_file(gzip_path):
     """
     gzip_path = Path(gzip_path)
     out_path = gzip_path.with_suffix('')
-    with gzip.open(gzip_path, 'rb') as fin, open(out_path, 'w') as fout:
+    with gzip.open(gzip_path, 'rb') as fin, open(out_path, 'wb') as fout:
         for line in fin:
             fout.write(line)
     os.remove(gzip_path)
