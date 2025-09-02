@@ -50,3 +50,16 @@ def check_genome_integrity(genome):
             if not set(line.strip()).issubset(bases):
                 return False
     return True
+
+def check_multiple_genomes_integrity(genomes):
+    """Checks an array of genomes for file integrity
+    Given certain genome, checks:
+        composition: if it is composed only by A, T, C and G (further work shall include user guided filter to include also other standard code as R, Y, etc)
+        padronization: makes sure all base data is in CapsLock
+    Args:
+        genome(arr): path to genome file
+    Returns:
+        genome(file): same input file but padronized
+        log(bool): discloses if the genome passed the composition integrity check 
+    """
+    return

@@ -1,10 +1,9 @@
-from nulloretriever.utils.integrity import *
+from nulloretriever.utils.integrity import check_genome_integrity
 import sys
 import argparse
 
 def setup_argparser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description='Sccript for genome integrity checking.')
-
+    parser = argparse.ArgumentParser(description='Script for genome integrity checking.')
     parser.add_argument(
         '--genome',
         help='Path to the configuration file to check'

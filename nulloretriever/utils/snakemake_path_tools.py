@@ -4,7 +4,7 @@ UNDER DEVELOPMENT:
     compatibility needed
     integration with main pipeline needed
     retrieve_nullomer_files_path: obtain org list needs implementation
-
+    CURRENTLY RETIRED
 """
 import os
 import yaml
