@@ -3,8 +3,8 @@ import sys
 import argparse
 from pathlib import Path
 import yaml
-from nulloretriever.utils.paths import gather_files_names
-from nulloretriever.utils.integrity import check_genome_integrity
+from nulloretriever.utils.paths import gather_files_names, gather_files_paths
+from nulloretriever.utils.integrity import check_multiple_genomes_integrity
 
 def setup_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Script for genome integrity checking.')
@@ -47,30 +47,24 @@ def main():
     parser = setup_argparser()
     args = parser.parse_args()
     out_path = args.out + args.name
-    genomes_path = Path(args.genomes)
+    genomes_path = args.genomes
     kvalues = args.kvalues
     log = args.log
     directories_paths = ['genomes','results','final','log','bench','checked']
     yaml_dump={}
-    organisms = gather_files_names(genomes_path)
+    organisms = gather_files_paths(genomes_path)
     if args.integrity:
-        app_organisms = []
-        napp_organisms = []
-        for organism in organisms:
-            full_path = genomes_path / organism
-            check = check_genome_integrity(full_path)
-            if check:
-                app_organisms.append(organism)
-            else:
-                napp_organisms.append(organism)
+        app_organisms, napp_organisms = check_multiple_genomes_integrity(organisms)
         yaml_dump['organisms'] = app_organisms
-        try:
-            with open(log,'w') as f:
-                f.write("The following organisms weren't approved on the integrity check:\n")
-                orgs = '\n'.join(napp_organisms)
-                f.write(orgs)
-        except:
-            print("Error writing the not approved log file!")
+        if napp_organisms:
+            print(f"At least one organism didn't pass the integrity check, please verify the log at: {log} for further information.")
+            try:
+                with open(log,'w') as f:
+                    f.write("The following organisms weren't approved on the integrity check:\n")
+                    orgs = '\n'.join(napp_organisms)
+                    f.write(orgs)
+            except:
+                print("Error writing the not approved log file!")
     else:
         yaml_dump['organisms'] = gather_files_names(genomes_path)
     yaml_dump['k'] = kvalues

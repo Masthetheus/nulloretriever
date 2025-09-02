@@ -18,17 +18,17 @@ def gather_files_names(location):
         return []
 
 def gather_files_paths(location):
-    """Gather the path of all files inside a specified location
+    """Gather the complete path of all files inside a specified location
     Args:
         location(str): path to search for files
     Returns:
-        files_paths(arr): array containing the full path to all files
+        files_paths(dict): dict containing the full path to all files
     """
     try:
-        location = Path(location)
-        files_paths = [f for f in location.iterdir() if f.is_file()]
+        loc_iter = Path(location)
+        files_paths = {}
+        files_paths[location] = [f.name for f in loc_iter.iterdir() if f.is_file()]
         return files_paths
     except OSError as e:
         print(f"Unable to gather file path, error {e}")
         return []
-    return

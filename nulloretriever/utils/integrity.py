@@ -35,11 +35,9 @@ def check_genome_integrity(genome):
     """Checks given genome file integrity
     Given certain genome, checks:
         composition: if it is composed only by A, T, C and G (further work shall include user guided filter to include also other standard code as R, Y, etc)
-        padronization: makes sure all base data is in CapsLock
     Args:
         genome(str): path to genome file
     Returns:
-        genome(file): same input file but padronized
         log(bool): discloses if the genome passed the composition integrity check 
     """
     bases = set('ATCG')
@@ -55,11 +53,20 @@ def check_multiple_genomes_integrity(genomes):
     """Checks an array of genomes for file integrity
     Given certain genome, checks:
         composition: if it is composed only by A, T, C and G (further work shall include user guided filter to include also other standard code as R, Y, etc)
-        padronization: makes sure all base data is in CapsLock
     Args:
-        genome(arr): path to genome file
+        genome(dict): dict containing the root folder of genomes location as keys and organisms to process as values
     Returns:
-        genome(file): same input file but padronized
         log(bool): discloses if the genome passed the composition integrity check 
     """
-    return
+    app_organisms = []
+    napp_organisms = []
+    for path, organisms in genomes.items():
+        path = Path(path)
+        for organism in organisms:
+            full_path = path / organism
+            integrity = check_genome_integrity(full_path)
+            if integrity:
+                app_organisms.append(organism)
+            else:
+                napp_organisms.append(organism)
+    return app_organisms, napp_organisms

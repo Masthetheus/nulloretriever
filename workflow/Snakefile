@@ -35,7 +35,7 @@ rule create_results_directories:
         mkdir -p {params.dirs}
         touch {output}
         """
-rule check_genome_integrity:
+rule extract_nullomers:
     input:
         expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
     output:
