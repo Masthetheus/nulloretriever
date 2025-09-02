@@ -1,5 +1,5 @@
 """Manual implemented progress bar for global purposes"""
-import datetime as dt
+import time
 
 def progress_bar(current, total, start, size=30):
     """Progress bar for general completion tracking
