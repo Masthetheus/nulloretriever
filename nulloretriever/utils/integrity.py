@@ -1,4 +1,22 @@
 """Module that gather functions aimed at integrity checking and padronization"""
+import gzip
+from pathlib import Path
+import os
+
+def unzip_fasta_file(gzip_path):
+    """Unzips files ending with .gz, specifically fasta files
+    Args:
+        gzip_path(str): path to gzipped file
+    Returns:
+        out_path(Path): path to uncompressed fasta file
+    """
+    gzip_path = Path(gzip_path)
+    out_path = gzip_path.with_suffix('')
+    with gzip.open(gzip_path, 'rb') as fin, open(out_path, 'w') as fout:
+        for line in fin:
+            fout.write(line)
+    os.remove(gzip_path)
+    return out_path
 
 def capslock_file(target_file):
     """Take given file and apply upper to it's whole content
