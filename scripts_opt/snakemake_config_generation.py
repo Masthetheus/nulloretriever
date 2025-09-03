@@ -66,7 +66,8 @@ def main():
             except:
                 print("Error writing the not approved log file!")
     else:
-        yaml_dump['organisms'] = gather_files_names(genomes_path)
+        if not Path(out_path).exists():
+            yaml_dump['organisms'] = gather_files_names(genomes_path)
     yaml_dump['k'] = kvalues
     yaml_dump['paths']={
         'genomes':"data/genomes",
