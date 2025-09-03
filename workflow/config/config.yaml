@@ -1,3 +1,5 @@
+c_script: workflow/scripts/c/fasta_kmer_extraction.c
+genomes: data/genomes/
 k:
 - 8
 - 10

@@ -35,7 +35,10 @@ rule create_results_directories:
         mkdir -p {params.dirs}
         touch {output}
         """
-rule extract_nullomers:
+rule generate_c_binaries:
     input:
         expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
     output:
+        "scripts/c/fasta_kmer_extraction"
+    shell:
+        

@@ -29,6 +29,11 @@ def setup_argparser() -> argparse.ArgumentParser:
         default='configlog'
     )
     parser.add_argument(
+        '--cscript',
+        help='Path to c script directory',
+        default='workflow/scripts/c/fasta_kmer_extraction.c'
+    )
+    parser.add_argument(
         '-ks',
         '--kvalues',
         nargs="+",
@@ -50,9 +55,17 @@ def main():
     genomes_path = args.genomes
     kvalues = args.kvalues
     log = args.log
+    c_script = args.cscript
     directories_paths = ['genomes','results','final','log','bench','checked']
     yaml_dump={}
     organisms = gather_files_paths(genomes_path)
+    already_exists = Path(out_path).exists()
+    if already_exists:
+        with open(out_path, 'r') as f:
+            pre_existing_data = yaml.safe_load(f)
+            yaml_dump['organisms'] = pre_existing_data['organisms']
+    elif not already_exists and not args.integrity:
+        yaml_dump['organisms'] = gather_files_names(genomes_path)
     if args.integrity:
         app_organisms, napp_organisms = check_multiple_genomes_integrity(organisms)
         yaml_dump['organisms'] = app_organisms
@@ -65,9 +78,6 @@ def main():
                     f.write(orgs)
             except:
                 print("Error writing the not approved log file!")
-    else:
-        if not Path(out_path).exists():
-            yaml_dump['organisms'] = gather_files_names(genomes_path)
     yaml_dump['k'] = kvalues
     yaml_dump['paths']={
         'genomes':"data/genomes",
@@ -77,6 +87,8 @@ def main():
         'bench':"benchmarks/",
         'checked':"results/checked/"
     }
+    yaml_dump['genomes']= 'data/genomes/'
+    yaml_dump['c_script']= c_script
     try:
         with open(out_path,'w') as f:
             yaml.dump(yaml_dump,f)
