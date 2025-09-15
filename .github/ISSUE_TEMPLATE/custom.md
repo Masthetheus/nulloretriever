@@ -1,10 +1,25 @@
 ---
 name: Custom issue template
-about: Describe this issue template's purpose here.
+about: General solo development issue for projects
 title: ''
 labels: ''
-assignees: ''
+assignees: Masthetheus
 
 ---
 
+## Description
+[What needs to be done and why]
 
+## Implementation Notes
+- [Key implementation details]
+- [Algorithm considerations]
+- [Design decisions]
+
+## Resources
+- [Relevant papers/articles]
+- [Example code/references]
+
+## Definition of Done
+- [ ] [Specific criteria for completion]
+- [ ] Tests added
+- [ ] Documentation updated
