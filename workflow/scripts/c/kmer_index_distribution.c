@@ -49,10 +49,11 @@ void process_kmers(const char* seq, int seqlen, int k, char* seen) {
             count++;
         }
     }
+    printf("Count %d\n",count);
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
+    if (argc != 3) {
         fprintf(stderr, "Uso: %s <arquivo_fasta> <k> <genome_size>\n", argv[0]);
         return 1;
     }
@@ -67,19 +68,8 @@ int main(int argc, char* argv[]) {
     
     int k = atoi(argv[2]);
     fprintf(stderr, "DEBUG: k=%d\n", k);
-    uint64_t size = strtoull(argv[3], NULL, 10);
-    uint64_t possible_kmers_org = (size - k) + 1;
     uint64_t possible_kmers_global = 1ULL << (2 * k);
-    printf("%" PRIu64 "\n", possible_kmers_global);
-    printf("%" PRIu64 "\n", possible_kmers_org);
-    uint64_t total_bits;
-    if (possible_kmers_global <= possible_kmers_org){
-    total_bits = possible_kmers_global;
-    } else{
-    total_bits = possible_kmers_org;
-    }
-    printf("%" PRIu64 "\n", total_bits);
-    char* seen = calloc((total_bits + 7) / 8, 1);
+    char* seen = calloc((possible_kmers_global + 7) / 8, 1);
     char* seq = malloc(MAX_SEQ);
     int seqlen = 0;
     char line[1024];
@@ -110,7 +100,7 @@ int main(int argc, char* argv[]) {
                 free(revcomp_seq);
 
                 seqlen = 0;
-                memset(seen, 0, (total_bits + 7) / 8);
+                memset(seen, 0, (possible_kmers_global + 7) / 8);
             }
         } else {
             char* p = line;
