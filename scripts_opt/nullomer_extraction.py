@@ -40,7 +40,7 @@ def main():
 
         trie=TrieBit(m,l)
 
-    trie.insert(v1,v2)
+        trie.insert(v1,v2)
 print(len(indexes))
 expected_null = (4**k) - len(indexes)
 print("Checking if all nodes were inserted correctly via nullomer count.")
