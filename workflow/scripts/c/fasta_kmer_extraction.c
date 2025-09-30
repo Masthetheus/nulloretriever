@@ -14,9 +14,9 @@ uint64_t encode_kmer(const char* seq, int k) {
         val <<= 2;
         switch(seq[i]) {
             case 'A': val |= 0; break;
-            case 'C': val |= 1; break;
-            case 'G': val |= 2; break;
-            case 'T': val |= 3; break;
+            case 'C': val |= 2; break;
+            case 'G': val |= 3; break;
+            case 'T': val |= 1; break;
             default: 
                 return UINT64_MAX;
         }
@@ -24,18 +24,18 @@ uint64_t encode_kmer(const char* seq, int k) {
     return val;
 }
 
-void print_binary_bytes(uint64_t val, int k) {
-    // Output actual bytes, not ASCII characters
-    for (int i = k * 2 - 1; i >= 0; i--) {
-        unsigned char bit = (val >> i) & 1;
-        fwrite(&bit, 1, 1, stdout);
+void print_packed_binary(uint64_t val, int k, int bytes_needed) {
+    // Write in big-endian format
+    for (int i = bytes_needed - 1; i >= 0; i--) {
+        unsigned char byte = (val >> (i * 8)) & 0xFF;
+        fwrite(&byte, 1, 1, stdout);
     }
-    fflush(stdout); // Force flush
 }
 
 void process_kmers(const char* seq, int seqlen, int k, char* seen) {
     int count = 0;
-    
+    int bytes_needed = (k * 2 + 7) / 8;
+    int half_bytes_needed = bytes_needed/2;
     for (int i = 0; i <= seqlen - k; i++) {
         uint64_t idx = encode_kmer(seq + i, k);
         if (idx == UINT64_MAX) {
@@ -44,7 +44,7 @@ void process_kmers(const char* seq, int seqlen, int k, char* seen) {
         
         uint64_t byte = idx / 8, bit = idx % 8;
         if (!(seen[byte] & (1 << bit))) {
-            print_binary_bytes(idx, k);
+            print_packed_binary(idx, k, bytes_needed);
             seen[byte] |= (1 << bit);
             count++;
         }
@@ -70,15 +70,12 @@ int main(int argc, char* argv[]) {
     uint64_t size = strtoull(argv[3], NULL, 10);
     uint64_t possible_kmers_org = (size - k) + 1;
     uint64_t possible_kmers_global = 1ULL << (2 * k);
-    printf("%" PRIu64 "\n", possible_kmers_global);
-    printf("%" PRIu64 "\n", possible_kmers_org);
     uint64_t total_bits;
     if (possible_kmers_global <= possible_kmers_org){
     total_bits = possible_kmers_global;
     } else{
     total_bits = possible_kmers_org;
     }
-    printf("%" PRIu64 "\n", total_bits);
     char* seen = calloc((total_bits + 7) / 8, 1);
     char* seq = malloc(MAX_SEQ);
     int seqlen = 0;

@@ -37,8 +37,20 @@ def main():
         k = int(k)
         l = int(k/2)
         m = 4**l
-
         trie=TrieBit(m,l)
+
+        proc = subprocess.Popen(
+            ['./fasta_teste_parsing', genome_path, k],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        total = 0
+        bytes_per_kmer = (k * 2 + 7) // 8
+        while True:
+            kmer_bytes = proc.stdout.read(bytes_per_kmer)
+            if len(kmer_bytes) < bytes_per_kmer:
+                break
+            
 
         trie.insert(v1,v2)
 print(len(indexes))
