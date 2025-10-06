@@ -2,12 +2,37 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <inttypes.h>
 
 #define MAX_SEQ 40000000
 #define MAX_K 20
+#define BUFFER_SIZE 65536
 
+static unsigned char write_buffer[BUFFER_SIZE];
+static size_t buffer_position = 0;
+
+void flush_output_buffer(void){
+    if (buffer_position > 0){
+        fwrite(write_buffer, 1, buffer_position, stdout);
+        buffer_position = 0;
+    }
+}
+void print_packed_binary(uint64_t val, int bytes_per_half, int bytes_per_kmer, int l){
+    if (buffer_position + bytes_per_kmer > BUFFER_SIZE){
+        flush_output_buffer();
+    }
+    int bits_per_half = l * 2;
+    
+    for(int j = 1; j >= 0; j--) {
+        uint64_t half = (val >> (j * bits_per_half)) & ((1ULL << bits_per_half) - 1);
+
+        for (int i = bytes_per_half - 1; i >= 0; i--) {
+            unsigned char byte = (half >> (i * 8)) & 0xFF;
+            fprintf(stderr, "DEBUG C: byte[%d]=%u\n", i, byte);
+            write_buffer[buffer_position++] = byte;
+        }
+    }
+}
 uint64_t encode_kmer(const char* seq, int k) {
     uint64_t val = 0;
     for (int i = 0; i < k; i++) {
@@ -24,18 +49,18 @@ uint64_t encode_kmer(const char* seq, int k) {
     return val;
 }
 
-void print_packed_binary(uint64_t val, int k, int bytes_needed) {
-    // Write in big-endian format
-    for (int i = bytes_needed - 1; i >= 0; i--) {
-        unsigned char byte = (val >> (i * 8)) & 0xFF;
-        fwrite(&byte, 1, 1, stdout);
+void print_binary_bytes(uint64_t val, int k) {
+    // Output actual bytes, not ASCII characters
+    for (int i = k * 2 - 1; i >= 0; i--) {
+        unsigned char bit = (val >> i) & 1;
+        fwrite(&bit, 1, 1, stdout);
     }
+    fflush(stdout); // Force flush
 }
 
-void process_kmers(const char* seq, int seqlen, int k, char* seen) {
+void process_kmers(const char* seq, int seqlen, int k, char* seen, int bytes_per_half, int bytes_per_kmer, int l) {
     int count = 0;
-    int bytes_needed = (k * 2 + 7) / 8;
-    int half_bytes_needed = bytes_needed/2;
+    
     for (int i = 0; i <= seqlen - k; i++) {
         uint64_t idx = encode_kmer(seq + i, k);
         if (idx == UINT64_MAX) {
@@ -44,7 +69,7 @@ void process_kmers(const char* seq, int seqlen, int k, char* seen) {
         
         uint64_t byte = idx / 8, bit = idx % 8;
         if (!(seen[byte] & (1 << bit))) {
-            print_packed_binary(idx, k, bytes_needed);
+            print_packed_binary(idx, bytes_per_half, bytes_per_kmer, l);
             seen[byte] |= (1 << bit);
             count++;
         }
@@ -52,8 +77,8 @@ void process_kmers(const char* seq, int seqlen, int k, char* seen) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
-        fprintf(stderr, "Uso: %s <arquivo_fasta> <k> <genome_size>\n", argv[0]);
+    if (argc != 3) {
+        fprintf(stderr, "Uso: %s <arquivo_fasta> <k>\n", argv[0]);
         return 1;
     }
     
@@ -67,20 +92,15 @@ int main(int argc, char* argv[]) {
     
     int k = atoi(argv[2]);
     fprintf(stderr, "DEBUG: k=%d\n", k);
-    uint64_t size = strtoull(argv[3], NULL, 10);
-    uint64_t possible_kmers_org = (size - k) + 1;
-    uint64_t possible_kmers_global = 1ULL << (2 * k);
-    uint64_t total_bits;
-    if (possible_kmers_global <= possible_kmers_org){
-    total_bits = possible_kmers_global;
-    } else{
-    total_bits = possible_kmers_org;
-    }
-    char* seen = calloc((total_bits + 7) / 8, 1);
+    int l = k/2;
+    uint64_t total = 1ULL << (2 * k);
+    char* seen = calloc((total + 7) / 8, 1);
     char* seq = malloc(MAX_SEQ);
     int seqlen = 0;
     char line[1024];
     int line_count = 0;
+    int bytes_per_half = (l * 2 + 7) / 8;
+    int bytes_per_kmer = bytes_per_half * 2;
 
     while (fgets(line, sizeof(line), f)) {
         line_count++;
@@ -88,7 +108,7 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "DEBUG: Found header at line %d: %.50s\n", line_count, line);
             if (seqlen > 0) {
                 // Process forward strand
-                process_kmers(seq, seqlen, k, seen);
+                process_kmers(seq, seqlen, k, seen, bytes_per_half, bytes_per_kmer,l);
 
                 // Generate reverse complement
                 char* revcomp_seq = malloc(seqlen + 1);
@@ -103,11 +123,11 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 revcomp_seq[seqlen] = '\0';
-                process_kmers(revcomp_seq, seqlen, k, seen);
+                process_kmers(revcomp_seq, seqlen, k, seen, bytes_per_half, bytes_per_kmer,l);
                 free(revcomp_seq);
 
                 seqlen = 0;
-                memset(seen, 0, (total_bits + 7) / 8);
+                memset(seen, 0, (total + 7) / 8);
             }
         } else {
             char* p = line;
@@ -119,7 +139,7 @@ int main(int argc, char* argv[]) {
     
     // Process last sequence
     if (seqlen > 0) {
-        process_kmers(seq, seqlen, k, seen);
+        process_kmers(seq, seqlen, k, seen, bytes_per_half, bytes_per_kmer,l);
         char* revcomp_seq = malloc(seqlen + 1);
         for (int i = 0; i < seqlen; i++) {
             char b = seq[seqlen - 1 - i];
@@ -132,10 +152,10 @@ int main(int argc, char* argv[]) {
             }
         }
         revcomp_seq[seqlen] = '\0';
-        process_kmers(revcomp_seq, seqlen, k, seen);
+        process_kmers(revcomp_seq, seqlen, k, seen, bytes_per_half, bytes_per_kmer,l);
         free(revcomp_seq);
     }
-    
+    flush_output_buffer();
     fprintf(stderr, "DEBUG: Program finished\n");
     free(seen);
     free(seq);
