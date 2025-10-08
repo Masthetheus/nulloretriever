@@ -33,7 +33,7 @@ def main():
     mode = args.mode
     out_path = args.output
     # See later how to sync with snakemake pipeline
-    genome_path = "../workflow/data/genomes/teste"
+    genome_path = "workflow/data/genomes/teste"
     for k in k_values:
         k_str = str(k)
         k = int(k)
@@ -42,29 +42,36 @@ def main():
         trie=TrieBit(m,l)
 
         proc = subprocess.Popen(
-            ['../workflow/scripts/c/newversion_kmer_extraction', genome_path, k_str],
+            ['workflow/scripts/c/bin_fasta_kmer_extraction', genome_path, k_str],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             bufsize=65536
         )
+        total = 0
         bytes_per_half = (l * 2 + 7) // 8
         bytes_per_kmer = bytes_per_half * 2
-
+        bytes_per_sequence = (k * 2 + 7) // 8
+        k_mask = (2**k) - 1
         while True:
-            kmer_bytes = proc.stdout.read(bytes_per_kmer)
-            if len(kmer_bytes) < bytes_per_kmer:
+            kmer_bytes = proc.stdout.read(bytes_per_sequence)
+            if len(kmer_bytes) < bytes_per_sequence:
                 break
             
             print(f"DEBUG PY: Read {len(kmer_bytes)} bytes: {[b for b in kmer_bytes]}")
-            
-            v1 = int.from_bytes(kmer_bytes[:bytes_per_half], byteorder='big')
-            v2 = int.from_bytes(kmer_bytes[bytes_per_half:], byteorder='big')
-            
-            full_kmer = (v1 << (l * 2)) | v2
-            
-            print(f"DEBUG PY: v1={v1}, v2={v2}, full_kmer={full_kmer}")
 
+            kmer_idx = int.from_bytes(kmer_bytes)
+            v1 = kmer_idx >> k
+            v2 = kmer_idx & k_mask
+            v1_bits = []
+            i = (k//2) - 1
+            while i >= 0:
+                v1_bits.append(v1 >> (i*2) & 3)
+                i -= 1
+            print(f"kmer_idx: {kmer_idx} v1: {v1} v2: {v2}")
+            print(v1_bits)
+            trie.insert(tuple(v1_bits), v2)
+            total += 1
         proc.wait()
-
+        print(trie.count_nullomers())
 if __name__ == "__main__":
     main()
