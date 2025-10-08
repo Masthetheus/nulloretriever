@@ -33,14 +33,14 @@ def main():
     mode = args.mode
     out_path = args.output
     # See later how to sync with snakemake pipeline
-    genome_path = "workflow/data/genomes/teste"
+    genome_path = "workflow/data/genomes/GCF_000146045.2_R64_genomic.fna"
     for k in k_values:
         k_str = str(k)
         k = int(k)
         l = int(k/2)
         m = 4**l
         trie=TrieBit(m,l)
-
+        k_out = out_path + f'_{k}'
         proc = subprocess.Popen(
             ['workflow/scripts/c/bin_fasta_kmer_extraction', genome_path, k_str],
             stdout=subprocess.PIPE,
@@ -57,8 +57,6 @@ def main():
             if len(kmer_bytes) < bytes_per_sequence:
                 break
             
-            print(f"DEBUG PY: Read {len(kmer_bytes)} bytes: {[b for b in kmer_bytes]}")
-
             kmer_idx = int.from_bytes(kmer_bytes)
             v1 = kmer_idx >> k
             v2 = kmer_idx & k_mask
@@ -67,11 +65,10 @@ def main():
             while i >= 0:
                 v1_bits.append(v1 >> (i*2) & 3)
                 i -= 1
-            print(f"kmer_idx: {kmer_idx} v1: {v1} v2: {v2}")
-            print(v1_bits)
             trie.insert(tuple(v1_bits), v2)
             total += 1
         proc.wait()
         print(trie.count_nullomers())
+        trie.write_bit_format(k_out)
 if __name__ == "__main__":
     main()
