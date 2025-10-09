@@ -1,22 +1,29 @@
-"""Script for k-mer processing and nullomer extraction on the snakemake pipeline"""
-from nulloretriever.core.triebit_class import TrieBit, TrieBitNode
+"""K-mer processing and nullomer extraction on the snakemake pipeline."""
 import argparse
 import subprocess
 
+from nulloretriever.core.triebit_class import TrieBit
+
+
 def setup_argparser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Script for k-mer processing and nullomer extraction on the snakemake pipeline")
+    """Argument passing function for the kmer extraction script."""
+    parser = argparse.ArgumentParser(description="""Script for k-mer processing
+                                     and nullomer extraction on the snakemake
+                                     pipeline""")
     parser.add_argument(
         '-k',
         '--kvalues',
-        help="Values of k for k-mer extraction. More than one value can be informed. Default = 10",
+        help="Values of k for k-mer extraction. More than one value can be"
+        "informed. Default = 10",
         nargs="*",
         default=[10]
     )
     parser.add_argument(
         '-m',
         '--mode',
-        help="Output mode, if in compact txt format or binary format. Default = binary.",
-        choices=['binary','txt'],
+        help="Output mode, if in compact txt format or binary format."
+        " Default = binary.",
+        choices=['binary', 'txt'],
         default='binary'
     )
     parser.add_argument(
@@ -26,7 +33,10 @@ def setup_argparser() -> argparse.ArgumentParser:
         default='workflow/data/'
     )
     return parser
+
+
 def main():
+    """K-mer extraction and nullomer trie generation."""
     parser = setup_argparser()
     args = parser.parse_args()
     k_values = args.kvalues
@@ -39,24 +49,23 @@ def main():
         k = int(k)
         l = int(k/2)
         m = 4**l
-        trie=TrieBit(m,l)
+        trie = TrieBit(m, l)
         k_out = out_path + f'_{k}'
         proc = subprocess.Popen(
-            ['workflow/scripts/c/bin_fasta_kmer_extraction', genome_path, k_str],
+            ['workflow/scripts/c/bin_fasta_kmer_extraction',
+             genome_path, k_str],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             bufsize=65536
         )
         total = 0
-        bytes_per_half = (l * 2 + 7) // 8
-        bytes_per_kmer = bytes_per_half * 2
         bytes_per_sequence = (k * 2 + 7) // 8
         k_mask = (2**k) - 1
         while True:
             kmer_bytes = proc.stdout.read(bytes_per_sequence)
             if len(kmer_bytes) < bytes_per_sequence:
                 break
-            
+
             kmer_idx = int.from_bytes(kmer_bytes)
             v1 = kmer_idx >> k
             v2 = kmer_idx & k_mask
@@ -70,5 +79,8 @@ def main():
         proc.wait()
         print(trie.count_nullomers())
         trie.write_bit_format(k_out)
+        print(total)
+
+
 if __name__ == "__main__":
     main()
