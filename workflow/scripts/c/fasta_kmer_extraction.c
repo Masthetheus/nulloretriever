@@ -8,19 +8,21 @@
 #define MAX_K 20
 #define BUFFER_SIZE 65536
 
+static int buff_tot = 0;
 static unsigned char write_buffer[BUFFER_SIZE];
 static size_t buffer_position = 0;
 
-void flush_output_buffer(void){
+void flush_output_buffer(int* buff_tot){
 
     if (buffer_position > 0){
         fwrite(write_buffer, 1, buffer_position, stdout);
         buffer_position = 0;
+        ++ *buff_tot;
     }
 }
 void print_packed_binary(uint64_t val, int bytes_per_half, int bytes_per_kmer, int l){
     if (buffer_position + bytes_per_kmer > BUFFER_SIZE){
-        flush_output_buffer();
+        flush_output_buffer(&buff_tot);
     }
     int bits_per_half = l * 2;
     
@@ -35,7 +37,7 @@ void print_packed_binary(uint64_t val, int bytes_per_half, int bytes_per_kmer, i
 }
 void print_packed_binary_test(uint64_t val, int bytes_per_sequence){
     if (buffer_position + bytes_per_sequence > BUFFER_SIZE){
-        flush_output_buffer();
+        flush_output_buffer(&buff_tot);
     }
 
     for (int i = bytes_per_sequence - 1; i >= 0; i--) {
@@ -68,8 +70,8 @@ void print_binary_bytes(uint64_t val, int k) {
     fflush(stdout); // Force flush
 }
 
-void process_kmers(const char* seq, int seqlen, int k, char* seen, int bytes_per_sequence, int l) {
-
+void process_kmers(const char* seq, int seqlen, int k, char* seen, int bytes_per_sequence, int* tot) {
+    
     for (int i = 0; i <= seqlen - k; i++) {
         uint64_t idx = encode_kmer(seq + i, k);
         if (idx == UINT64_MAX) {
@@ -80,6 +82,7 @@ void process_kmers(const char* seq, int seqlen, int k, char* seen, int bytes_per
         if (!(seen[byte] & (1 << bit))) {
             print_packed_binary_test(idx, bytes_per_sequence);
             seen[byte] |= (1 << bit);
+            *tot += 1;
         }
     }
 }
@@ -108,6 +111,7 @@ int main(int argc, char* argv[]) {
     char line[1024];
     int line_count = 0;
     int bytes_per_sequence = (k * 2 + 7) / 8;
+    int tot = 0;
 
     while (fgets(line, sizeof(line), f)) {
         line_count++;
@@ -115,7 +119,7 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "DEBUG: Found header at line %d: %.50s\n", line_count, line);
             if (seqlen > 0) {
                 // Process forward strand
-                process_kmers(seq, seqlen, k, seen, bytes_per_sequence, l);
+                process_kmers(seq, seqlen, k, seen, bytes_per_sequence, &tot);
 
                 // Generate reverse complement
                 char* revcomp_seq = malloc(seqlen + 1);
@@ -130,7 +134,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 revcomp_seq[seqlen] = '\0';
-                process_kmers(revcomp_seq, seqlen, k, seen, bytes_per_sequence,l);
+                process_kmers(revcomp_seq, seqlen, k, seen, bytes_per_sequence, &tot);
                 free(revcomp_seq);
 
                 seqlen = 0;
@@ -146,7 +150,7 @@ int main(int argc, char* argv[]) {
     
     // Process last sequence
     if (seqlen > 0) {
-        process_kmers(seq, seqlen, k, seen, bytes_per_sequence, l);
+        process_kmers(seq, seqlen, k, seen, bytes_per_sequence, &tot);
         char* revcomp_seq = malloc(seqlen + 1);
         for (int i = 0; i < seqlen; i++) {
             char b = seq[seqlen - 1 - i];
@@ -159,13 +163,15 @@ int main(int argc, char* argv[]) {
             }
         }
         revcomp_seq[seqlen] = '\0';
-        process_kmers(revcomp_seq, seqlen, k, seen, bytes_per_sequence, l);
+        process_kmers(revcomp_seq, seqlen, k, seen, bytes_per_sequence, &tot);
         free(revcomp_seq);
     }
-    flush_output_buffer();
+    flush_output_buffer(&buff_tot);
     fprintf(stderr, "DEBUG: Program finished\n");
     free(seen);
     free(seq);
     fclose(f);
+    fprintf(stderr, "DEBUG: Total of %d sequences inserted", tot);
+    fprintf(stderr, "DEBUG: Total of %d buffers sent", buff_tot);
     return 0;
 }
