@@ -25,7 +25,7 @@ void print_packed_binary(uint64_t val, int bytes_per_half, int bytes_per_kmer, i
         flush_output_buffer(&buff_tot);
     }
     int bits_per_half = l * 2;
-    
+
     for(int j = 1; j >= 0; j--) {
         uint64_t half = (val >> (j * bits_per_half)) & ((1ULL << bits_per_half) - 1);
 
@@ -54,7 +54,7 @@ uint64_t encode_kmer(const char* seq, int k) {
             case 'C': val |= 2; break;
             case 'G': val |= 3; break;
             case 'T': val |= 1; break;
-            default: 
+            default:
                 return UINT64_MAX;
         }
     }
@@ -70,14 +70,37 @@ void print_binary_bytes(uint64_t val, int k) {
     fflush(stdout); // Force flush
 }
 
+char* decode_kmer(uint64_t val, int k) {
+    static const char nt[4] = {'A', 'T', 'C', 'G'}; // Adjust to your encoding
+    char* seq = malloc(k + 1);
+    if (!seq) return NULL;
+    for (int i = 0; i < k; i++) {
+        int base_bits = (val >> (2 * (k - i - 1))) & 3;
+        seq[i] = nt[base_bits];
+    }
+    seq[k] = '\0';
+    return seq;
+}
+
+void write_decoded_kmer(FILE *f, uint64_t val, int k) {
+    static const char nt[4] = {'A', 'T', 'C', 'G'}; // match your encoding
+    char seq[k+1];
+    for (int i = 0; i < k; i++) {
+        int base_bits = (val >> (2 * (k - i - 1))) & 3;
+        seq[i] = nt[base_bits];
+    }
+    seq[k] = '\0';
+    fprintf(f, "%s\n", seq);
+}
+
 void process_kmers(const char* seq, int seqlen, int k, char* seen, int bytes_per_sequence, int* tot) {
-    
+    FILE *out = fopen("decoded_kmers.txt", "w");
     for (int i = 0; i <= seqlen - k; i++) {
         uint64_t idx = encode_kmer(seq + i, k);
         if (idx == UINT64_MAX) {
             continue;
         }
-        
+
         uint64_t byte = idx / 8, bit = idx % 8;
         if (!(seen[byte] & (1 << bit))) {
             print_packed_binary_test(idx, bytes_per_sequence);
@@ -92,15 +115,15 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Uso: %s <arquivo_fasta> <k>\n", argv[0]);
         return 1;
     }
-    
+
     fprintf(stderr, "DEBUG: Starting program with file=%s, k=%s\n", argv[1], argv[2]);
-    
+
     FILE* f = fopen(argv[1], "r");
     if (!f) {
         perror("Erro ao abrir arquivo");
         return 1;
     }
-    
+
     int k = atoi(argv[2]);
     fprintf(stderr, "DEBUG: k=%d\n", k);
     int l = k/2;
@@ -147,7 +170,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    
+
     // Process last sequence
     if (seqlen > 0) {
         process_kmers(seq, seqlen, k, seen, bytes_per_sequence, &tot);
@@ -171,7 +194,7 @@ int main(int argc, char* argv[]) {
     free(seen);
     free(seq);
     fclose(f);
-    fprintf(stderr, "DEBUG: Total of %d sequences inserted", tot);
+    fprintf(stderr, "DEBUG: Total of %d sequences inserted\n", tot);
     fprintf(stderr, "DEBUG: Total of %d buffers sent", buff_tot);
     return 0;
 }

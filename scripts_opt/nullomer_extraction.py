@@ -43,7 +43,7 @@ def main():
     mode = args.mode
     out_path = args.output
     # See later how to sync with snakemake pipeline
-    genome_path = "workflow/data/genomes/genome_one_chromo"
+    genome_path = "workflow/data/genomes/GCA_001010845_3"
     for k in k_values:
         k_str = str(k)
         k = int(k)
@@ -63,12 +63,18 @@ def main():
         bytes_per_sequence = (k * 2 + 7) // 8
         wasted_space = (bytes_per_sequence * 8) - (k * 2)
         k_mask = (2**k) - 1
+        mask = (4**k) - 1
+        print(f"DEBUG: Variables in use:\n"
+              f"bytes_per_sequence: {bytes_per_sequence}"
+              f"\nwasted_space:{wasted_space}"
+              f"\nk_mask: {k_mask}"
+              f"\nmask: {mask}")
         while True:
             kmer_bytes = proc.stdout.read(bytes_per_sequence)
             if len(kmer_bytes) < bytes_per_sequence:
                 break
             kmer_idx = int.from_bytes(kmer_bytes, byteorder='big')
-            kmer_idx = kmer_idx >> wasted_space & 2*(k_mask)
+            kmer_idx = (kmer_idx >> wasted_space) & (mask)
             sequences_received += 1
             v1 = kmer_idx >> k
             v2 = kmer_idx & k_mask
@@ -80,10 +86,11 @@ def main():
             trie.insert(tuple(v1_bits), v2)
             total += 1
         proc.wait()
-        # trie.write_bit_format(k_out)
+        trie.write_bit_format(k_out)
         expected = 4**k
         null_count = trie.count_nullomers()
-        diff = expected - (null_count + total)
+        obtained = null_count + total
+        diff = expected - total
         print(f"{total} k-mkers were inserted, and {trie.count_nullomers()}"
               f" nullomers were counted.\n {expected} total were expected."
               f"The difference between both values was of {diff}")

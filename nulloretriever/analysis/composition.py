@@ -71,5 +71,8 @@ def nullomers_gc_mean(filename):
         except (struct.error, OSError):
             pass
     total_bases = (v1_count*l)+(count*l)
-    gc_percent = (gc_tot/total_bases)*100
+    if total_bases > 0:
+        gc_percent = (gc_tot/total_bases)*100
+    else:
+        gc_percent = 0
     return gc_percent

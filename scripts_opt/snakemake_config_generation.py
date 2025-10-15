@@ -31,7 +31,7 @@ def setup_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--cscript',
         help='Path to c script directory',
-        default='workflow/scripts/c/fasta_kmer_extraction.c'
+        default='scripts/c/fasta_kmer_extraction.c'
     )
     parser.add_argument(
         '-ks',
@@ -47,6 +47,13 @@ def setup_argparser() -> argparse.ArgumentParser:
         action='store_true',
         help='Checks the downloaded genomes integrity and removes in case of non-expected formatting'
     )
+    parser.add_argument(
+        '--statistics',
+        nargs="+",
+        type=str,
+        default = [],
+        help='Specifies which statistics must be retrieved from the nullomer files'
+    )
     return parser
 def main():
     parser = setup_argparser()
@@ -57,6 +64,7 @@ def main():
     log = args.log
     c_script = args.cscript
     directories_paths = ['genomes','results','final','log','bench','checked']
+    statistics = args.statistics
     yaml_dump={}
     organisms = gather_files_paths(genomes_path)
     already_exists = Path(out_path).exists()
@@ -80,7 +88,7 @@ def main():
                 print("Error writing the not approved log file!")
     yaml_dump['k'] = kvalues
     yaml_dump['paths']={
-        'genomes':"data/genomes",
+        'genomes':"data/genomes/",
         'results':"results/",
         'final':"runs/",
         'log':"logs/",
@@ -89,6 +97,7 @@ def main():
     }
     yaml_dump['genomes']= 'data/genomes/'
     yaml_dump['c_script']= c_script
+    yaml_dump['statistics'] = statistics
     try:
         with open(out_path,'w') as f:
             yaml.dump(yaml_dump,f)

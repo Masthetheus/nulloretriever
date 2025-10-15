@@ -102,9 +102,20 @@ def retrieve_nullomers_cpg_stats(filename):
                 count += nullomer_count     
         except (struct.error, OSError):
             pass
-    cpg_count_mean = cpg_tot/null_with_cpg
-    cpg_global_mean = (null_with_cpg/count)*100
-    cpg_stats = [cpg_tot, null_with_cpg, cpg_global_mean, cpg_count_mean]
+    try:
+        cpg_count_mean = cpg_tot/null_with_cpg
+    except ZeroDivisionError:
+        cpg_count_mean = 0
+    try:
+        cpg_global_mean = (null_with_cpg/count)*100
+    except ZeroDivisionError:
+        cpg_global_mean = 0
+    cpg_stats = {
+        "total": cpg_tot,
+        "nullomers_with_cpg": null_with_cpg,
+        "global_mean": cpg_global_mean,
+        "mean_nullomers_with_cpg": cpg_count_mean
+    }
     return cpg_stats
 
 def generate_complement_index_dict(l):
@@ -175,8 +186,15 @@ def retrieve_palindrome_stats(filename):
                     i += 1                
         except (struct.error, OSError):
             pass
-        palindrome_relative = (palindrome_count/total_null) * 100
-    return palindrome_count, palindrome_relative
+        try:
+            palindrome_relative = (palindrome_count/total_null) * 100
+        except ZeroDivisionError:
+            palindrome_relative = 0
+    palindrome_stats = {
+        "count": palindrome_count,
+        "relative_fraction": palindrome_relative
+    }
+    return palindrome_stats
 
 def is_homopolymer(index,l):
     """Checks if given index is a homopolymer

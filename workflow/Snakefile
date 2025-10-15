@@ -1,21 +1,37 @@
 configfile: "config/config.yaml"
 import re
 
-def sanitize_filename(name):
-    return re.sub(r'[^A-Za-z0-9_]', '_', name)
+def needed_threads_k_value(wildcards):
+    try:
+        k = int(wildcards.k)
+    except ValueError:
+        return 4
+
+    if k <= 12:
+        return 1
+    elif k <= 14:
+        return 2
+    elif k < 16:
+        return 6
+    else:
+        return 8
 
 organisms = config["organisms"]
 ks = config["k"]
-results_directories = expand("results/k{k}/{organism}", k=ks, organism=organisms)
 paths = list(config["paths"].values())
+c_script = config["c_script"]
+stats = config["statistics"]
+benchmark = config["paths"]["bench"].rstrip('/')
 
 rule all:
     input:
-        expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
+        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms)
+    benchmark:
+        "{}/complete_snakemake_pipeline_benchmark.txt".format(benchmark)
 
 rule create_base_directories:
     output:
-        expand("{dirs}/.directories_created", dirs=paths)
+        expand("{dir}.directories_created", dir = paths)
     params:
         dirs = paths
     shell:
@@ -23,22 +39,52 @@ rule create_base_directories:
         mkdir -p {params.dirs}
         touch {output}
         """
+
 rule create_results_directories:
     input:
-        expand("{dirs}/.directories_created", dirs=paths)
+        lambda wildcards: config["paths"]["results"] + ".directories_created"
     output:
-        expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
+        "results/k{k}/{organism}/.results_directories_created"
     params:
-        dirs = results_directories
+        dirs = lambda wildcards: 'results/k' + wildcards.k + '/' + wildcards.organism
     shell:
         """
         mkdir -p {params.dirs}
         touch {output}
         """
+
 rule generate_c_binaries:
     input:
-        expand("results/k{k}/{organism}/.results_directories_created", k=ks, organism=organisms)
+        c_source = config["c_script"]
     output:
-        "scripts/c/fasta_kmer_extraction"
+        "scripts/c/bin_fasta_kmer_extraction"
     shell:
-        
+        "gcc -O3 -Wall -Wextra {input.c_source} -o {output} "
+
+rule extract_nullomers:
+    input:
+        "results/k{k}/{organism}/.results_directories_created",
+        bin =  "scripts/c/bin_fasta_kmer_extraction",
+        genome = lambda wildcards: config["genomes"] + wildcards.organism
+    output:
+        "results/k{k}/{organism}/null_bit_format"
+    params:
+        k_val = lambda wildcards: wildcards.k
+    benchmark:
+        f"{benchmark}/k" + "{k}/{organism}/extract_nullomers_benchmark.txt"
+    threads: needed_threads_k_value
+    script:
+        "scripts/python/nullomer_extraction.py"
+
+rule retrieve_nullomer_statistics:
+    input:
+        "results/k{k}/{organism}/null_bit_format"
+    output:
+        "results/k{k}/{organism}/nullomer_statistics.csv"
+    params:
+        stats = config["statistics"]
+    benchmark:
+        f"{benchmark}/k" + "{k}/{organism}/retrieve_nullomers_statistics_benchmark.txt"
+    threads: 1
+    script:
+        "scripts/python/nullomer_statistics_retrieval.py"
