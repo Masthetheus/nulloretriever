@@ -3,6 +3,8 @@ import yaml
 import json
 import argparse
 
+from nulloretriever.data.ncbiapidata import get_genome_metadata
+
 
 def setup_argparser() -> argparse.ArgumentParser:
     """Argument parsing function for the JSON creation script."""
@@ -33,8 +35,11 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     out_path = args.out
-
-
+    with open(config_file, 'r') as f:
+        content = yaml.safe_load(f)
+        organisms = content['organisms']
+    for organism in organisms:
+       organisms[organism] = organism.
 
 if __name__ == "__main__":
     main()

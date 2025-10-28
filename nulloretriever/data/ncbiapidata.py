@@ -170,8 +170,8 @@ def get_genome_metadata(accessions, params=None):
         for acc in accessions:
             summary = get_accesion_summary_data(acc)
             for param in params:
-
-
+                metadata[acc] = summary['DocumentSummarySet']['DocumentSummary'][0].get(param)
+        return metadata
     except Exception as e:
         print(f"Error during {acc}: {e}")
         return None
