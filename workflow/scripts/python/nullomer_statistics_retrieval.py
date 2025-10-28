@@ -44,6 +44,8 @@ def main():
     out_path = snakemake.output[0]
     stats = snakemake.params.stats
     nullomer_file = snakemake.input[0]
+    organism = snakemake.wildcards.organism
+    k_val = snakemake.wildcards.k
     dispatch_table = {
         "composition": nullomers_gc_mean,
         "counter": quick_nullomer_count,
@@ -62,7 +64,11 @@ def main():
                   f"following statistic: {stat}.\n"
                   f"Error: {err=}, {type(err)=}")
             raise
-    final_stats = dict_flattener(retrieved_stats)
+
+    base_dict = {}
+    base_dict['organism'] = organism
+    base_dict['k'] = k_val
+    final_stats = dict_flattener(retrieved_stats, base_dict)
     with open(out_path, mode = 'w', newline = '') as f:
         writer = csv.writer(f)
         writer.writerow(final_stats.keys())

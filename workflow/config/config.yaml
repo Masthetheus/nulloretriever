@@ -211,8 +211,6 @@ organisms:
 - GCA_029952725_1
 - GCA_900290405_1
 - GCA_051599425_1
-- umcromo_GCA_001010845_3
-- .directories_created
 paths:
   bench: benchmarks/
   checked: results/checked/

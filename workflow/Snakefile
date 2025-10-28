@@ -25,7 +25,8 @@ benchmark = config["paths"]["bench"].rstrip('/')
 
 rule all:
     input:
-        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms)
+        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms),
+        "results/nullomer_statistics_summarized.csv"
     benchmark:
         "{}/complete_snakemake_pipeline_benchmark.txt".format(benchmark)
 
@@ -88,3 +89,13 @@ rule retrieve_nullomer_statistics:
     threads: 1
     script:
         "scripts/python/nullomer_statistics_retrieval.py"
+
+rule summarize_nullomer_statistics:
+    input:
+        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms)
+    output:
+        "results/nullomer_statistics_summarized.csv"
+    params:
+        organisms = config['organisms']
+    script:
+        "scripts/python/nullomer_statistics_summary.py"

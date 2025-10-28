@@ -1,18 +1,36 @@
+"""Optional script for direct genome download via NCBI API."""
 from nulloretriever.utils.validation import get_valid_email, get_valid_tool
-from nulloretriever.data.ncbidownload import read_accession_list, download_genome_bioentrez
+from nulloretriever.data.ncbidownload import download_genome_bioentrez
+from nulloretriever.data.ncbiapidata import read_accession_list
 from nulloretriever.utils.integrity import unzip_fasta_file, capslock_file
 from Bio import Entrez
 import argparse
+import textwrap
 from pathlib import Path
+
+
 def main():
-    Entrez.email = get_valid_email()
-    Entrez.tool = get_valid_tool()
-    parser = argparse.ArgumentParser(description="Download genomes from NCBI by assembly accession list.")
+    """Return the genomes files from given set of accession codes.
+
+    Args:
+        Entrez.email(str): e-mail registered on Entrez
+        Entrez.tool(str): personal/lab use tool registered on Entrez via e-mail
+        accession-list(file): list of NCBI assembly accession numbers
+        output: place to store the gathered files
+    Returns:
+        directory(file): file containing a genome sequence unzipped and in full
+                         capslock.
+    """
+    parser = argparse.ArgumentParser(description="Download genomes from NCBI"
+                                     " by assembly accession list.")
     parser.add_argument(
         "--accession-list",
         type=str,
-        default="ncbi_dataset.tsv",
-        help="Path to the file containing assembly accession numbers (default: ncbi_dataset.tsv)"
+        default="workflow/data/ncbi_dataset.tsv",
+        help=textwrap.dedent("""
+        Path to the file containing assembly accession numbers
+        (default: ncbi_dataset.tsv)
+        """)
     )
     parser.add_argument(
         "--output",
@@ -23,11 +41,15 @@ def main():
     args = parser.parse_args()
     accession_file = args.accession_list
     output = Path(args.output)
+    Entrez.email = get_valid_email()
+    Entrez.tool = get_valid_tool()
     print(f"Using accession file: {accession_file}")
-    print("Do you want to specify a custom .csv/.tsv column name for the accession numbers? (y/[n])")
+    print("Do you want to specify a custom .csv/.tsv column name for the"
+          " accession numbers? (y/[n])")
     custom_column = input().strip().lower() == 'y'
     if custom_column:
-        column_name = input("Enter the column name (NCBI default is 'Assembly Accession'): ").strip() or "Assembly Accession"
+        column_name = input("Enter the column name (NCBI default is 'Assembly"
+                            " Accession'): ").strip() or "Assembly Accession"
     else:
         column_name = None
     acessions = read_accession_list(accession_file, column=column_name)
@@ -40,5 +62,7 @@ def main():
         capslock_file(out_path)
     print("All genomes decompressed and capitalized!")
     print(f"Downloaded genomes can be found in the {output} directory.")
+
+
 if __name__ == "__main__":
     main()
