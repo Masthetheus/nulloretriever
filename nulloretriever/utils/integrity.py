@@ -3,6 +3,7 @@ import gzip
 from pathlib import Path
 import os
 
+
 def unzip_fasta_file(gzip_path):
     """Unzips files ending with .gz, specifically fasta files
     Args:
@@ -18,6 +19,7 @@ def unzip_fasta_file(gzip_path):
     os.remove(gzip_path)
     return out_path
 
+
 def capslock_file(target_file):
     """Take given file and apply upper to it's whole content
     Args:
@@ -31,6 +33,7 @@ def capslock_file(target_file):
     with open(target_file, 'w') as f:
         f.write(content_upper)
 
+
 def check_genome_integrity(genome):
     """Checks given genome file integrity
     Given certain genome, checks:
@@ -38,7 +41,7 @@ def check_genome_integrity(genome):
     Args:
         genome(str): path to genome file
     Returns:
-        log(bool): discloses if the genome passed the composition integrity check 
+        log(bool): discloses if the genome passed the composition integrity check
     """
     bases = set('ATCG')
     with open(genome, 'r') as f:
@@ -49,6 +52,7 @@ def check_genome_integrity(genome):
                 return False
     return True
 
+
 def check_multiple_genomes_integrity(genomes):
     """Checks an array of genomes for file integrity
     Given certain genome, checks:
@@ -56,7 +60,7 @@ def check_multiple_genomes_integrity(genomes):
     Args:
         genome(dict): dict containing the root folder of genomes location as keys and organisms to process as values
     Returns:
-        log(bool): discloses if the genome passed the composition integrity check 
+        log(bool): discloses if the genome passed the composition integrity check
     """
     app_organisms = []
     napp_organisms = []

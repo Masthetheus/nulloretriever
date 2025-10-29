@@ -1,6 +1,8 @@
 """General utils for NCBI API data gathering."""
 import csv
 import os
+import time
+
 from Bio import Entrez
 
 
@@ -67,7 +69,8 @@ def read_accession_list(filepath, column=None):
                 if row and len(row) > column:
                     accessions.append(row[column].strip())
     else:
-        raise ValueError("Unsupported file format. Use .txt, .csv, or .tsv files.")
+        raise ValueError(
+            "Unsupported file format. Use .txt, .csv, or .tsv files.")
     return accessions
 
 
@@ -87,6 +90,8 @@ def get_accesion_summary_data(acc):
         record = Entrez.read(handle)
         handle.close()
 
+        time.sleep(0.35)
+
         if not record["IdList"]:
             print(f"No result found for {acc}")
             with open(log, 'a') as log:
@@ -102,6 +107,9 @@ def get_accesion_summary_data(acc):
         handle = Entrez.esummary(db="assembly", id=assembly_id, retmode="xml")
         summary = Entrez.read(handle)
         handle.close()
+
+        time.sleep(0.35)
+
         return summary
     except Exception as e:
         print(f"Error during {acc}: {e}")
@@ -125,11 +133,14 @@ def get_genome_download_link(accessions):
             # Obtain the xml data for given accession code
             summary = get_accesion_summary_data(accession)
             # Obtain FTP Assembly link
-            ftp_path = summary['DocumentSummarySet']['DocumentSummary'][0].get('FtpPath_RefSeq')
+            ftp_path = summary['DocumentSummarySet']['DocumentSummary'][0].get(
+                'FtpPath_RefSeq')
             if not ftp_path:
-                ftp_path = summary['DocumentSummarySet']['DocumentSummary'][0].get('FtpPath_GenBank')
+                ftp_path = summary['DocumentSummarySet']['DocumentSummary'][0].get(
+                    'FtpPath_GenBank')
             if ftp_path:
-                link = ftp_path + "/" + ftp_path.split("/")[-1] + "_genomic.fna.gz"
+                link = ftp_path + "/" + \
+                    ftp_path.split("/")[-1] + "_genomic.fna.gz"
                 link = link[3:]
                 link = 'https' + link
                 links[accession] = link
@@ -153,12 +164,11 @@ def get_genome_metadata(accessions, params=None):
     Returns:
         metadata (list): list with needed metadata of given accession code.
     """
-    log = "data/logs/genome_metadata.log"
     if isinstance(accessions, str):
         accessions = [accessions]
     if not params:
         params = [
-            'taxid',
+            'Taxid',
             'SpeciesTaxid',
             'SpeciesName',
             'AssemblyStatus'
@@ -169,8 +179,11 @@ def get_genome_metadata(accessions, params=None):
     try:
         for acc in accessions:
             summary = get_accesion_summary_data(acc)
+            data = {}
             for param in params:
-                metadata[acc] = summary['DocumentSummarySet']['DocumentSummary'][0].get(param)
+                data[param] = summary['DocumentSummarySet']['DocumentSummary'][0].get(
+                    param)
+            metadata[acc] = data
         return metadata
     except Exception as e:
         print(f"Error during {acc}: {e}")

@@ -3,6 +3,8 @@ import yaml
 import json
 import argparse
 
+from Bio import Entrez
+from nulloretriever.utils.validation import get_valid_email, get_valid_tool
 from nulloretriever.data.ncbiapidata import get_genome_metadata
 
 
@@ -29,17 +31,38 @@ def setup_argparser() -> argparse.ArgumentParser:
     return parser
 
 
+def format_accesion_code(organisms):
+    """Adjust a series of accession codes to their original form.
+
+    Args:
+        organisms(list): list of accession codes with . replaced by _
+    Returns:
+        organisms(list): acession codes with the last _ changed back
+                             to .
+    """
+    for index, organism in enumerate(organisms):
+        new_org = organism[:-2] + organism[-2:].replace('_', '.')
+        organisms[index] = new_org
+    return organisms
+
+
 def main():
     """Generate all organisms central JSON file."""
     parser = setup_argparser()
     args = parser.parse_args()
     config_file = args.config
-    out_path = args.out
+    Entrez.email = get_valid_email()
+    Entrez.tool = get_valid_tool()
+    out_path = args.output
     with open(config_file, 'r') as f:
         content = yaml.safe_load(f)
         organisms = content['organisms']
-    for organism in organisms:
-       organisms[organism] = organism.
+    format_accesion_code(organisms)
+    metadata = get_genome_metadata(organisms)
+    print(metadata)
+    with open(out_path, 'w') as f:
+        json.dump(metadata, f)
+
 
 if __name__ == "__main__":
     main()
