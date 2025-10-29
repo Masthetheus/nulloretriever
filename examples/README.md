@@ -19,7 +19,7 @@ Ensure that all project dependencies are correctly installed in your system, ide
 
 **Observation: Given the extension of the project, it is highly advised to fully configure the environment, with all needed dependencies, not only those related to the current example.** 
 
-Please check the [Installation guide](../README.md) for further instructions.
+Please check the [Installation guide](../README.md #installation) for further instructions.
 
 ### Execution
 
