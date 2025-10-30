@@ -82,7 +82,7 @@ def get_accesion_summary_data(acc):
     Returns:
         summary (xml): xml summary of given accesion code ID.
     """
-    log = "data/logs/entrez.log"
+    log = "accession_summary_data_entrez.log"
     try:
         # Search the ID on the DB
         print(f"Searching ID for Assembly Accession: {acc}")
@@ -124,7 +124,7 @@ def get_genome_download_link(accessions):
     Returns:
         links (list): list of the download links of the desired genomes.
     """
-    log = "data/logs/genome_download.log"
+    log = "genome_download.log"
     if isinstance(accessions, str):
         accessions = [accessions]
     links = {}
@@ -132,6 +132,9 @@ def get_genome_download_link(accessions):
         for accession in accessions:
             # Obtain the xml data for given accession code
             summary = get_accesion_summary_data(accession)
+            if not summary:
+                print("Vai quebrar")
+                break
             # Obtain FTP Assembly link
             ftp_path = summary['DocumentSummarySet']['DocumentSummary'][0].get(
                 'FtpPath_RefSeq')
@@ -179,6 +182,8 @@ def get_genome_metadata(accessions, params=None):
     try:
         for acc in accessions:
             summary = get_accesion_summary_data(acc)
+            if not summary:
+                continue
             data = {}
             for param in params:
                 data[param] = summary['DocumentSummarySet']['DocumentSummary'][0].get(
