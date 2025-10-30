@@ -72,7 +72,7 @@ chmod +x setup.sh
         - It is recommended the use of a conda environment for general package installing and maintenence. A environment.yml file can be found and use to create such.
             ```sh
             conda env create -f environment.yml
-            conda activate nullomer-env 
+            conda activate nulloretriever
             ```
         - The libraries can be installed also via pip, taking as a base the requirements.txt file.
             ```sh
