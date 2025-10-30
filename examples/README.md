@@ -29,19 +29,19 @@ ideally inside a virtual environment or a conda environment.
 
 - Make sure the NulloRetriever environment is running, or activate it by:
 
-```sh
-conda activate nulloretriever
-```
+    ```sh
+    conda activate nulloretriever
+    ```
 
 - Change to the desired examples folder or export it to your PATH before executing the scripts:
 
-```sh
-cd desired-folder
+    ```sh
+    cd desired-folder
 
-# or
+    # or
 
-export PATH=$PATH:/path/of/desired/folder
-```
+    export PATH=$PATH:/path/of/desired/folder
+    ```
 
 **Observation: Detailed information on the execution proccess and available examples can be found in each folder's relative README file.**
 
