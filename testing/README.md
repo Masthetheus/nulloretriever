@@ -3,21 +3,22 @@
 ## Overview
 
 This directory contains base examples for the **NulloRetriever** project. Each
-is designed to supply a minimal reproducible example of each optional script
-and of the complete snakemake pipeline.
+is designed to supply a minimal reproducible example of the individual modules,
+optional scripts and the complete snakemake pipeline.
 
 ## Directory Structure
 
 Each example folder is organized to mirror it's actual project usage and
-implementation. For any script, there is a corresponding example file
+implementation. For any module or script, there is a corresponding example file
 prefixed with `example_`.
 
--   `examples/opt-scripts/test_script_name.py` will upply an example to `opt-scripts/script_name.py`.
+-   `examples/modules/example_module_name.py` will supply an example to `modules/module_name.py`.
+-   `examples/opt-scripts/test_script_name.py` will supply an example to `opt-scripts/script_name.py`.
 
 ## Types of Minimal Reproducible Example
 
 In the current structure, we group the examples in two groups: single and suite.
-Singles consist on the isolated file of certain optional script or
+Singles consist on the isolated file of certain module, optional script or
 pipeline modular script. In this sense, the output refer directly only to it's
 scope. In the other hand, suites aim to integrate the maximum scripts possible,
 in their folder ambient, and thus supply a streamlined example of execution.
