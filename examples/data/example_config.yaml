@@ -1,8 +1,10 @@
 c_script: scripts/c/fasta_kmer_extraction.c
 genomes: data/genomes/
 k:
-- 10
-organisms: ''
+- 4
+organisms:
+- simple_genome_example
+- GCA_051599425_1
 paths:
   bench: benchmarks/
   checked: results/checked/

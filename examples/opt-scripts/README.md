@@ -2,24 +2,34 @@
 
 ## Overview
 
-This directory contains supplementary scripts that are not part of the core `nulloretriever` Snakemake workflow. These scripts are intended for ancillary tasks such as data preparation, post-processing, results summarization, or other manual analyses.
+This directory contains tests for the optional scripts that are not part of the core `nulloretriever` Snakemake workflow. These scripts are intended for auxiliary tasks, mainly data preparation.
 
-## Usage
+## General Usage
 
-Each script is designed to be executed as a standalone program from the command line. For detailed usage instructions, each script should implement a command-line help message, accessible via the `-h` or `--help` flag.
+Each script is designed to be executed as a standalone program from the command line. All needed data can be found inside ../examples/data.
 
 Example:
 ```sh
-python opt-scripts/summary_generator.py --input results/file.txt --output summary.csv
+cd opt-scripts/
+python example_create_organism_db.py
 ```
 
-To view all available parameters for a script:
+Some scripts have parameters that can be set. They can be found detailed in **PLACEHOLDER**. To view all available parameters for a script:
+
 ```sh
-python opt-scripts/summary_generator.py --help
+python example_snakemake_config_generation.py --help
 ```
 
-## Testing
+## Available scripts
 
-All scripts in this directory should have corresponding tests located in the `tests/opt-scripts/` directory. These tests verify the correctness of the script's logic and command-line interface.
+In this section you can find each added example script general description and quirks, if any.
 
-Refer to the `README.md` in the `tests/` directory for instructions on how to run the tests.
+### Create Organism DB
+
+From a config.yaml file (default at '../data/config.yaml') retrieves all organisms metadata and outputs them in a JSON file. Needs an e-mail and Entrez tool code. This db is needed for further data manipulation, when used along the snakemake full pipeline execution.
+
+### Snakemake Config Generation
+
+Example of a template config.yaml file generation to be used along the snakemake pipeline or standalone scripts. It searches '../data/' for any existing config.yaml files, keeping it's listed organisms, then generate the config.yaml based on an internal template.
+
+Given the multiple possible options and flags available **PLACEHOLDER**
