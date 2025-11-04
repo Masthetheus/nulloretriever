@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include "../h/kmer_extraction.h"
 #include "../h/kmerio.h"
+#include "../h/chained_bitarray.h"
 
 #define MAX_SEQ 40000000
 #define MAX_K 20

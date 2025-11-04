@@ -1,4 +1,5 @@
 #include "../h/kmer_deduplication.h"
+#include "../h/kmer_hashing.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +18,8 @@ char* deduplication_method(int k){
     return bitarray_deduplication(k);
   }
   else if(k <= 20)
-    chainhash_deduplication()
+    return 0;
   else
-    printf("Invalid k value!")
+    printf("Invalid k value!");
+  return 0;
 }
