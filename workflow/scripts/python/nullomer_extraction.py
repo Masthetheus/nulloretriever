@@ -16,10 +16,13 @@ def main():
         l = int(k/2)
         m = 4**l
         k_mask = (2**k) - 1
+        v1_size, v2_size = l
     else:
         l = int(k/2) + 1
         m = 4**(l-1)
         k_mask = (2**(k-1)) - 1
+        v1_size = l
+        v2_size = k - l
     trie = TrieBit(m, l)
     proc = subprocess.Popen(
         [snakemake.input.bin,
@@ -40,14 +43,12 @@ def main():
           f"\nmask: {mask}")
     while True:
         kmer_bytes = proc.stdout.read(bytes_per_sequence)
-        print(kmer_bytes)
         if len(kmer_bytes) < bytes_per_sequence:
             break
-        kmer_idx = bin(int.from_bytes(kmer_bytes, byteorder='big'))
-        print(kmer_idx)
-        kmer_idx = (kmer_idx >> wasted_space) & (mask)
+        kmer_idx = int.from_bytes(kmer_bytes, byteorder='big')
+        kmer_idx = (kmer_idx) & (mask)
         sequences_received += 1
-        v1 = kmer_idx >> (l*2)
+        v1 = kmer_idx >> (v2_size*2)
         v2 = kmer_idx & k_mask
         v1_bits = []
         i = l - 1
@@ -55,7 +56,6 @@ def main():
             v1_bits.append(v1 >> (i*2) & 3)
             i -= 1
         trie.insert(tuple(v1_bits), v2)
-        print(kmer_idx, v1, v1_bits, v2)
         total += 1
     proc.wait()
     trie.write_bit_format(out_path)
