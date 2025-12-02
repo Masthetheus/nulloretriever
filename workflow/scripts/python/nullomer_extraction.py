@@ -12,8 +12,14 @@ def main():
     genome_path = snakemake.input.genome
     k_str = str(snakemake.params.k_val)
     k = int(snakemake.params.k_val)
-    l = int(k/2)
-    m = 4**l
+    if k % 2 == 0:
+        l = int(k/2)
+        m = 4**l
+        k_mask = (2**k) - 1
+    else:
+        l = int(k/2) + 1
+        m = 4**(l-1)
+        k_mask = (2**(k-1)) - 1
     trie = TrieBit(m, l)
     proc = subprocess.Popen(
         [snakemake.input.bin,
@@ -26,7 +32,6 @@ def main():
     total = 0
     bytes_per_sequence = (k * 2 + 7) // 8
     wasted_space = (bytes_per_sequence * 8) - (k * 2)
-    k_mask = (2**k) - 1
     mask = (4**k) - 1
     print(f"DEBUG: Variables in use:\n"
           f"bytes_per_sequence: {bytes_per_sequence}"
@@ -35,19 +40,22 @@ def main():
           f"\nmask: {mask}")
     while True:
         kmer_bytes = proc.stdout.read(bytes_per_sequence)
+        print(kmer_bytes)
         if len(kmer_bytes) < bytes_per_sequence:
             break
-        kmer_idx = int.from_bytes(kmer_bytes, byteorder='big')
+        kmer_idx = bin(int.from_bytes(kmer_bytes, byteorder='big'))
+        print(kmer_idx)
         kmer_idx = (kmer_idx >> wasted_space) & (mask)
         sequences_received += 1
-        v1 = kmer_idx >> k
+        v1 = kmer_idx >> (l*2)
         v2 = kmer_idx & k_mask
         v1_bits = []
-        i = (k//2) - 1
+        i = l - 1
         while i >= 0:
             v1_bits.append(v1 >> (i*2) & 3)
             i -= 1
         trie.insert(tuple(v1_bits), v2)
+        print(kmer_idx, v1, v1_bits, v2)
         total += 1
     proc.wait()
     trie.write_bit_format(out_path)
