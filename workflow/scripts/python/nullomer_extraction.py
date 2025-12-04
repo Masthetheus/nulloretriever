@@ -16,7 +16,7 @@ def main():
         l = int(k/2)
         m = 4**l
         k_mask = (2**k) - 1
-        v1_size, v2_size = l
+        v1_size = v2_size = l
     else:
         l = int(k/2) + 1
         m = 4**(l-1)

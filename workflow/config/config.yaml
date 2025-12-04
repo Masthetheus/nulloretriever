@@ -1,9 +1,9 @@
 c_script: scripts/c/fasta_kmer_extraction.c
 genomes: data/genomes/
 k:
-- 13
+- 11
 organisms:
-- GCF_000002985_6
+- GCF_037993035_2
 paths:
   bench: benchmarks/
   checked: results/checked/

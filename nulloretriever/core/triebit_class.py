@@ -3,6 +3,7 @@
 from bitarray import bitarray
 import struct
 
+
 class TrieBitNode:
     def __init__(self, m):
         self.children = [None] * 4  # 0:A, 1:T, 2:C, 3:G
@@ -17,19 +18,20 @@ class TrieBitNode:
             if child is not None:
                 yield from child.iterate(path + [i])
 
+
 class TrieBit:
     def __init__(self, m, l):
         self.root = TrieBitNode(m)
         self.m = m
         self.l = l
 
-        if m <= 256:
+        if m <= 255:
             self.index_format = 'B'
             self.format_code = 1
-        elif m <= 65536:
-            self.index_format = 'H' 
+        elif m <= 65535:
+            self.index_format = 'H'
             self.format_code = 2
-        elif m <= 4294967296:
+        elif m <= 4294967295:
             self.index_format = 'I'
             self.format_code = 4
         else:
@@ -58,16 +60,17 @@ class TrieBit:
 
     def count_nullomers(self, target_length=None):
         l = target_length or self.l
+
         def dfs(node, depth):
             if depth == l:
-                return sum(1 for genome_id in range(len(node.v2_set)) 
-                        if not node.v2_set[genome_id])
-            
-            return sum(dfs(child, depth + 1) 
-                    for child in node.children 
-                    if child is not None)
+                return sum(1 for genome_id in range(len(node.v2_set))
+                           if not node.v2_set[genome_id])
+
+            return sum(dfs(child, depth + 1)
+                       for child in node.children
+                       if child is not None)
         return dfs(self.root, 0)
-    
+
     def write_bit_format(self, output):
         """
             Saves TrieBit to a compact binary format.
@@ -86,21 +89,28 @@ class TrieBit:
         with open(output, 'wb') as f:
             f.write(b'TRIE')  # Magic number
             version = 1
-            f.write(struct.pack('<HHB', version, self.l, self.format_code))  # version, l, byte_size
+            # version, l, byte_size
+            f.write(struct.pack('<HHB', version, self.l, self.format_code))
+
             def collect_nodes(node, path):
                 if len(path) == self.l:
-                    nullomers = [i for i, bit in enumerate(node.v2_set) if not bit]
+                    nullomers = [i for i, bit in enumerate(
+                        node.v2_set) if not bit]
                     if nullomers:
                         # Compute lexicographic index for v1 path
-                        index = sum(base * (4 ** (self.l - i - 1)) for i, base in enumerate(path))
+                        index = sum(base * (4 ** (self.l - i - 1))
+                                    for i, base in enumerate(path))
                         f.write(struct.pack(f'<{self.index_format}', index))
-                        f.write(struct.pack(f'<{self.index_format}', len(nullomers)))
+                        f.write(struct.pack(
+                            f'<{self.index_format}', len(nullomers)))
                         for v2_index in nullomers:
-                            f.write(struct.pack(f'<{self.index_format}', v2_index))
+                            f.write(struct.pack(
+                                f'<{self.index_format}', v2_index))
                 for child_value, child_node in enumerate(node.children):
                     if child_node is not None:
                         collect_nodes(child_node, path + [child_value])
             collect_nodes(self.root, [])
+
     def write_compact_txt_format(self, output):
         """Writes a trie paths and relative v2 values in a compact txt format
         Args:
@@ -114,9 +124,11 @@ class TrieBit:
         with open(output, 'w') as f:
             def dfs(node, path):
                 if len(path) == self.l:
-                    nullomers = [i for i, bit in enumerate(node.v2_set) if not bit]
+                    nullomers = [i for i, bit in enumerate(
+                        node.v2_set) if not bit]
                     if nullomers:
-                        v1_index = sum(base * (4 ** (self.l - i - 1)) for i, base in enumerate(path))
+                        v1_index = sum(base * (4 ** (self.l - i - 1))
+                                       for i, base in enumerate(path))
                         f.write(f">{v1_index}\n")
                         v2_values = ",".join(str(i) for i in nullomers)
                         f.write(f"{v2_values}\n")
@@ -124,4 +136,3 @@ class TrieBit:
                     if child_node is not None:
                         dfs(child_node, path + [child_value])
             dfs(self.root, [])
-

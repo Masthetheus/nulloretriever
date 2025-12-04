@@ -43,7 +43,7 @@ def main():
     mode = args.mode
     out_path = args.output
     # See later how to sync with snakemake pipeline
-    genome_path = "workflow/data/genomes/GCA_001010845_3"
+    genome_path = "workflow/data/genomes/GCA_000002985_3"
     for k in k_values:
         k_str = str(k)
         k = int(k)
