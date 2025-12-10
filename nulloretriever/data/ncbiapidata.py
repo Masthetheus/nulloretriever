@@ -2,6 +2,7 @@
 import csv
 import os
 import time
+import xml.etree.ElementTree as ET
 
 from Bio import Entrez
 
@@ -174,7 +175,8 @@ def get_genome_metadata(accessions, params=None):
             'Taxid',
             'SpeciesTaxid',
             'SpeciesName',
-            'AssemblyStatus'
+            'AssemblyStatus',
+            'Meta'
         ]
     elif isinstance(params, str):
         params = [params]
@@ -193,3 +195,21 @@ def get_genome_metadata(accessions, params=None):
     except Exception as e:
         print(f"Error during {acc}: {e}")
         return None
+
+
+def get_genome_length(metadata):
+    old_metadata = metadata
+    for organism in old_metadata:
+        xml_content = f"<Root>{old_metadata[organism]['Meta']}</Root>"
+        try:
+            root = ET.fromstring(xml_content)
+            genome_total_length = root.find(
+                ".//Stat[@category='total_length']")
+
+            if genome_total_length is not None:
+                total_length = genome_total_length.text
+                metadata[organism]['Genome length'] = total_length
+                metadata[organism].pop("Meta")
+        except ET.ParseError as e:
+            print(f"Error analyzing Meta string: {e}")
+    return metadata

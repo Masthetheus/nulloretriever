@@ -5,7 +5,7 @@ import argparse
 
 from Bio import Entrez
 from nulloretriever.utils.validation import get_valid_email, get_valid_tool
-from nulloretriever.data.ncbiapidata import get_genome_metadata
+from nulloretriever.data.ncbiapidata import get_genome_metadata, get_genome_length
 
 
 def setup_argparser() -> argparse.ArgumentParser:
@@ -59,9 +59,9 @@ def main():
         organisms = content['organisms']
     format_accesion_code(organisms)
     metadata = get_genome_metadata(organisms)
-    print(metadata)
+    new_metadata = get_genome_length(metadata)
     with open(out_path, 'w') as f:
-        json.dump(metadata, f)
+        json.dump(new_metadata, f)
 
 
 if __name__ == "__main__":
