@@ -1,5 +1,5 @@
-"""Retrieve nullomer statistics froma bit file, snakemake compatible."""
-import pandas as pd
+"""Retrieve nullomer statistics from a bit file, snakemake compatible."""
+
 import csv
 
 from nulloretriever.analysis.composition import nullomers_gc_mean
@@ -7,31 +7,34 @@ from nulloretriever.analysis.motifs import (
     retrieve_nullomers_cpg_stats,
     retrieve_palindrome_stats,
     retrieve_homopolymer_stats
-    )
+)
 from nulloretriever.analysis.counter import quick_nullomer_count
 from snakemake.script import snakemake
 
+
 def motif_wrapper(filename):
     """Calls all functions related to motif statistics."""
-    motifs_results={
+    motifs_results = {
         "cpg": retrieve_nullomers_cpg_stats(filename),
         "palindromy": retrieve_palindrome_stats(filename),
         "homopolymers": retrieve_homopolymer_stats(filename)
     }
     return motifs_results
 
-def dict_flattener(full_dict, final_dict=None, parent_key = ''):
+
+def dict_flattener(full_dict, final_dict=None, parent_key=''):
     if final_dict is None:
         final_dict = {}
 
     for key, value in full_dict.items():
         new_key = f"{parent_key}_{key}" if parent_key else key
         if isinstance(value, dict):
-            dict_flattener(value, final_dict, parent_key = new_key)
+            dict_flattener(value, final_dict, parent_key=new_key)
         else:
             final_dict[new_key] = value
 
     return final_dict
+
 
 def main():
     """Retrieve nullomer statistics according to user specification.
@@ -69,10 +72,11 @@ def main():
     base_dict['organism'] = organism
     base_dict['k'] = k_val
     final_stats = dict_flattener(retrieved_stats, base_dict)
-    with open(out_path, mode = 'w', newline = '') as f:
+    with open(out_path, mode='w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(final_stats.keys())
         writer.writerow(final_stats.values())
+
 
 if __name__ == "__main__":
     main()

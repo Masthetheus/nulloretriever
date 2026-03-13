@@ -65,7 +65,7 @@ def main():
     diff = expected - total
     print(f"{total} k-mkers were inserted, and {trie.count_nullomers()}"
           f" nullomers were counted.\n {expected} total were expected."
-          f"The difference between both values was of {diff}")
+          f"We have total + null equals {obtained}.")
     print(f"A total of {sequences_received} sequences were read.")
 
 
