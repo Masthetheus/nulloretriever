@@ -13,11 +13,11 @@ void flush_output_buffer(int* buff_tot){
         ++ *buff_tot;
     }
 }
-void print_packed_binary(uint64_t val, int bytes_per_half, int bytes_per_kmer, int l){
+void print_packed_binary(uint64_t val, int bytes_per_half, int bytes_per_kmer, int half_k){
     if (buffer_position + bytes_per_kmer > BUFFER_SIZE){
         flush_output_buffer(&buff_tot);
     }
-    int bits_per_half = l * 2;
+    int bits_per_half = half_k * 2;
 
     for(int j = 1; j >= 0; j--) {
         uint64_t half = (val >> (j * bits_per_half)) & ((1ULL << bits_per_half) - 1);

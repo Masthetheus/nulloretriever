@@ -7,8 +7,8 @@ genome = snakemake.input.genome
 output = snakemake.output.nullomers
 org = genome.split("/")[-1]
 k = int(snakemake.params.k)
-l = int(k / 2)
-m = 4**l
+half_k = int(k / 2)
+m = 4**half_k
 
 def read_kmers_binary(genome_path, k):
     """Read k-mers in binary format - reading actual bytes"""
@@ -18,10 +18,10 @@ def read_kmers_binary(genome_path, k):
         stderr=subprocess.PIPE
     )
     total = 0
-    l = k // 2
-    trie = inicializar_triebit_teste(l, 4**l)
+    half_k = k // 2
+    trie = inicializar_triebit_teste(half_k, 4**half_k)
     
-    print(f"DEBUG: Starting to read k-mers, l={l}, m={4**l}")
+    print(f"DEBUG: Starting to read k-mers, half_k={half_k}, m={4**half_k}")
     
     bits_per_kmer = k * 2  # Each k-mer is k*2 bits = k*2 bytes
     
@@ -35,8 +35,8 @@ def read_kmers_binary(genome_path, k):
         kmer_bytes = all_output[pos:pos + bits_per_kmer]
         
         # Split into v1 and v2 bit sequences
-        v1_bits = kmer_bytes[:l * 2]  # First l nucleotides (l*2 bits)
-        v2_bits = kmer_bytes[l * 2:]  # Last l nucleotides (l*2 bits)
+        v1_bits = kmer_bytes[:half_k * 2]  # First half_k nucleotides (half_k*2 bits)
+        v2_bits = kmer_bytes[half_k * 2:]  # Last half_k nucleotides (half_k*2 bits)
         
         # Convert v1 bits to base array (for trie navigation)
         v1_bases = []
@@ -65,7 +65,7 @@ def read_kmers_binary(genome_path, k):
 print(f"Generating the k-mer Trie.")
 trie, total = read_kmers_binary(genome, k)
 print(f"Writing found nullomers in custom txt format.")
-write_trie_compact_txt(trie, output, l)
+write_trie_compact_txt(trie, output, half_k)
 print(f"Counting found nullomers.")
-tot = count_trie_nullomers(trie,l)
+tot = count_trie_nullomers(trie,half_k)
 print(tot)

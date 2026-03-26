@@ -33,15 +33,15 @@ def genome_random(lengthsG, genomaaleatorio): #apenas para testes
             datafile.write(str(i))
         datafile.close()
 
-def gerar_kmers(l):
+def gerar_kmers(half_k):
     """
-    Gera todos os k-mers possíveis de comprimento `l` usando as bases A, T, C, G.
-    :param l: Comprimento do k-mer.
+    Gera todos os k-mers possíveis de comprimento `half_k` usando as bases A, T, C, G.
+    :param half_k: Comprimento do k-mer.
     :return: Lista de k-mers.
     """
     from itertools import product
     bases = ['A', 'T', 'C', 'G']
-    return [''.join(kmer) for kmer in product(bases, repeat=l)]
+    return [''.join(kmer) for kmer in product(bases, repeat=half_k)]
 
 def ajustar_nome_orgs(nome_org):
     nome_org = nome_org.replace(" ", "_")  # Substitui espaços por underscores
@@ -101,31 +101,31 @@ def adicionar_grupo_por_organismo(csv_principal, csv_grupos, saida_csv):
     # Salva o resultado
     df_merged.to_csv(saida_csv, index=False)
 
-def criar_dic_reversos(l):
+def criar_dic_reversos(half_k):
     """
     Cria um dicionário onde cada índice lexicográfico está relacionado ao índice
     lexicográfico da sua sequência reversa, sem duplicidade (ou seja, só um dos pares é registrado).
     Exemplo: se ATCG (i) pareia com GCTA (j), só (i: j) estará no dicionário, não (j: i).
 
-    :param l: Comprimento da sequência.
+    :param half_k: Comprimento da sequência.
     :return: Dicionário {indice_lexico: indice_lexico_reverso}
     """
     dic_reversos = {}
-    for i in range(4**l):
-        seq = indice_para_seq(i, l)
+    for i in range(4**half_k):
+        seq = indice_para_seq(i, half_k)
         seq_rev = seq[::-1]
-        j = calc_ind_lexicografico(seq_rev, l)
+        j = calc_ind_lexicografico(seq_rev, half_k)
         dic_reversos[i] = j
     return dic_reversos
 
-def indices_homopolimeros(l):
+def indices_homopolimeros(half_k):
     """
     Retorna um array com os índices lexicográficos das sequências homopolímeras (AAAA..., TTTT..., CCCC..., GGGG...).
-    :param l: Comprimento da sequência.
+    :param half_k: Comprimento da sequência.
     :return: Lista de índices lexicográficos.
     """
     bases = ['A', 'T', 'C', 'G']
-    return [calc_ind_lexicografico(base * l, l) for base in bases]
+    return [calc_ind_lexicografico(base * half_k, half_k) for base in bases]
 
 def obter_ks_analisados(base_path):
     """
@@ -148,7 +148,7 @@ def path_nulomeros_gerados(base_path, config_file):
     k_values = obter_ks_analisados(base_path)
     paths_existentes = {}
     for k in k_values:
-        l = int(k // 2)
+        half_k = int(k // 2)
         k_path = base_path + str(k) + '/'
         print(f"Verificando diretório para k={k}")
         cont = 0
@@ -219,10 +219,10 @@ class TrieBitTeste:
     def iterate(self):
         yield from self.root.iterate([])
 
-def inicializar_triebit_teste(l, m):
+def inicializar_triebit_teste(half_k, m):
     trie = TrieBitTeste(m)
     def construir(node, depth):
-        if depth == l:
+        if depth == half_k:
             return
         for i in range(4):
             if node.children[i] is None:
@@ -235,10 +235,10 @@ def revcomp(seq):
     comp = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
     return ''.join(comp.get(b, 'N') for b in reversed(seq))
 
-def contar_nulomeros_trie_bit_novo(trie_bit, l):
+def contar_nulomeros_trie_bit_novo(trie_bit, half_k):
     def dfs(node, depth):
         total = 0
-        if depth == l:
+        if depth == half_k:
             # Conta os bits 0 em cada conjunto
             m = len(node.v2_set)
             for v2 in range(m):
@@ -251,7 +251,7 @@ def contar_nulomeros_trie_bit_novo(trie_bit, l):
         return total
     return dfs(trie_bit.root, 0)
 
-def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
+def escrever_trie_em_txt_bitarray(trie, arquivo_saida, half_k):
     """
     Escreve os caminhos e valores de uma Trie baseada em bitarray (apenas v2_set) em um arquivo de texto no formato:
     >indice_lexicografico_v1
@@ -260,11 +260,11 @@ def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
     with open(arquivo_saida, 'w') as f:
         def dfs(node, path):
             # Verifica se há nullômeros (bits 0) neste nó
-            if len(path) == l:  # Só processa nós folha (profundidade l)
+            if len(path) == half_k:  # Só processa nós folha (profundidade half_k)
                 nullomeros = [i for i, bit in enumerate(node.v2_set) if not bit]
                 if nullomeros:  # Se há nullômeros para escrever
                     # Calcula o índice lexicográfico de v1 (o caminho atual)
-                    indice_lexicografico = sum(base * (4 ** (l - i - 1)) for i, base in enumerate(path))
+                    indice_lexicografico = sum(base * (4 ** (half_k - i - 1)) for i, base in enumerate(path))
                     f.write(f">{indice_lexicografico}\n")
                     valores = ",".join(str(i) for i in nullomeros)
                     f.write(f"{valores}\n")
@@ -273,11 +273,11 @@ def escrever_trie_em_txt_bitarray(trie, arquivo_saida, l):
                     dfs(child_node, path + [child_value])
         dfs(trie.root, [])
 
-def importar_triebit_teste_txt(arquivo_entrada, l, m):
+def importar_triebit_teste_txt(arquivo_entrada, half_k, m):
     """
     Lê um arquivo no formato exportado por escrever_trie_em_txt_bitarray e reconstrói uma TrieBitTeste.
     :param arquivo_entrada: Caminho do arquivo .txt.
-    :param l: Comprimento de v1.
+    :param half_k: Comprimento de v1.
     :param m: Comprimento de v2 (tamanho do bitarray).
     :return: Instância de TrieBitTeste reconstruída.
     """
@@ -295,8 +295,8 @@ def importar_triebit_teste_txt(arquivo_entrada, l, m):
                     # Converte o índice lexicográfico para o caminho v1
                     v1 = []
                     temp = v1_lexico
-                    for _ in range(l):
-                        div = 4 ** (l - len(v1) - 1)
+                    for _ in range(half_k):
+                        div = 4 ** (half_k - len(v1) - 1)
                         v1.append(temp // div)
                         temp = temp % div
                     for v2 in line.split(','):
@@ -304,17 +304,17 @@ def importar_triebit_teste_txt(arquivo_entrada, l, m):
                             trie.insert(v1, int(v2))
     return trie
 
-def media_gc_por_organismo_triebit_txt(arquivo_txt, l, k):
+def media_gc_por_organismo_triebit_txt(arquivo_txt, half_k, k):
     """
     Calcula a média de GC% para cada organismo a partir de um arquivo trie_bit_txt_novo.
     :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
+    :param half_k: Comprimento de v1 e v2.
     :param k: Tamanho total do k-mer.
     :return: Float com a média de GC%, 4 casas decimais.
     """
     soma_gc = 0
     total_pares = 0
-    gc_dict = precomputar_gc_cpg(l)  # {indice_lexico_v1: [total_gc, total_seqs]}
+    gc_dict = precomputar_gc_cpg(half_k)  # {indice_lexico_v1: [total_gc, total_seqs]}
     with open(arquivo_txt, 'r') as f:
         v1_lexico = None
         for line in f:
@@ -333,14 +333,14 @@ def media_gc_por_organismo_triebit_txt(arquivo_txt, l, k):
 
     return round(media_gc,4)
 
-def total_palindromo_organismo_triebit_txt(arquivo_txt, l):
+def total_palindromo_organismo_triebit_txt(arquivo_txt, half_k):
     """
     Conta o total de palíndromos em um arquivo trie_bit_txt_novo.
     :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
+    :param half_k: Comprimento de v1 e v2.
     :return: Inteiro com o total de palíndromos.
     """
-    ind_reversos = criar_dic_reversos(l)
+    ind_reversos = criar_dic_reversos(half_k)
     total_palindromos = 0
     with open(arquivo_txt, 'r') as f:
         v1_lexico = None
@@ -358,14 +358,14 @@ def total_palindromo_organismo_triebit_txt(arquivo_txt, l):
                         total_palindromos += 1
     return total_palindromos
 
-def total_homopolimeros_organismo_triebit_txt(arquivo_txt, l):
+def total_homopolimeros_organismo_triebit_txt(arquivo_txt, half_k):
     """
     Conta o total de homopolímeros em um arquivo trie_bit_txt_novo.
     :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
+    :param half_k: Comprimento de v1 e v2.
     :return: Inteiro com o total de homopolímeros.
     """
-    homopolimeros = indices_homopolimeros(l)
+    homopolimeros = indices_homopolimeros(half_k)
     total_homopolimeros = 0
     with open(arquivo_txt, 'r') as f:
         v1_lexico = None
@@ -383,11 +383,11 @@ def total_homopolimeros_organismo_triebit_txt(arquivo_txt, l):
                             total_homopolimeros += 1
     return total_homopolimeros
 
-def total_null_txt(arquivo_txt, l):
+def total_null_txt(arquivo_txt, half_k):
     """
     Conta o total de nulômeros em um arquivo trie_bit_txt_novo.
     :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
+    :param half_k: Comprimento de v1 e v2.
     :return: Inteiro com o total de nulômeros.
     """
     total_nulomeros = 0
@@ -405,8 +405,8 @@ def total_null_txt(arquivo_txt, l):
                     total_nulomeros += len(v2_indices)  # Conta cada v2 como um nulômero
     return total_nulomeros
 
-def total_cpg_organismo_triebit_txt(arquivo_txt, l):
-    cpg_dict, cg_dict = precomputar_cpg_terminaC_comecaG(l)
+def total_cpg_organismo_triebit_txt(arquivo_txt, half_k):
+    cpg_dict, cg_dict = precomputar_cpg_terminaC_comecaG(half_k)
     total_cpg = 0
     with open(arquivo_txt) as f:
         v1_lexico = None
@@ -424,8 +424,8 @@ def total_cpg_organismo_triebit_txt(arquivo_txt, l):
                             total_cpg += 1
     return total_cpg
 
-def total_cpg_triebit_por_cpg(arquivo_txt, l):
-    cpg_dict, cg_dict = precomputar_cpg_terminaC_comecaG(l)
+def total_cpg_triebit_por_cpg(arquivo_txt, half_k):
+    cpg_dict, cg_dict = precomputar_cpg_terminaC_comecaG(half_k)
     cpg_counter = Counter()
     with open(arquivo_txt) as f:
         v1_lexico = None
@@ -446,31 +446,31 @@ def total_cpg_triebit_por_cpg(arquivo_txt, l):
                         total_cpg = 0
     return dict(cpg_counter)
 
-def parametros_cpg(arquivo_txt, l, total_null):
-    total_cpg= total_cpg_organismo_triebit_txt(arquivo_txt, l)
+def parametros_cpg(arquivo_txt, half_k, total_null):
+    total_cpg= total_cpg_organismo_triebit_txt(arquivo_txt, half_k)
     if total_null != 0:
         cpg_relativo_total = (total_cpg * 100) / total_null
     else:
         cpg_relativo_total = 0
-    cpg_counter = total_cpg_triebit_por_cpg(arquivo_txt, l)
+    cpg_counter = total_cpg_triebit_por_cpg(arquivo_txt, half_k)
     return {
         "total_cpg": total_cpg,
         "cpg_total": cpg_relativo_total,
         "cpg_counter": cpg_counter
     }
 
-def parametros_nulomeros(arquivo_txt, l):
+def parametros_nulomeros(arquivo_txt, half_k):
     """
     Calcula os parâmetros de nulômeros a partir de um arquivo trie_bit_txt_novo.
     :param arquivo_txt: Caminho do arquivo .txt.
-    :param l: Comprimento de v1 e v2.
+    :param half_k: Comprimento de v1 e v2.
     :return: Dicionário com os parâmetros calculados.
     """
-    total_nulomeros = total_null_txt(arquivo_txt, l)
-    total_palindromos = total_palindromo_organismo_triebit_txt(arquivo_txt, l)
-    total_homopolimeros = total_homopolimeros_organismo_triebit_txt(arquivo_txt, l)
-    total_gc = media_gc_por_organismo_triebit_txt(arquivo_txt, l, 2*l)  # k = 2*l para o cálculo de GC%
-    total_cpg = parametros_cpg(arquivo_txt, l, total_nulomeros)
+    total_nulomeros = total_null_txt(arquivo_txt, half_k)
+    total_palindromos = total_palindromo_organismo_triebit_txt(arquivo_txt, half_k)
+    total_homopolimeros = total_homopolimeros_organismo_triebit_txt(arquivo_txt, half_k)
+    total_gc = media_gc_por_organismo_triebit_txt(arquivo_txt, half_k, 2*half_k)  # k = 2*half_k para o cálculo de GC%
+    total_cpg = parametros_cpg(arquivo_txt, half_k, total_nulomeros)
     return {
         "total_nulomeros": total_nulomeros,
         "total_palindromos": total_palindromos,
@@ -501,7 +501,7 @@ def processar_null_batch(
     resultados = []
     k_values = obter_ks_analisados(base_path)
     for k in k_values:
-        l = int(k // 2)
+        half_k = int(k // 2)
         k_path = base_path + str(k) + '/'
         if not os.path.exists(k_path):
             print(f"Diretório {k_path} não existe.")
@@ -522,7 +522,7 @@ def processar_null_batch(
                 cont += 1
                 print(f"Processando organismo {org}. {cont} de um total de {len(orgs)} organismos para k = {k}.")
                 org_path = org_path + 'nulomerostrie_' + org + '_' + str(k) + '.txt'
-                parametros = parametros_nulomeros(org_path, l)
+                parametros = parametros_nulomeros(org_path, half_k)
                 print(f"Total de nulômeros encontrados para {org} com k={k}: {parametros['total_nulomeros']}")
                 linha = {'Organismo': org, 'k': k}
                 for chave, valor in parametros.items():
@@ -557,8 +557,8 @@ def calcula_workers_ajustado(mem_por_worker_gb=2, max_workers_user=4):
     return min(max_workers_user, max_workers_mem)
 
 def processa_organismo(args):
-    genoma, arquivo_txt, l, m, k = args
-    trie = importar_triebit_teste_txt(arquivo_txt, l, m)
+    genoma, arquivo_txt, half_k, m, k = args
+    trie = importar_triebit_teste_txt(arquivo_txt, half_k, m)
     proc = subprocess.Popen(
         ['/home/leveduras/integranteslab/matheus/Mestradoteste/./fasta_kmers_novo', genoma, str(k)],
         stdout=subprocess.PIPE,

@@ -47,9 +47,9 @@ def main():
     for k in k_values:
         k_str = str(k)
         k = int(k)
-        l = int(k/2)
-        m = 4**l
-        trie = TrieBit(m, l)
+        half_k = int(k/2)
+        m = 4**half_k
+        trie = TrieBit(m, half_k)
         k_out = out_path + f'_{k}'
         proc = subprocess.Popen(
             ['workflow/scripts/c/bin_fasta_kmer_extraction',

@@ -22,12 +22,12 @@ def random_genome(gsize, random_genome):
             datafile.write(str(i))
         datafile.close()
 
-def generate_kmers(l):
-    """Generate all possible combinations of nucleotides of size l
+def generate_kmers(half_k):
+    """Generate all possible combinations of nucleotides of size half_k
     Args:
-        l(int): size of k-mers that shall be generated
+        half_k(int): size of k-mers that shall be generated
     Returns:
-        kmers[str]: array of all possible k-mers configurations of size l
+        kmers[str]: array of all possible k-mers configurations of size half_k
     """
     bases = ['A', 'T', 'C', 'G']
-    return [''.join(kmer) for kmer in product(bases, repeat=l)]
+    return [''.join(kmer) for kmer in product(bases, repeat=half_k)]

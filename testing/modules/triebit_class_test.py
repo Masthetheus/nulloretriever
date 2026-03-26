@@ -5,10 +5,10 @@ if not k:
     k = 10
 else:
     k = int(k)
-l = int(k/2)
-m = 4**l
-print(f"Creating TrieBit for m = {m} and l = {l}")
-trie = TrieBit(m,l)
+half_k = int(k/2)
+m = 4**half_k
+print(f"Creating TrieBit for m = {m} and half_k = {half_k}")
+trie = TrieBit(m,half_k)
 print(f"Checking if all nodes are inserted via nullomer count. Result must be = {4**k}.")
 count = trie.count_nullomers()
 print(count)
@@ -20,7 +20,7 @@ while i < m:
 print(f"Index list generated for testing:\n {indexes}")
 v1 = []
 v1_counter = 0
-while v1_counter < l:
+while v1_counter < half_k:
     v1.append(0)
     v1_counter += 1
 count = 0

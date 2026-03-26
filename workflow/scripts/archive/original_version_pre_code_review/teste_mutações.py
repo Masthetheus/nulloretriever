@@ -13,16 +13,16 @@ paths, erros = path_nulomeros_gerados(base_path, config_file)
 print(f'Não foram gerados arquivos de nulômeros para {len(erros)} organismos.')
 
 for k, lista_paths in paths.items():
-    l = int(k / 2)
-    m = 4 ** l
+    half_k = int(k / 2)
+    m = 4 ** half_k
     if k > 10:
         x = 10
     csv_path = f"{base_path}{k}/mutacoesk_{k}.csv"
     print(f"Iniciando o processamento de {len(lista_paths)} organismos para k = {k}")
     inicio = time.time()
-    orgs_com_nulomeros = [(g, a) for (g, a) in lista_paths if total_null_txt(a, l) > 0]
+    orgs_com_nulomeros = [(g, a) for (g, a) in lista_paths if total_null_txt(a, half_k) > 0]
     tot = len(orgs_com_nulomeros)
-    tasks = [(genoma, arquivo_txt, l, m, k) for (genoma, arquivo_txt) in orgs_com_nulomeros]
+    tasks = [(genoma, arquivo_txt, half_k, m, k) for (genoma, arquivo_txt) in orgs_com_nulomeros]
     results = []
     with ProcessPoolExecutor(max_workers=x) as executor:
         for i, res in enumerate(executor.map(processa_organismo, tasks), 1):

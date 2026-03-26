@@ -110,12 +110,12 @@ mkdir -p results logs benchmarks runs
 from scripts.python.funcoes_mestrado import *
 
 k = 8  # Valor pequeno para teste
-l = k // 2
-m = 4 ** l
+half_k = k // 2
+m = 4 ** half_k
 
 # Teste de inicialização
-trie = inicializar_triebit_teste(l, m)
-print(f"Trie inicializada com sucesso: l={l}, m={m}")
+trie = inicializar_triebit_teste(half_k, m)
+print(f"Trie inicializada com sucesso: half_k={half_k}, m={m}")
 
 # Teste de inserção básica
 # ... adicionar testes específicos

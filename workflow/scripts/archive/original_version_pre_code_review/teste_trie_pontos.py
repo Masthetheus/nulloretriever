@@ -1,8 +1,8 @@
 from funcoes_mestrado import TrieBitTeste, busca_min_mutacoes
 
 def criar_trie_exemplo():
-    # Cria uma TrieBitTeste para k=4 (l=2, m=4**2=16)
-    l = 2
+    # Cria uma TrieBitTeste para k=4 (half_k=2, m=4**2=16)
+    half_k = 2
     m = 16
     trie = TrieBitTeste(m)
     # Exemplo: insere o nulômero para v1=[0,1] (A,T), v2=3

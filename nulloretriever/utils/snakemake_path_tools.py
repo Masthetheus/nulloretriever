@@ -87,7 +87,7 @@ def retrieve_nullomer_files_path(base_path, config_file):
     except Exception as e:
         print("Please check your config file integrity!")
     for k in k_values:
-        l = int(k // 2)
+        half_k = int(k // 2)
         k_path = base_path + str(k) + '/'
         print(f"Checking directory for k={k}")
         cont = 0

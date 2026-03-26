@@ -13,17 +13,17 @@ def main():
     k_str = str(snakemake.params.k_val)
     k = int(snakemake.params.k_val)
     if k % 2 == 0:
-        l = int(k/2)
-        m = 4**l
+        half_k = int(k/2)
+        m = 4**half_k
         k_mask = (2**k) - 1
-        v1_size = v2_size = l
+        v1_size = v2_size = half_k
     else:
-        l = int(k/2) + 1
-        m = 4**(l-1)
+        half_k = int(k/2) + 1
+        m = 4**(half_k-1)
         k_mask = (2**(k-1)) - 1
-        v1_size = l
-        v2_size = k - l
-    trie = TrieBit(m, l)
+        v1_size = half_k
+        v2_size = k - half_k
+    trie = TrieBit(m, half_k)
     proc = subprocess.Popen(
         [snakemake.input.bin,
          genome_path, k_str],
@@ -51,7 +51,7 @@ def main():
         v1 = kmer_idx >> (v2_size*2)
         v2 = kmer_idx & k_mask
         v1_bits = []
-        i = l - 1
+        i = half_k - 1
         while i >= 0:
             v1_bits.append(v1 >> (i*2) & 3)
             i -= 1

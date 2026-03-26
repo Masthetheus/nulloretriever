@@ -17,8 +17,8 @@ def quick_nullomer_count(filename):
     with open(filename, 'rb') as f:
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
-        l = struct.unpack('<H', f.read(2))[0]
-        l = int(l)
+        half_k = struct.unpack('<H', f.read(2))[0]
+        half_k = int(half_k)
         byte_size = struct.unpack('<B', f.read(1))[0]
         byte_format = byte_to_format[byte_size]
         try:

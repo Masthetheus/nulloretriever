@@ -20,10 +20,10 @@ class TrieBitNode:
 
 
 class TrieBit:
-    def __init__(self, m, l):
+    def __init__(self, m, half_k):
         self.root = TrieBitNode(m)
         self.m = m
-        self.l = l
+        self.half_k = half_k
 
         if m <= 255:
             self.index_format = 'B'
@@ -39,7 +39,7 @@ class TrieBit:
             self.format_code = 8
 
         def build(node, depth):
-            if depth == l:
+            if depth == half_k:
                 return
             for i in range(4):
                 if node.children[i] is None:
@@ -59,10 +59,10 @@ class TrieBit:
         yield from self.root.iterate([])
 
     def count_nullomers(self, target_length=None):
-        l = target_length or self.l
+        half_k = target_length or self.half_k
 
         def dfs(node, depth):
-            if depth == l:
+            if depth == half_k:
                 return sum(1 for genome_id in range(len(node.v2_set))
                            if not node.v2_set[genome_id])
 
@@ -75,32 +75,32 @@ class TrieBit:
         """
             Saves TrieBit to a compact binary format.
             Format: [header][nodes...]
-            Header: b'TRIE'[4] + version(2) + l(2) + format_code(1)
+            Header: b'TRIE'[4] + version(2) + half_k(2) + format_code(1)
             Args:
                 self: TrieBit object
                 output(str): path to save the file
                 target_leght(int): size of each halve of the nullomers.
             Returns:
                 file: all nullomers sequences in binary format, where:
-                    v1: index of the first half of the sequence, with size l (k/2)
+                    v1: index of the first half of the sequence, with size half_k (k/2)
                     v2_set size: total of v2 for the given v1
-                    v2: index of the second half of the sequence, with size l (k/2), that are directly connected to the previous v1 value
+                    v2: index of the second half of the sequence, with size half_k (k/2), that are directly connected to the previous v1 value
         """
         with open(output, 'wb') as f:
             f.write(b'TRIE')  # Magic number
             version = 1
-            # version, l, byte_size
-            f.write(struct.pack('<HHB', version, self.l, self.format_code))
+            # version, half_k, byte_size
+            f.write(struct.pack('<HHB', version, self.half_k, self.format_code))
 
             def collect_nodes(node, path):
-                if len(path) == self.l:
+                if len(path) == self.half_k:
                     nullomers = [i for i, bit in enumerate(
                         node.v2_set) if not bit]
                     print(f"DEBUG: nullomers {
                           nullomers} has len {len(nullomers)}")
                     if nullomers:
                         # Compute lexicographic index for v1 path
-                        index = sum(base * (4 ** (self.l - i - 1))
+                        index = sum(base * (4 ** (self.half_k - i - 1))
                                     for i, base in enumerate(path))
                         print(f"DEBUG: v1 = {index}")
                         f.write(struct.pack(f'<{self.index_format}', index))
@@ -126,11 +126,11 @@ class TrieBit:
         """
         with open(output, 'w') as f:
             def dfs(node, path):
-                if len(path) == self.l:
+                if len(path) == self.half_k:
                     nullomers = [i for i, bit in enumerate(
                         node.v2_set) if not bit]
                     if nullomers:
-                        v1_index = sum(base * (4 ** (self.l - i - 1))
+                        v1_index = sum(base * (4 ** (self.half_k - i - 1))
                                        for i, base in enumerate(path))
                         f.write(f">{v1_index}\n")
                         v2_values = ",".join(str(i) for i in nullomers)

@@ -2,11 +2,11 @@
 
 import struct
 
-def calculate_gpc_index(index, l):
+def calculate_gpc_index(index, half_k):
     """Calculate cpg occurrence, last and first base of each index sequence
     Args:
         index(int): index of sequence to be analyzed
-        l(int): original size of the k-mer sequence
+        half_k(int): original size of the k-mer sequence
     Returns:
         cpg(int): total count of tuples consisting in C nucleotides directly followed by G nucleotides in the index original sequence
         c(bool): marks if given sequence ends in a C nucleotide
@@ -15,8 +15,8 @@ def calculate_gpc_index(index, l):
     cpg = 0
     c = False
     g = False
-    for i in range(l):
-        base = (index // (4 ** (l - i - 1))) % 4
+    for i in range(half_k):
+        base = (index // (4 ** (half_k - i - 1))) % 4
         if i == 0 and base == 3:
             g = True
         if base == 2:
@@ -28,16 +28,16 @@ def calculate_gpc_index(index, l):
             c = False
     return cpg,c,g
 
-def generate_cpg_dict(l):
+def generate_cpg_dict(half_k):
     """Generates a dict with cpg informations by sequence indexes
     Args:
-        l(int): original k-mer size
+        half_k(int): original k-mer size
     Returns:
-        cpg_dict(dict): dict contaning for each possible index for all k-mers with size l it's total cpg count, if it starts with G or ends in C 
+        cpg_dict(dict): dict contaning for each possible index for all k-mers with size half_k it's total cpg count, if it starts with G or ends in C 
     """
     cpg_dict = {}
-    for index in range(4**l):
-        cpg, c, g = calculate_gpc_index(index, l)
+    for index in range(4**half_k):
+        cpg, c, g = calculate_gpc_index(index, half_k)
         cpg_dict[index] = (cpg,c,g)
     return cpg_dict
 
@@ -58,11 +58,11 @@ def retrieve_nullomers_cpg_stats(filename):
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
         l_bytes = f.read(2)
-        l = struct.unpack('<H', l_bytes)[0]
+        half_k = struct.unpack('<H', l_bytes)[0]
         byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
         byte_size = struct.unpack('<B', f.read(1))[0]
         byte_format = byte_to_format[byte_size]
-        cpg_dict = generate_cpg_dict(l)
+        cpg_dict = generate_cpg_dict(half_k)
         cpg_tot = 0
         null_with_cpg = 0
         try:
@@ -118,26 +118,26 @@ def retrieve_nullomers_cpg_stats(filename):
     }
     return cpg_stats
 
-def generate_complement_index_dict(l):
+def generate_complement_index_dict(half_k):
     """Generates a dict of complementary indexes
     Args:
-        l(int): original k-mer sequence size
+        half_k(int): original k-mer sequence size
     Returns:
         complement_index_dict(dict): dictionary pairing indexes that represent complimentary k-mer sequences
     """
     complement = {0: 1, 1: 0, 2: 3, 3: 2}
     complement_index_dict = {}
-    m = 4**l
+    m = 4**half_k
     for number in range(m):
         temp = number
         bases = []
-        for _ in range(l):
+        for _ in range(half_k):
             bases.append(temp % 4)
             temp //= 4
         comp_bases = [complement[base] for base in bases]
         comp_index = 0
         for i, base in enumerate(comp_bases):
-            comp_index += base * (4 ** (l - i - 1))
+            comp_index += base * (4 ** (half_k - i - 1))
         complement_index_dict[number] = comp_index
     return complement_index_dict
 
@@ -154,12 +154,12 @@ def retrieve_palindrome_stats(filename):
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
         l_bytes = f.read(2)
-        l = struct.unpack('<H', l_bytes)[0]
+        half_k = struct.unpack('<H', l_bytes)[0]
         byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
         byte_size = struct.unpack('<B', f.read(1))[0]
         byte_format = byte_to_format[byte_size]
         total_null = 0 
-        complement_index_dict = generate_complement_index_dict(l)
+        complement_index_dict = generate_complement_index_dict(half_k)
         try:
             while True:
                 index_bytes = f.read(byte_size)
@@ -196,19 +196,19 @@ def retrieve_palindrome_stats(filename):
     }
     return palindrome_stats
 
-def is_homopolymer(index,l):
+def is_homopolymer(index,half_k):
     """Checks if given index is a homopolymer
     Args:
         index(int): index relative to a k-mer sequence
-        l(int): original length of the k-mer sequence
+        half_k(int): original length of the k-mer sequence
     Returns:
         same(bool): boolean indicating if the index represents a homopolymeric sequence or not
     """
     same = False
     count = 0
     current = 0
-    for i in range(l):
-        base = (index // (4 ** (l - i - 1))) % 4
+    for i in range(half_k):
+        base = (index // (4 ** (half_k - i - 1))) % 4
         if i == 0:
             current = base
         if base == current:
@@ -217,20 +217,20 @@ def is_homopolymer(index,l):
         else:
             same = False
             break
-    if count == l:
+    if count == half_k:
         same = True
     return same
 
-def generate_homopolymer_array(l):
-    """Generates an array containing all homopolymer indexes for given l
+def generate_homopolymer_array(half_k):
+    """Generates an array containing all homopolymer indexes for given half_k
     Args:
-        l(int): original size of k-mer sequences
+        half_k(int): original size of k-mer sequences
     Returns:
         homopolymer_array(arr): all possible indexes that represent homopolymeric sequences
     """
     homopolymer_array = []
-    for i in range(4**l):
-        homopolymer = is_homopolymer(i, l)
+    for i in range(4**half_k):
+        homopolymer = is_homopolymer(i, half_k)
         if homopolymer:
             homopolymer_array.append(i)
     return homopolymer_array
@@ -249,11 +249,11 @@ def retrieve_homopolymer_stats(filename):
     with open(filename, 'rb') as f:
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
-        l = struct.unpack('<H', f.read(2))[0]
-        l = int(l)
+        half_k = struct.unpack('<H', f.read(2))[0]
+        half_k = int(half_k)
         byte_size = struct.unpack('<B', f.read(1))[0]
         byte_format = byte_to_format[byte_size]
-        homopolymers = generate_homopolymer_array(l)
+        homopolymers = generate_homopolymer_array(half_k)
         try:
             while True:
                 index_bytes = f.read(byte_size)
