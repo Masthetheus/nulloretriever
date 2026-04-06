@@ -76,7 +76,7 @@ def read_accession_list(filepath, column=None):
 
 
 def get_accesion_summary_data(acc):
-    """Return xml summary data for giben accession.
+    """Return xml summary data for given accession.
 
     Args:
         acc (str): Single accession code.
