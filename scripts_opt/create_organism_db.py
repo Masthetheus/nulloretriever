@@ -5,7 +5,7 @@ import argparse
 
 from Bio import Entrez
 from nulloretriever.utils.validation import get_valid_email, get_valid_tool
-from nulloretriever.data.ncbiapidata import get_genome_metadata, get_genome_length
+from nulloretriever.data.ncbiapidata import get_genome_metadata, get_genome_length, get_taxonomy_metadata
 
 
 def setup_argparser() -> argparse.ArgumentParser:
@@ -60,6 +60,8 @@ def main():
     format_accesion_code(organisms)
     metadata = get_genome_metadata(organisms)
     new_metadata = get_genome_length(metadata)
+    get_taxonomy_metadata(metadata)
+    print(metadata)
     with open(out_path, 'w') as f:
         json.dump(new_metadata, f)
 

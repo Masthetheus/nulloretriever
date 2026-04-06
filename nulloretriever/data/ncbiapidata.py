@@ -213,3 +213,18 @@ def get_genome_length(metadata):
         except ET.ParseError as e:
             print(f"Error analyzing Meta string: {e}")
     return metadata
+
+
+def get_taxonomy_metadata(metadata):
+    old_metadata = metadata
+    for organism in old_metadata:
+        fetch = Entrez.efetch(
+            id=metadata[organism]['Taxid'], db='taxonomy', retmode='xml')
+        data = Entrez.read(fetch)
+        fetch.close()
+        taxonomy_data = {d['Rank']: d['TaxId']
+                         for d in data[0]['LineageEx']}
+        family_id = taxonomy_data.get('family', 'N/A')
+        if family_id is not None:
+            metadata[organism]['family_id'] = family_id
+    return metadata

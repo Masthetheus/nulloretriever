@@ -69,7 +69,8 @@ def main():
     print(cpg_max_count)
     print(composition_max_count)
     print(palindromy_max_count)
-    print(nulldata[['k', 'counter']]
+    print(nulldata[['k', 'counter']])
+
 
 if __name__ == "__main__":
     main()
