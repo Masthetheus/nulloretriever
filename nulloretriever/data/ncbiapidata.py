@@ -224,7 +224,7 @@ def get_taxonomy_metadata(metadata):
         fetch.close()
         taxonomy_data = {d['Rank']: d['TaxId']
                          for d in data[0]['LineageEx']}
-        family_id = taxonomy_data.get('family', 'N/A')
+        family_id = taxonomy_data.get('class', 'N/A')
         if family_id is not None:
-            metadata[organism]['family_id'] = family_id
+            metadata[organism]['class_id'] = family_id
     return metadata
