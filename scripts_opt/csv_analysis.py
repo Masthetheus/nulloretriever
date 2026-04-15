@@ -14,9 +14,9 @@ df = pd.read_csv('workflow/results/nullomer_statistics_summarized_9_to_14.csv')
 #     plt.show()
 
 dfj = pd.read_json('workflow/data/organisms.json').transpose()
-mapping = dfj.set_index('SpeciesName')['class_id']
-df['class_id'] = df['organism_name'].map(mapping)
-df_class = df.groupby(['class_id'])
+mapping = dfj.set_index('SpeciesName')['phylum_id']
+df['phylum_id'] = df['organism_name'].map(mapping)
+df_class = df.groupby(['phylum_id'])
 df_k = df.groupby(['k'])
 columns = list(df)
 columns_set = set(columns)
@@ -41,7 +41,7 @@ for name, group in df_k:
     for column in columns:
         plt.figure(figsize=(12, 6))
         current = sns.boxplot(data=group, x='k', y=column,
-                              hue='class_id', palette='Paired')
+                              hue='phylum_id', palette='Paired')
         sns.move_legend(current, "upper right", bbox_to_anchor=(1.05, 1))
         plt.savefig(f'graphs/{name[0]}/{column}', dpi=200)
         plt.close()

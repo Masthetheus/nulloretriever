@@ -3,6 +3,8 @@
 import argparse
 import pandas as pd
 import csv
+import matplotlib.pyplot as plt
+import seaborn as sns
 from nulloretriever.analysis.processing import json_to_csv_mapping
 
 
@@ -60,6 +62,21 @@ def setup_argparser() -> argparse.ArgumentParser:
         choices=[0, 1, 2],
         default=2
     )
+    parser.add_argument(
+        '-og',
+        '--output_graphs',
+        help="Destination for graph storage."
+        "Default = workflow/analysis",
+        default='workflow/analysis/graphs'
+    )
+    parser.add_argument(
+        '-oc',
+        '--output_csvs',
+        help="Destination for processed csv storage."
+        "Default = workflow/analysis",
+        default='workflow/analysis/csv'
+    )
+
     return parser
 
 
@@ -71,15 +88,55 @@ def main():
     k_range = args.k_range
     mode = args.mode
     csv_path = args.data + f"{k_range[0]}_to_{k_range[1]}.csv"
+    graph_output = args.output_graphs
+    csv_output = args.output_csvs
     if not args.grouping:
         grouping = 'k'
+    else:
+        grouping = args.grouping
+    # Removes all rows where 'column_name' has the value 10
     df = pd.read_csv(csv_path)
+    df = df[df['k'] != 14]
+    df = df[df['k'] != 13]
     json_to_csv_mapping(df_db, df)
+    df_grouped = df.groupby([f'{grouping}'])
     if not args.columns:
         grouping_columns = {'k', 'organism', 'organism_name',
                             'tax_id', 'motifs_homopolymers', 'class_id',
                             'assemblystatus', 'taxid', 'speciestaxid'}
     data_columns = list(set(list(df)) - grouping_columns)
+
+    if mode == 1:
+        for column in data_columns:
+            plt.figure(figsize=(12, 6))
+            sns.lineplot(data=df, x='k', y=column, hue="phylum_id")
+            plt.savefig(f'{graph_output}/phylum_id/{column}')
+        pass
+
+    elif mode == 2:
+        for name, group in df_grouped:
+            count = 0
+            for column in data_columns:
+                plt.figure(figsize=(12, 6))
+                current = sns.lineplot(x='k', y=column, hue="phylum_id",
+                                       data=group, palette='Paired')
+                sns.move_legend(current, "upper right",
+                                bbox_to_anchor=(1.05, 1))
+                try:
+                    if int(name[0]) > 20:
+                        plt.savefig(
+                            f'{graph_output}/phylum_id/{int(name[0])}_{column}', dpi=200)
+                    else:
+                        plt.savefig(
+                            f'{graph_output}/{name[0]}/{column}', dpi=200)
+                except Exception:
+                    plt.savefig(
+                        f'{graph_output}/phylum_id/{count}_{column}', dpi=200)
+                    plt.close()
+                    pass
+                plt.close()
+        df_grouped.describe().to_csv(
+            f'{graph_output}/dataset_grouped_by_{grouping}.csv')
 
 
 if __name__ == "__main__":
