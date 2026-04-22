@@ -66,7 +66,8 @@ def assign_v2_to_v1(v2s, half_k):
     for v2 in v2s:
         v2s_extended = []
         obtain_v2_extensions(v2, v2s_extended, half_k)
-        first_base = v2 >> (((half_k-1)*2) - 2) & 3
+        first_base = v2 >> (((half_k-1)*2)) & 3
+        # print(f"v2: {v2}, first base: {first_base}")
         for value in v2s_extended:
             v2s_extensions[first_base].append(value)
     return v2s_extensions
@@ -118,7 +119,6 @@ def first_half_extensions(smaller_v1, v2s, half_k, file):
         return found_extensions
 
 
-@profile
 def second_half_extensions(v1, v2s, half_k, file):
     """Search extended nullomers from a v2 in a file."""
     byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
@@ -144,20 +144,22 @@ def second_half_extensions(v1, v2s, half_k, file):
                     f'<{byte_format}', nullomer_count_bytes)[0]
                 if v1 in v1_extensions:
                     counter = 0
+                    v1_first = v1 >> (((half_k-1)*2) - 2) & 3
                     while counter < nullomer_count:
                         v2_bytes = f.read(byte_size)
                         v2s_extensions.add(struct.unpack(
                             f'<{byte_format}', v2_bytes)[0])
                         counter += 1
-                        v1_first = v1 >> (((half_k-1)*2) - 2) & 3
-                        set_v2s = set(orig_v2_extensions[v1_first])
-                        set_v2s_ext = v2s_extensions
-                        extensions = set_v2s - set_v2s_ext
-                        if not extensions:
-                            found_extensions[v1] = v2s
-                            found_extensions[v1].append('all_found')
-                        else:
-                            found_extensions[v1] = extensions
+                    # testar dnv o profile de tempo
+                    # acho que o loop while tava zuado
+                    set_v2s = set(orig_v2_extensions[v1_first])
+                    set_v2s_ext = v2s_extensions
+                    extensions = set_v2s - set_v2s_ext
+                    if not extensions:
+                        found_extensions[v1] = v2s
+                        found_extensions[v1].append('all_found')
+                    else:
+                        found_extensions[v1] = extensions
                 else:
                     f.seek(nullomer_count * byte_size, 1)
         except (struct.error, OSError) as e:
