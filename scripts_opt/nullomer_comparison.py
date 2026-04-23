@@ -55,6 +55,11 @@ def main():
         while nullomer_count < count:
             v1, v2s, counter, nullomer_count, skip_counter = read_per_v1(
                 file1, skip_counter, nullomer_count)
+            with open(file2, 'rb') as f:
+                full_file = f.read()
+                print(f"\nStarting v1: {v1}.")
+                idx = full_file.find(v1.to_bytes(2, byteorder='big'))
+                print(v1, idx)
             new_counter_v1 = first_half_extensions(
                 v1, v2s, half_k, file2, new_counter_v1, trivial_extensions)
             new_counter_v2 = second_half_extensions(
