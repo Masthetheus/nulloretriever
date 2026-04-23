@@ -73,12 +73,11 @@ def assign_v2_to_v1(v2s, half_k):
     return v2s_extensions
 
 
-def first_half_extensions(smaller_v1, v2s, half_k, file):
+def first_half_extensions(smaller_v1, v2s, half_k, file, new_counter, trivial_extensions):
     """Search extended nullomers from a v1 in a file."""
     v1_extensions = v1_possible_extensions(smaller_v1, half_k)
     v2s_extensions = []
     byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-    found_extensions = {}
     with open(file, 'rb') as f:
         # Skip header
         f.seek(8)
@@ -104,27 +103,30 @@ def first_half_extensions(smaller_v1, v2s, half_k, file):
                         counter += 1
                     set_v2s = set(v2s)
                     set_v2s_ext = set(v2s_extensions)
-                    extensions = set_v2s - set_v2s_ext
+                    extensions = set_v2s_ext & set_v2s
                     if not extensions:
                         # found_extensions[v1] = v2s
                         # found_extensions[v1].append('all_found')
-                        found_extensions[v1] = 1
+                        # found_extensions[v1] = 1
+                        continue
                     else:
-                        found_extensions[v1] = extensions
+                        # found_extensions[v1] = extensions
+                        new_counter += len(extensions)
+                        trivial_extensions[v1].update(extensions)
                 else:
                     f.seek(nullomer_count * byte_size, 1)
         except (struct.error, OSError) as e:
             print(e)
             pass
-        return found_extensions
+        return new_counter
 
 
-def second_half_extensions(v1, v2s, half_k, file):
+def second_half_extensions(v1, v2s, half_k, file, new_counter, trivial_extensions):
     """Search extended nullomers from a v2 in a file."""
     byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
     v1_extensions = v1_possible_extensions(v1, half_k)
     orig_v2_extensions = assign_v2_to_v1(v2s, half_k)
-    found_extensions = {}
+    # found_extensions = {}
     v2s_extensions = set()
     with open(file, 'rb') as f:
         # Skip header
@@ -150,19 +152,20 @@ def second_half_extensions(v1, v2s, half_k, file):
                         v2s_extensions.add(struct.unpack(
                             f'<{byte_format}', v2_bytes)[0])
                         counter += 1
-                    # testar dnv o profile de tempo
-                    # acho que o loop while tava zuado
                     set_v2s = set(orig_v2_extensions[v1_first])
                     set_v2s_ext = v2s_extensions
-                    extensions = set_v2s - set_v2s_ext
+                    extensions = set_v2s_ext & set_v2s
                     if not extensions:
-                        found_extensions[v1] = v2s
-                        found_extensions[v1].append('all_found')
+                        continue
+                        # found_extensions[v1] = v2s
+                        # found_extensions[v1].append('all_found')
                     else:
-                        found_extensions[v1] = extensions
+                        new_counter += len(extensions)
+                        trivial_extensions[v1].update(extensions)
+                        # found_extensions[v1] = extensions
                 else:
                     f.seek(nullomer_count * byte_size, 1)
         except (struct.error, OSError) as e:
             print(e)
             pass
-        return found_extensions
+        return new_counter
