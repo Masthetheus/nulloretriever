@@ -72,3 +72,57 @@ def sequence_length_conversion(half_k, v1=False, v2=False):
         return v1_extensions
     if v2:
         half_k
+
+
+def obtain_v1_positions(file):
+    """Retrieves the location of the v1 indexes inside a bit trie file."""
+    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+    v1_locations = {}
+    with open(file, 'rb') as f:
+        # Skip header
+        f.seek(8)
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
+        try:
+            while True:
+                bytes_v1 = f.read(byte_size)
+                if len(bytes_v1) < byte_size:
+                    break
+                v1_location = f.tell()
+                v1 = struct.unpack(f'<{byte_format}', bytes_v1)[0]
+                v1_locations[v1] = v1_location
+                nullomer_count_bytes = f.read(byte_size)
+                if len(nullomer_count_bytes) < byte_size:
+                    break
+                nullomer_count = struct.unpack(
+                    f'<{byte_format}', nullomer_count_bytes)[0]
+                f.seek(nullomer_count * byte_size, 1)
+        except (struct.error, OSError) as e:
+            print(e)
+            pass
+    return v1_locations
+
+
+def gather_v1_related_data(v1_bit_index, file):
+    """Gather informations from given v1 value from a bit nullomer file."""
+    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+    with open(file, 'rb') as f:
+        f.seek(8)
+        byte_size = struct.unpack('<B', f.read(1))[0]
+        byte_format = byte_to_format[byte_size]
+        f.seek(v1_bit_index, 0)
+        counter = 0
+        v2s = set()
+        try:
+            nullomer_count_bytes = f.read(byte_size)
+            nullomer_count = struct.unpack(
+                f'<{byte_format}', nullomer_count_bytes)[0]
+            while counter < nullomer_count:
+                v2_bytes = f.read(byte_size)
+                v2s.add(struct.unpack(f'<{byte_format}', v2_bytes)[0])
+                counter += 1
+            print(counter)
+            print(f.tell())
+        except (struct.error, OSError):
+            pass
+    return v2s

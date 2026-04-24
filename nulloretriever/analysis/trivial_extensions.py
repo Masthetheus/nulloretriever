@@ -2,6 +2,8 @@
 
 import struct
 
+from nulloretriever.analysis.parsings import obtain_trie_infos
+
 
 def obtain_sequence_list_from_v1(v1, half_k):
     """Receives a v1 value and expand into it's singular value form."""
@@ -139,12 +141,14 @@ def second_half_extensions(v1, v2s, half_k, file, new_counter, trivial_extension
                 if len(bytes_v1) < byte_size:
                     break
                 v1 = struct.unpack(f'<{byte_format}', bytes_v1)[0]
+                v1_pos = f.tell()
                 nullomer_count_bytes = f.read(byte_size)
                 if len(nullomer_count_bytes) < byte_size:
                     break
                 nullomer_count = struct.unpack(
                     f'<{byte_format}', nullomer_count_bytes)[0]
                 if v1 in v1_extensions:
+                    print(f"DEBUG: v1 {v1} at pos {v1_pos}.")
                     counter = 0
                     v1_first = v1 >> (((half_k-1)*2) - 2) & 3
                     while counter < nullomer_count:
@@ -169,3 +173,37 @@ def second_half_extensions(v1, v2s, half_k, file, new_counter, trivial_extension
             print(e)
             pass
         return new_counter
+
+
+def retrieve_trivial_extensions(v1, v2s, v1_indexes_file2, file2, half_k, trivial_extensions):
+    """Count the number of trivial nullomer extensions in a bit file."""
+    v1_extensions = v1_possible_extensions(v1, half_k)
+    orig_v2_extensions = assign_v2_to_v1(v2s, half_k)
+    v2s_bigger_k = set()
+    byte_size, byte_format = obtain_trie_infos(file2)
+    new_counter = 0
+    for v1 in v1_extensions:
+        counter = 0
+        v1_first = v1 >> (((half_k-1)*2) - 2) & 3
+        with open(file2, 'rb') as f:
+            f.seek(v1_indexes_file2[v1], 0)
+            try:
+                nullomer_count_bytes = f.read(byte_size)
+                nullomer_count = struct.unpack(
+                    f'<{byte_format}', nullomer_count_bytes)[0]
+                while counter < nullomer_count:
+                    current_v2_bytes = f.read(byte_size)
+                    v2s_bigger_k.add(struct.unpack(
+                        f'<{byte_format}', current_v2_bytes)[0])
+                    counter += 1
+                set_v2s = set(orig_v2_extensions[v1_first])
+                extensions = v2s_bigger_k & set_v2s
+                if not extensions:
+                    new_counter = 0
+                    continue
+                else:
+                    new_counter += len(extensions)
+                    trivial_extensions[v1].update(extensions)
+            except (struct.error, OSError):
+                pass
+    return new_counter
