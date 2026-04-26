@@ -48,7 +48,13 @@ def main():
     while k2 <= k_range[1]:
         trivial_extensions = defaultdict(set)
         trivial_extensions_test = defaultdict(set)
-        half_k = k1//2
+        if k1 % 2 == 0:
+            half_k_v1 = k1//2
+            half_k_v2 = half_k_v1
+        else:
+            half_k_v1 = k2//2
+            half_k_v2 = k1//2
+
         skip_counter = 0
         nullomer_count = 0
         new_counter_v1 = 0
@@ -64,7 +70,7 @@ def main():
         for v1, index in v1_indexes_file1.items():
             v2s = gather_v1_related_data(index, file1)
             extension_counter += retrieve_trivial_extensions(
-                v1, v2s, v1_indexes_file2, file2, half_k, trivial_extensions_test)
+                v1, v2s, v1_indexes_file2, file2, half_k_v1, half_k_v2, trivial_extensions_test)
             # new_counter_v1 = first_half_extensions(
             #     v1, v2s, half_k, file2, new_counter_v1, trivial_extensions)
             # new_counter_v2 = second_half_extensions(
@@ -85,15 +91,10 @@ def main():
         #         v1, v2s, half_k, file2, new_counter_v2, trivial_extensions)
         k1 = k2
         k2 += 1
-        print(f"v1: {new_counter_v1}. v2: {new_counter_v2}. Sum: {
-              new_counter_v1+new_counter_v2}")
-        trivial_porc = ((new_counter_v1+new_counter_v2)/total_null_file2) * 100
-        print(f"Porcentagem de trivial extensions: {trivial_porc}")
-        total = sum(len(v) for v in trivial_extensions.values())
+        total = sum(len(v) for v in trivial_extensions_test.values())
         trivial_new_porc = (total/total_null_file2)*100
+        print(f"Novo modo trivial total: {total}.")
         print(f"Porcentagem de trivial extensions nova: {trivial_new_porc}")
-        print(len(trivial_extensions))
-        print(total)
 
 
 if __name__ == "__main__":

@@ -121,8 +121,6 @@ def gather_v1_related_data(v1_bit_index, file):
                 v2_bytes = f.read(byte_size)
                 v2s.add(struct.unpack(f'<{byte_format}', v2_bytes)[0])
                 counter += 1
-            print(counter)
-            print(f.tell())
         except (struct.error, OSError):
             pass
     return v2s

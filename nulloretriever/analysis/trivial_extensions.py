@@ -175,16 +175,17 @@ def second_half_extensions(v1, v2s, half_k, file, new_counter, trivial_extension
         return new_counter
 
 
-def retrieve_trivial_extensions(v1, v2s, v1_indexes_file2, file2, half_k, trivial_extensions):
+def retrieve_trivial_extensions(v1, v2s, v1_indexes_file2, file2, half_k_v1, half_k_v2, trivial_extensions):
     """Count the number of trivial nullomer extensions in a bit file."""
-    v1_extensions = v1_possible_extensions(v1, half_k)
-    orig_v2_extensions = assign_v2_to_v1(v2s, half_k)
+    v1_extensions = v1_possible_extensions(v1, half_k_v1)
+    orig_v2_extensions = assign_v2_to_v1(v2s, half_k_v2)
     v2s_bigger_k = set()
     byte_size, byte_format = obtain_trie_infos(file2)
     new_counter = 0
+    print(half_k_v1, half_k_v2, v1, v1_extensions)
     for v1 in v1_extensions:
         counter = 0
-        v1_first = v1 >> (((half_k-1)*2) - 2) & 3
+        v1_first = v1 >> (((half_k_v1-1)*2) - 2) & 3
         with open(file2, 'rb') as f:
             f.seek(v1_indexes_file2[v1], 0)
             try:
@@ -197,13 +198,16 @@ def retrieve_trivial_extensions(v1, v2s, v1_indexes_file2, file2, half_k, trivia
                         f'<{byte_format}', current_v2_bytes)[0])
                     counter += 1
                 set_v2s = set(orig_v2_extensions[v1_first])
-                extensions = v2s_bigger_k & set_v2s
-                if not extensions:
+                set_v2s_orig = set(v2s)
+                extensions1 = v2s_bigger_k & set_v2s
+                extensions2 = v2s_bigger_k & set_v2s_orig
+                if not extensions1 and not extensions2:
                     new_counter = 0
                     continue
                 else:
-                    new_counter += len(extensions)
-                    trivial_extensions[v1].update(extensions)
+                    new_counter += len(extensions1) + len(extensions2)
+                    trivial_extensions[v1].update(extensions1)
+                    trivial_extensions[v1].update(extensions2)
             except (struct.error, OSError):
                 pass
     return new_counter
