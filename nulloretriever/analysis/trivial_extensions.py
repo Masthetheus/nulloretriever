@@ -175,17 +175,21 @@ def second_half_extensions(v1, v2s, half_k, file, new_counter, trivial_extension
         return new_counter
 
 
-def retrieve_trivial_extensions(v1, v2s, v1_indexes_file2, file2, half_k_v1, half_k_v2, trivial_extensions):
+def retrieve_trivial_extensions(v1, v2s, v1_indexes_file2, file2, half_k,
+                                trivial_extensions, odd):
     """Count the number of trivial nullomer extensions in a bit file."""
-    v1_extensions = v1_possible_extensions(v1, half_k_v1)
-    orig_v2_extensions = assign_v2_to_v1(v2s, half_k_v2)
+    if odd:
+        v1_adjusted = v1 >> 2
+        v1_extensions = v1_possible_extensions(v1_adjusted, half_k)
+    else:
+        v1_extensions = v1_possible_extensions(v1, half_k)
+    orig_v2_extensions = assign_v2_to_v1(v2s, half_k)
     v2s_bigger_k = set()
     byte_size, byte_format = obtain_trie_infos(file2)
     new_counter = 0
-    print(half_k_v1, half_k_v2, v1, v1_extensions)
     for v1 in v1_extensions:
         counter = 0
-        v1_first = v1 >> (((half_k_v1-1)*2) - 2) & 3
+        v1_first = v1 >> (((half_k-1)*2) - 2) & 3
         with open(file2, 'rb') as f:
             f.seek(v1_indexes_file2[v1], 0)
             try:
