@@ -2,6 +2,7 @@
 
 import struct
 
+
 def calculate_gc_index(index, half_k):
     """Calculate nullomeric gc content for each relative index
     Args:
@@ -17,6 +18,7 @@ def calculate_gc_index(index, half_k):
             gc += 1
     return gc
 
+
 def generate_gc_dict(half_k):
     """Generate a dict pairing each possible index to it's total GC count
     Args:
@@ -29,6 +31,7 @@ def generate_gc_dict(half_k):
         gc = calculate_gc_index(index, half_k)
         gc_dict[index] = gc
     return gc_dict
+
 
 def nullomers_gc_mean(filename):
     """Calculate mean GC% of all nullomeric sequences on given organism
@@ -60,14 +63,16 @@ def nullomers_gc_mean(filename):
                 nullomer_count_bytes = f.read(byte_size)
                 if len(nullomer_count_bytes) < byte_size:
                     break
-                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(
+                    f'<{byte_format}', nullomer_count_bytes)[0]
                 i = 0
                 while i < nullomer_count:
                     nullomer_byte = f.read(byte_size)
-                    nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
+                    nullomer_index = struct.unpack(
+                        f'<{byte_format}', nullomer_byte)[0]
                     gc_tot += gc_dict[nullomer_index]
                     i += 1
-                count += nullomer_count    
+                count += nullomer_count
         except (struct.error, OSError):
             pass
     total_bases = (v1_count*half_k)+(count*half_k)

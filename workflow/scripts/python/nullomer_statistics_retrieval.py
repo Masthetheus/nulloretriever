@@ -66,7 +66,7 @@ def main():
             print("Unexpected occurence processing the"
                   f"following statistic: {stat}.\n"
                   f"Error: {err=}, {type(err)=}")
-            raise
+            continue
 
     base_dict = {}
     base_dict['organism'] = organism

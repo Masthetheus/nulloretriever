@@ -54,6 +54,8 @@ def main():
 
     k = int(k_range[0])
     while k <= k_range[1]:
+        remove_counter = 0
+        print(f"======{k}======")
         anchor_file = f"workflow/results/k{k}/{genomes[0]}/null_bit_format"
         anchor_v1_locations = obtain_v1_positions(anchor_file)
         common_nullomer_set = obtain_nullomer_set(
@@ -64,24 +66,37 @@ def main():
             file2_v1_locations = obtain_v1_positions(file2)
             file2_null_set = obtain_nullomer_set(file2, file2_v1_locations)
             common_v1 = common_nullomer_set.keys() & file2_v1_locations.keys()
-            for key in common_v1:
-                comp = common_nullomer_set[key] & file2_null_set[key]
-                if comp:
-                    common_test[key] = comp
-                else:
-                    continue
             if len(common_v1) == 0:
-                print(f"Nothing in similar with organism: {genome}.")
-                break
+                remove_counter += 1
+                continue
+            else:
+                count_key = 0
+                for key in common_v1:
+                    comp = common_nullomer_set[key] & file2_null_set[key]
+                    count_key += 1
+                    if comp:
+                        print(f"Entrou {comp}.")
+                        common_test[key] = comp
+                    else:
+                        common_test = defaultdict(set)
+                        continue
+                total_len = sum(len(s)for s in common_nullomer_set.values())
+                print(f"Total len antes do if {total_len}")
+                if common_test.values() != 0:
+                    common_nullomer_set = common_test
+                total_len = sum(len(s)for s in common_nullomer_set.values())
+                print(f"Total len depois do if {total_len}")
+                breakpoint()
             # common_nullomer_set = search_prime_nullomers(
             #     common_nullomer_set, common_v1, file2_v1_locations, file2)
-        k += 1
         # print(len(common_nullomer_set))
         # total_len = sum(len(s) for s in common_nullomer_set.values())
         # print(total_len)
-        print(f"Common: {len(common_test)}")
-        total_len = sum(len(s) for s in common_test.values())
+        print(f"Common: {len(common_nullomer_set)}")
+        total_len = sum(len(s) for s in common_nullomer_set.values())
         print(f"Total len: {total_len}")
+        print(f"Genomes skipped: {remove_counter}")
+        k += 1
 
 
 if __name__ == "__main__":

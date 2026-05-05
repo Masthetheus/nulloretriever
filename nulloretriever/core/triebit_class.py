@@ -96,13 +96,10 @@ class TrieBit:
                 if len(path) == self.half_k:
                     nullomers = [i for i, bit in enumerate(
                         node.v2_set) if not bit]
-                    print(f"DEBUG: nullomers {
-                          nullomers} has len {len(nullomers)}")
                     if nullomers:
                         # Compute lexicographic index for v1 path
                         index = sum(base * (4 ** (self.half_k - i - 1))
                                     for i, base in enumerate(path))
-                        print(f"DEBUG: v1 = {index}")
                         f.write(struct.pack(f'<{self.index_format}', index))
                         f.write(struct.pack(
                             f'<{self.index_format}', len(nullomers)))
