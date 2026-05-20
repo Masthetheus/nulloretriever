@@ -21,3 +21,8 @@
     3. Teste controlado
     4. Teste real
     5. Outputs
+
+# 20-05 - Revisão main.c
+
+- Fazer:
+    [ ] Revisitar Snakemake, ajustar o comando de compilação

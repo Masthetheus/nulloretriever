@@ -10,10 +10,6 @@
 #define MAX_K 20
 #define BUFFER_SIZE 65536
 
-static int buff_tot = 0;
-static unsigned char write_buffer[BUFFER_SIZE];
-static size_t buffer_position = 0;
-
 int main(int argc, char *argv[]) {
         if (argc != 3) {
                 fprintf(stderr, "Usage: %s <fasta_file> <k>\n", argv[0]);
@@ -77,12 +73,11 @@ int main(int argc, char *argv[]) {
                               bytes_per_sequence, &tot);
                 free(revcomp_seq);
         }
-        flush_output_buffer(&buff_tot);
         fprintf(stderr, "DEBUG: Program finished\n");
         free(seen);
         free(seq);
         fclose(f);
         fprintf(stderr, "DEBUG: Total of %d sequences inserted\n", tot);
-        fprintf(stderr, "DEBUG: Total of %d buffers sent.\n", buff_tot);
+        //fprintf(stderr, "DEBUG: Total of %d buffers sent.\n", buff_tot);
         return 0;
 }

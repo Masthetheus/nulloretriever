@@ -8,7 +8,7 @@
 #include <string.h>
 
 void write_decoded_kmer(FILE *f, uint64_t val, int k);
-void flush_output_buffer(int *buff_tot);
+void flush_output_buffer(unsigned char *write_buffer, size_t buffer_position);
 void print_packed_binary(uint64_t val, int bytes_per_half, int bytes_per_kmer,
                          int half_k);
 void print_packed_binary_test(uint64_t val, int bytes_per_sequence);

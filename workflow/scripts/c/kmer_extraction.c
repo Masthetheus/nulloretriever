@@ -9,6 +9,9 @@
 #include <string.h>
 
 #define MAX_SEQ 40000000
+#define BUFFER_SIZE 65536
+
+static int buffers_sent=0;
 
 char *generate_revcomp_seq(int seqlen, char *seq) {
         char *revcomp_seq = malloc(seqlen + 1);
@@ -37,6 +40,10 @@ char *generate_revcomp_seq(int seqlen, char *seq) {
 
 void process_kmers(const char *seq, int seqlen, int k, char *seen,
                    int bytes_per_sequence, int *tot) {
+
+        static unsigned char write_buffer[BUFFER_SIZE];
+        static size_t buffer_position = 0;
+
         for (int i = 0; i <= seqlen - k; i++) {
                 uint64_t idx = encode_kmer(seq + i, k);
                 if (idx == UINT64_MAX) {
@@ -45,11 +52,26 @@ void process_kmers(const char *seq, int seqlen, int k, char *seen,
 
                 uint64_t byte = idx / 8, bit = idx % 8;
                 if (!(seen[byte] & (1 << bit))) {
-                        print_packed_binary_test(idx, bytes_per_sequence);
+                        if (buffer_position + bytes_per_sequence > BUFFER_SIZE) {
+                                flush_output_buffer(write_buffer, buffer_position);
+                                buffer_position = 0;
+                                buffers_sent++;
+                        }
+                        for (int i = bytes_per_sequence - 1; i >= 0; i--) {
+                                unsigned char byte = (idx >> (i * 8)) & 0xFF;
+                                write_buffer[buffer_position++] = byte;
+                        }
+
                         seen[byte] |= (1 << bit);
                         *tot += 1;
                         int total = *tot;
                         fprintf(stderr, "%d", total);
                 }
         }
+        if (buffer_position > 0){
+                flush_output_buffer(write_buffer, buffer_position);
+                buffers_sent++;
+        }
+        fprintf(stderr, "DEBUG: até o momento foram enviados %d buffers.\n\n", buffers_sent);
+
 }
