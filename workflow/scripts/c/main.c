@@ -8,7 +8,6 @@
 
 #define MAX_SEQ 40000000
 #define MAX_K 20
-#define BUFFER_SIZE 65536
 
 int main(int argc, char *argv[]) {
         if (argc != 3) {
@@ -78,6 +77,5 @@ int main(int argc, char *argv[]) {
         free(seq);
         fclose(f);
         fprintf(stderr, "DEBUG: Total of %d sequences inserted\n", tot);
-        //fprintf(stderr, "DEBUG: Total of %d buffers sent.\n", buff_tot);
         return 0;
 }

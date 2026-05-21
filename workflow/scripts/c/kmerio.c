@@ -1,21 +1,9 @@
 #include "../h/kmerio.h"
 
-#define BUFFER_SIZE 65536
-
-void flush_output_buffer(unsigned char *write_buffer, size_t buffer_position) {
+void flush_output_buffer(unsigned char *write_buffer, size_t *buffer_position) {
         //fprintf(stderr,"DEBUG: flush no buffer com tot = %ls.\n", buff_tot);
-        fwrite(write_buffer, 1, buffer_position, stdout);
-        buffer_position = 0;
+        fwrite(write_buffer, 1, *buffer_position, stdout);
         //++*buff_tot;
-}
-
-void print_binary_bytes(uint64_t val, int k) {
-        // Output actual bytes, not ASCII characters
-        for (int i = k * 2 - 1; i >= 0; i--) {
-                unsigned char bit = (val >> i) & 1;
-                fwrite(&bit, 1, 1, stdout);
-        }
-        fflush(stdout); // Force flush
 }
 
 void write_decoded_kmer(FILE *f, uint64_t val, int k) {
