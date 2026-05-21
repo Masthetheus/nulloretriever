@@ -51,8 +51,6 @@ int main(int argc, char *argv[]) {
                                 process_kmers(revcomp_seq, seqlen, k, seen,
                                               bytes_per_sequence, &tot);
 
-                                free(seq);
-                                seq = malloc(MAX_SEQ);
                                 free(revcomp_seq);
                                 seqlen = 0;
                         }

@@ -28,7 +28,7 @@ def main():
         [snakemake.input.bin,
          genome_path, k_str],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
         bufsize=65536
     )
     sequences_received = 0
@@ -60,13 +60,13 @@ def main():
     proc.wait()
     trie.write_bit_format(out_path)
     expected = 4**k
-    null_count = trie.count_nullomers()
-    obtained = null_count + total
-    diff = expected - total
-    print(f"{total} k-mkers were inserted, and {trie.count_nullomers()}"
-          f" nullomers were counted.\n {expected} total were expected."
-          f"We have total + null equals {obtained}.")
-    print(f"A total of {sequences_received} sequences were read.")
+    #null_count = trie.count_nullomers()
+    #obtained = null_count + total
+    #diff = expected - total
+    #print(f"{total} k-mkers were inserted, and {trie.count_nullomers()}"
+    #      f" nullomers were counted.\n {expected} total were expected."
+    #      f"We have total + null equals {obtained}.")
+    #print(f"A total of {sequences_received} sequences were read.")
 
 
 if __name__ == "__main__":

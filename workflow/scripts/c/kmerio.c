@@ -2,7 +2,7 @@
 
 void flush_output_buffer(unsigned char *write_buffer, size_t *buffer_position) {
         //fprintf(stderr,"DEBUG: flush no buffer com tot = %ls.\n", buff_tot);
-        fwrite(write_buffer, 1, *buffer_position, stdout);
+        fwrite(write_buffer, sizeof(unsigned char), *buffer_position, stdout);
         //++*buff_tot;
 }
 
