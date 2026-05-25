@@ -107,13 +107,16 @@ class TrieBit:
             Format: [header][nodes...]
             Header: b'TRIE'[4] + version(2) + half_k(2) + format_code(1)
             Args:
-                self: TrieBit object
+                self(TrieBit): TrieBit object to be saved in compact binary
                 output(str): path to save the file
             Returns:
                 file: all nullomers sequences in binary format, where:
-                    v1: index of the first half of the sequence, with size half_k (k/2)
-                    v2_set size: total of v2 for the given v1
-                    v2: index of the second half of the sequence, with size half_k (k/2), that are directly connected to the previous v1 value
+                    v1(int): index of the first half of the sequence, with size
+                    half_k (k/2).
+                    v2_set size(int): count of v2 for the given v1
+                    v2(array): indexes of the second half of the sequence,
+                        calculated with half_k (k/2), that are directly connected
+                        to the previous v1 value
         """
         with open(output, 'wb') as f:
             f.write(b'TRIE')  # Magic number
@@ -126,7 +129,6 @@ class TrieBit:
                     nullomers = [i for i, bit in enumerate(
                         node.v2_set) if not bit]
                     if nullomers:
-                        # Compute lexicographic index for v1 path
                         index = sum(base * (4 ** (self.half_k - i - 1))
                                     for i, base in enumerate(path))
                         f.write(struct.pack(f'<{self.index_format}', index))
@@ -135,6 +137,7 @@ class TrieBit:
                         for v2_index in nullomers:
                             f.write(struct.pack(
                                 f'<{self.index_format}', v2_index))
+                    return
                 for child_value, child_node in enumerate(node.children):
                     if child_node is not None:
                         collect_nodes(child_node, path + [child_value])
@@ -161,6 +164,7 @@ class TrieBit:
                         f.write(f">{v1_index}\n")
                         v2_values = ",".join(str(i) for i in nullomers)
                         f.write(f"{v2_values}\n")
+                    return
                 for child_value, child_node in enumerate(node.children):
                     if child_node is not None:
                         dfs(child_node, path + [child_value])
