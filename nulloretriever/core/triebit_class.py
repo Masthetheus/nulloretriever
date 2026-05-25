@@ -5,10 +5,8 @@ import struct
 
 
 class TrieBitNode:
-    def __init__(self, m):
-        self.children = [None] * 4  # 0:A, 1:T, 2:C, 3:G
-        self.v2_set = bitarray(m)
-        self.v2_set.setall(0)
+    def __init__(self):
+        self.children = [None] * 4  
 
     def iterate(self, path=None):
         if path is None:
@@ -18,10 +16,14 @@ class TrieBitNode:
             if child is not None:
                 yield from child.iterate(path + [i])
 
+class TrieBitLeaf:
+    def __init__(self, m):
+        self.v2_set = bitarray(m)
+        self.v2_set.setall(0)
 
 class TrieBit:
     def __init__(self, m, half_k):
-        self.root = TrieBitNode(m)
+        self.root = TrieBitNode()
         self.m = m
         self.half_k = half_k
 
@@ -39,19 +41,26 @@ class TrieBit:
             self.format_code = 8
 
         def build(node, depth):
+            print(f"Depth atual {depth}")
             if depth == half_k:
-                return
+                for i in range(4):
+                    print(f"DEBUG: LOOP {i}")
+                    if node.children[i] is None:
+                        print(f"Leaf adicionada no idx {i} na depth {depth}")
+                        node.children[i] = TrieBitLeaf(self.m)
             for i in range(4):
+                print("CHILDRENS")
+                print(node.children)
                 if node.children[i] is None:
-                    node.children[i] = TrieBitNode(m)
-                build(node.children[i], depth + 1)
+                    node.children[i] = TrieBitNode()
+                    print(f"Criado node de idx {i} na depth {depth}")
+                    build(node.children[i], depth + 1)
+                print(f"DEBUG: terminando loop maior de idx {i}")
         build(self.root, 0)
 
     def insert(self, v1, v2):
         node = self.root
         for value in v1:
-            if node.children[value] is None:
-                node.children[value] = TrieBitNode(self.m)
             node = node.children[value]
         node.v2_set[v2] = 1
 
@@ -62,9 +71,10 @@ class TrieBit:
         half_k = target_length or self.half_k
 
         def dfs(node, depth):
+            counter = 0
             if depth == half_k:
-                return sum(1 for genome_id in range(len(node.v2_set))
-                           if not node.v2_set[genome_id])
+                print(f"Returning {node.v2_set.count(0)} null counted .")
+                return node.v2_set.count(0)
 
             return sum(dfs(child, depth + 1)
                        for child in node.children

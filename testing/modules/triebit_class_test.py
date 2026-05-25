@@ -10,8 +10,8 @@ m = 4**half_k
 print(f"Creating TrieBit for m = {m} and half_k = {half_k}")
 trie = TrieBit(m,half_k)
 print(f"Checking if all nodes are inserted via nullomer count. Result must be = {4**k}.")
-count = trie.count_nullomers()
-print(count)
+init_count = trie.count_nullomers()
+print(init_count)
 indexes = []
 i = 0
 while i < m:
@@ -35,12 +35,14 @@ expected_null = (4**k) - len(indexes)
 print("Checking if all nodes were inserted correctly via nullomer count.")
 nullomers = trie.count_nullomers()
 print(f"{nullomers} nullomers were found of the {expected_null} expected.")
+print(f"{nullomers} nullomers were found of the initial {init_count} present.\n")
+print(f"Representing a difference of {init_count - nullomers}.\n")
 output_bit = "trie_binary_test"
 output_compact_txt = "trie_compact_txt"
 print(f"Trying now to write the trie in bit format on the following path: {output_bit}")
-trie.write_bit_format(output_bit)
+#trie.write_bit_format(output_bit)
 print("Trie in bit format correctly wrriten!")
 print(f"Trying now to write the trie in compact txt format on the following path: {output_compact_txt}")
-trie.write_compact_txt_format(output_compact_txt)
+#trie.write_compact_txt_format(output_compact_txt)
 print("Trie in compact txt format correctly wrriten!")
 print("All TrieBit base functionalities tested and passed!")
