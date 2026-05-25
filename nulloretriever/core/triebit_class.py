@@ -67,34 +67,44 @@ class TrieBit:
             self.index_format = 'Q'
             self.format_code = 8
 
-        def build(node, depth):
-            if depth == half_k - 1:
-                for i in range(4):
-                    if node.children[i] is None:
-                        node.children[i] = TrieBitLeaf(self.m)
-                return
-            for i in range(4):
-                if node.children[i] is None:
-                    node.children[i] = TrieBitNode()
-                    build(node.children[i], depth + 1)
-        build(self.root, 0)
+        #def build(node, depth):
+        #    if depth == half_k - 1:
+        #        for i in range(4):
+        #            if node.children[i] is None:
+        #                node.children[i] = TrieBitLeaf(self.m)
+        #        return
+        #    for i in range(4):
+        #        if node.children[i] is None:
+        #            node.children[i] = TrieBitNode()
+        #            build(node.children[i], depth + 1)
+        #build(self.root, 0)
 
     def insert(self, v1, v2):
         node = self.root
+        count = 0
         for value in v1:
-            node = node.children[value]
-        node.v2_set[v2] = 1
+            count += 1
+            if node.children[value] is None:
+                if count != self.half_k:
+                    node.children[value] = TrieBitNode()
+                else:
+                    node.children[value] = TrieBitLeaf(self.m)
+            if count == self.half_k:
+                node.children[value].v2_set[v2] = 1
+            else:
+                node = node.children[value]
 
     def iterate(self):
         yield from self.root.iterate([])
 
-    def count_nullomers(self, target_length=None):
+    def count_kmers(self, target_length=None):
         half_k = target_length or self.half_k
 
         def dfs(node, depth):
             counter = 0
+            leafs = 0
             if depth == half_k:
-                return node.v2_set.count(0)
+                return node.v2_set.count(1)
 
             return sum(dfs(child, depth + 1)
                        for child in node.children
@@ -142,7 +152,7 @@ class TrieBit:
                         collect_nodes(child_node, path + [child_value])
             collect_nodes(self.root, [])
 
-    def write_compact_txt_format(self, output):
+    def write_txt_format(self, output):
         """Writes a trie paths and relative v2 values in a compact txt format
             Args:
                 self(TrieBit): TrieBit object to be saved in compact binary
