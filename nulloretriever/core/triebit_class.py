@@ -135,17 +135,21 @@ class TrieBit:
 
             def collect_nodes(node, path):
                 if len(path) == self.half_k:
-                    nullomers = [i for i, bit in enumerate(
-                        node.v2_set) if not bit]
+                    #nullomers = [i for i, bit in enumerate(
+                     #   node.v2_set) if not bit]
+                    nullomers = node.v2_set.search(bitarray('0'))
                     if nullomers:
+                        buffer = bytearray()
                         index = sum(base * (4 ** (self.half_k - i - 1))
                                     for i, base in enumerate(path))
-                        f.write(struct.pack(f'<{self.index_format}', index))
-                        f.write(struct.pack(
-                            f'<{self.index_format}', len(nullomers)))
+                        buffer.extend(struct.pack(f'{self.index_format}',
+                                                  index))
+                        buffer.extend(struct.pack(f'{self.index_format}',
+                                                  len(nullomers)))
                         for v2_index in nullomers:
-                            f.write(struct.pack(
-                                f'<{self.index_format}', v2_index))
+                            buffer.extend(struct.pack(f'{self.index_format}',
+                                          v2_index))
+                        f.write(buffer)
                     return
                 for child_value, child_node in enumerate(node.children):
                     if child_node is not None:

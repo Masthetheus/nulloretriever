@@ -1,6 +1,11 @@
 c_script: scripts/c/fasta_kmer_extraction.c
 genomes: data/genomes/
 k:
+- 8
+- 9
+- 10
+- 11
+- 12
 - 13
 - 14
 organisms:
