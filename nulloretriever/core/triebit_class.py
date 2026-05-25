@@ -5,6 +5,10 @@ import struct
 
 
 class TrieBitNode:
+    """Class for non-terminal nodes.
+    Regular node of a Bit Trie class, representing one of the four nucleotides.
+    Each node is composed of up to four referenced children nodes.
+    """
     def __init__(self):
         self.children = [None] * 4  
 
@@ -17,23 +21,46 @@ class TrieBitNode:
                 yield from child.iterate(path + [i])
 
 class TrieBitLeaf:
+    """Class for terminal nodes.
+    Leaf node of a Bit Trie class, representing the last base of given half_k
+    path.
+    It's main difference consists on it's "children", that being an bitarray
+    that represents the possible sequences indexes for given k value.
+    All bits start at 0, representing absence of such sequences.
+    """
     def __init__(self, m):
         self.v2_set = bitarray(m)
         self.v2_set.setall(0)
 
 class TrieBit:
+    """Main class for nullomer optimized search and retrieval.
+    Composite class of multiple BitNodes objects with bit arrays attached to
+    terminal BitLeaf nodes at depth half_k or half_k + 1.
+    Lessen the impact of redundancy in the search by splitting each sequence in
+    two main indexes, the first one for the main path and the second one being
+    represented via bit setting in the respective bit array.
+    Args:
+        m(int): Number of possible indexes for the second split half. Obtained
+        in it's general form by 4**(half_k).
+        half_k(int): Half of the k value. For odd k values, half_k must be
+        (k/2)+1, since, by own convention, the first half balances the division.
+    Return:
+        triebit(trie)S: An initialized TrieBit object with half_k depth.
+    """
     def __init__(self, m, half_k):
         self.root = TrieBitNode()
         self.m = m
         self.half_k = half_k
 
-        if m <= 255:
+        # m-1 aiming to adjust to the 0 index, since m = 4**half_k, m will
+        # represent the total possible indexes, not accounting 0. 
+        if m-1 <= 255:
             self.index_format = 'B'
             self.format_code = 1
-        elif m <= 65535:
+        elif m-1 <= 65535:
             self.index_format = 'H'
             self.format_code = 2
-        elif m <= 4294967295:
+        elif m-1 <= 4294967295:
             self.index_format = 'I'
             self.format_code = 4
         else:
@@ -41,21 +68,15 @@ class TrieBit:
             self.format_code = 8
 
         def build(node, depth):
-            print(f"Depth atual {depth}")
-            if depth == half_k:
+            if depth == half_k - 1:
                 for i in range(4):
-                    print(f"DEBUG: LOOP {i}")
                     if node.children[i] is None:
-                        print(f"Leaf adicionada no idx {i} na depth {depth}")
                         node.children[i] = TrieBitLeaf(self.m)
+                return
             for i in range(4):
-                print("CHILDRENS")
-                print(node.children)
                 if node.children[i] is None:
                     node.children[i] = TrieBitNode()
-                    print(f"Criado node de idx {i} na depth {depth}")
                     build(node.children[i], depth + 1)
-                print(f"DEBUG: terminando loop maior de idx {i}")
         build(self.root, 0)
 
     def insert(self, v1, v2):
@@ -73,7 +94,6 @@ class TrieBit:
         def dfs(node, depth):
             counter = 0
             if depth == half_k:
-                print(f"Returning {node.v2_set.count(0)} null counted .")
                 return node.v2_set.count(0)
 
             return sum(dfs(child, depth + 1)
@@ -89,7 +109,6 @@ class TrieBit:
             Args:
                 self: TrieBit object
                 output(str): path to save the file
-                target_leght(int): size of each halve of the nullomers.
             Returns:
                 file: all nullomers sequences in binary format, where:
                     v1: index of the first half of the sequence, with size half_k (k/2)

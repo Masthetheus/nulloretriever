@@ -5,8 +5,14 @@ if not k:
     k = 10
 else:
     k = int(k)
-half_k = int(k/2)
-m = 4**half_k
+if k % 2 == 0:
+    half_k = int(k/2)
+    print(k, half_k)
+    m = 4**(half_k)
+else:
+    half_k = int((k/2)+1)
+    print(k, half_k)
+    m = 4**(half_k - 1)
 print(f"Creating TrieBit for m = {m} and half_k = {half_k}")
 trie = TrieBit(m,half_k)
 print(f"Checking if all nodes are inserted via nullomer count. Result must be = {4**k}.")
