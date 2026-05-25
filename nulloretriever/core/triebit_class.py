@@ -102,8 +102,7 @@ class TrieBit:
         return dfs(self.root, 0)
 
     def write_bit_format(self, output):
-        """
-            Saves TrieBit to a compact binary format.
+        """Saves TrieBit to a compact binary format.
             Format: [header][nodes...]
             Header: b'TRIE'[4] + version(2) + half_k(2) + format_code(1)
             Args:
@@ -145,13 +144,15 @@ class TrieBit:
 
     def write_compact_txt_format(self, output):
         """Writes a trie paths and relative v2 values in a compact txt format
-        Args:
-            self: TrieBit object
-            output(str): path where the compact txt shall be stored
-        Returns:
-            file: compact .txt file as below:
-                >v1_index(int)
-                v2_values(arr): all v2 index values for the previous v1 value
+            Args:
+                self(TrieBit): TrieBit object to be saved in compact binary
+                output(str): path to save the file
+            Returns:
+                file: compact .txt file as below:
+                    >(char): v1 delimiter, for further automation of file
+                    reading and processing
+                    v1_index(int)
+                    v2_values(array): comma separated v2 index values for the previous v1
         """
         with open(output, 'w') as f:
             def dfs(node, path):
