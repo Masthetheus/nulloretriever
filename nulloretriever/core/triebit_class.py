@@ -67,18 +67,6 @@ class TrieBit:
             self.index_format = 'Q'
             self.format_code = 8
 
-        #def build(node, depth):
-        #    if depth == half_k - 1:
-        #        for i in range(4):
-        #            if node.children[i] is None:
-        #                node.children[i] = TrieBitLeaf(self.m)
-        #        return
-        #    for i in range(4):
-        #        if node.children[i] is None:
-        #            node.children[i] = TrieBitNode()
-        #            build(node.children[i], depth + 1)
-        #build(self.root, 0)
-
     def insert(self, v1, v2):
         node = self.root
         count = 0
@@ -135,9 +123,8 @@ class TrieBit:
 
             def collect_nodes(node, path):
                 if len(path) == self.half_k:
-                    #nullomers = [i for i, bit in enumerate(
-                     #   node.v2_set) if not bit]
                     nullomers = node.v2_set.search(bitarray('0'))
+                    null_count = node.v2_set.count()
                     if nullomers:
                         buffer = bytearray()
                         index = sum(base * (4 ** (self.half_k - i - 1))
@@ -145,7 +132,7 @@ class TrieBit:
                         buffer.extend(struct.pack(f'{self.index_format}',
                                                   index))
                         buffer.extend(struct.pack(f'{self.index_format}',
-                                                  len(nullomers)))
+                                                  null_count))
                         for v2_index in nullomers:
                             buffer.extend(struct.pack(f'{self.index_format}',
                                           v2_index))
@@ -166,7 +153,8 @@ class TrieBit:
                     >(char): v1 delimiter, for further automation of file
                     reading and processing
                     v1_index(int)
-                    v2_values(array): comma separated v2 index values for the previous v1
+                    v2_values(array): comma separated v2 index values for the
+                                    previous v1
         """
         with open(output, 'w') as f:
             def dfs(node, path):
