@@ -2,6 +2,8 @@
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+from nulloretriever.analysis.processing import json_to_csv_mapping
 # from nulloretriever.analysis.results import *
 
 
@@ -42,7 +44,7 @@ def main():
     orgdbt = orgdb.transpose()
     print(orgdbt)
     nulldata = pd.read_csv(
-        'workflow/results/nullomer_statistics_summarized_9_to_14.csv')
+        'workflow/results/nullomer_statistics_summarized_8_to_15.csv')
     print(nulldata.head())
     print(nulldata.columns)
     print(nulldata['counter'])
@@ -60,6 +62,17 @@ def main():
         'k')['composition'].agg(['min', 'max', 'mean'])
     palindromy_max_count = nulldata[nulldata['motifs_palindromy_count'] > 1].groupby(
         'k')['motifs_palindromy_count'].agg(['min', 'max', 'mean'])
+    grouping_columns = {'k', 'organism', 'organism_name',
+                            'tax_id', 'motifs_homopolymers', 'class_id',
+                            'assemblystatus', 'taxid', 'speciestaxid'}
+    df = json_to_csv_mapping(orgdbt, nulldata)
+    print(df)
+    data_columns = list(set(list(nulldata)) - grouping_columns)
+    for column in data_columns:
+        plt.figure(figsize=(12, 6))
+        sns.lineplot(data=nulldata, x='k', y=column, hue="phylum_id")
+        plt.savefig(f'{graph_output}/phylum_id/{column}')
+    pass
     print(media)
     print(values)
     print(cpg_mean)
