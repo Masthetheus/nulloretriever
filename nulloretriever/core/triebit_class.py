@@ -54,13 +54,13 @@ class TrieBit:
 
         # m-1 aiming to adjust to the 0 index, since m = 4**half_k, m will
         # represent the total possible indexes, not accounting 0. 
-        if m-1 <= 255:
+        if half_k <= 4:
             self.index_format = 'B'
             self.format_code = 1
-        elif m-1 <= 65535:
+        elif half_k <= 8:
             self.index_format = 'H'
             self.format_code = 2
-        elif m-1 <= 4294967295:
+        elif half_k <= 9:
             self.index_format = 'I'
             self.format_code = 4
         else:
@@ -125,15 +125,22 @@ class TrieBit:
                 if len(path) == self.half_k:
                     nullomers = node.v2_set.search(bitarray('0'))
                     null_count = node.v2_set.count()
-                    if nullomers:
+                    if nullomers and null_count > 0:
                         buffer = bytearray()
                         index = sum(base * (4 ** (self.half_k - i - 1))
                                     for i, base in enumerate(path))
+                        print("ANTES")
+                        print(f"tamanho do caminho {len(path)}, indice{index}")
+                        print(f"tamanho half {self.half_k}, tamanho m {self.m}")
                         buffer.extend(struct.pack(f'{self.index_format}',
                                                   index))
+                        if null_count == self.m:
+                            null_count = 0
                         buffer.extend(struct.pack(f'{self.index_format}',
                                                   null_count))
                         for v2_index in nullomers:
+                            if v2_index == self.m:
+                                print("ACHOU")
                             buffer.extend(struct.pack(f'{self.index_format}',
                                           v2_index))
                         f.write(buffer)

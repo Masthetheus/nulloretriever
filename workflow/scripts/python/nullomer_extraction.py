@@ -50,6 +50,9 @@ def main():
         sequences_received += 1
         v1 = kmer_idx >> (v2_size*2)
         v2 = kmer_idx & k_mask
+        if v2 == 256 and k == 8:
+            print("HERE")
+            print(k, half_k, m)
         v1_bits = []
         i = half_k - 1
         while i >= 0:

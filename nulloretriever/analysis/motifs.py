@@ -86,19 +86,23 @@ def retrieve_nullomers_cpg_stats(filename):
                     end_g = 0
                     nullomer_byte = f.read(byte_size)
                     nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
-                    cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
-                    if cpg_dict[nullomer_index][2] == 1:
-                        end_g = 1
-                    if end_c and end_g:
-                            cpg_tot +=1
-                    if cpg_exists:
-                        null_with_cpg += 1
-                    elif end_c and end_g:
-                        null_with_cpg += 1
-                    else:
-                        if cpg_dict[nullomer_index][0] > 0:
+                    try:
+                        cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
+                        if cpg_dict[nullomer_index][2] == 1:
+                            end_g = 1
+                        if end_c and end_g:
+                                cpg_tot +=1
+                        if cpg_exists:
                             null_with_cpg += 1
-                    i += 1
+                        elif end_c and end_g:
+                            null_with_cpg += 1
+                        else:
+                            if cpg_dict[nullomer_index][0] > 0:
+                                null_with_cpg += 1
+                        i += 1
+                    except:
+                        print("DEBUG: NAO ACHOU CHAVE")
+                        print(v1,nullomer_index,byte_format, nullomer_byte, half_k)
                 count += nullomer_count     
         except (struct.error, OSError):
             pass

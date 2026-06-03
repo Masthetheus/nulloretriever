@@ -41,7 +41,7 @@ def main():
     args = parser.parse_args()
     k_values = args.kvalues
     mode = args.mode
-    out_path = args.output
+    out_path = args.output+'_result'
     genome_path = "workflow/data/genomes/GCA_033182465_1"
     k = int(k_values[0])
     if k % 2 == 0:

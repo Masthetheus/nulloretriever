@@ -65,9 +65,16 @@ def nullomers_gc_mean(filename):
                 while i < nullomer_count:
                     nullomer_byte = f.read(byte_size)
                     nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
-                    gc_tot += gc_dict[nullomer_index]
+                    if nullomer_index == 256 and half_k == 4:
+                        print("ESSE")
+                        print(half_k, byte_format, nullomer_byte)
+                    try:
+                        gc_tot += gc_dict[nullomer_index]
+                    except:
+                        print("TIRAAA")
+                        print(half_k, byte_format, nullomer_byte)
                     i += 1
-                count += nullomer_count    
+                count += nullomer_count
         except (struct.error, OSError):
             pass
     total_bases = (v1_count*half_k)+(count*half_k)

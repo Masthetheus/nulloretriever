@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_SEQ 40000000
+#define MAX_SEQ 8000000000
 #define MAX_K 20
 
 int main(int argc, char *argv[]) {
