@@ -54,15 +54,32 @@ class TrieBit:
 
         # m-1 aiming to adjust to the 0 index, since m = 4**half_k, m will
         # represent the total possible indexes, not accounting 0. 
-        if half_k <= 4:
+        if half_k < 4:
+            self.index_format = self.counter_format = 'B'
+            self.format_code = self.counter_code = 1
+        elif half_k == 4:
             self.index_format = 'B'
             self.format_code = 1
-        elif half_k <= 8:
+            self.counter_format = 'H'
+            self.counter_code = 2
+        elif half_k < 8:
+            self.index_format = self.counter_format = 'H'
+            self.format_code = self.counter_code = 2
             self.index_format = 'H'
             self.format_code = 2
-        elif half_k <= 9:
+        elif half_k == 8:
+            self.index_format = 'H'
+            self.format_code = 2
+            self.counter_format = 'I'
+            self.counter_code = 4
+        elif half_k < 9:
+            self.index_format = self.counter_format = 'I'
+            self.format_code = self.counter_code = 4
+        elif half_k == 9:
             self.index_format = 'I'
             self.format_code = 4
+            self.counter_format = 'Q'
+            self.counter_code = 8
         else:
             self.index_format = 'Q'
             self.format_code = 8
@@ -119,7 +136,7 @@ class TrieBit:
             f.write(b'TRIE')  # Magic number
             version = 1
             # version, half_k, byte_size
-            f.write(struct.pack('<HHB', version, self.half_k, self.format_code))
+            f.write(struct.pack('<HHBB', version, self.half_k, self.format_code, self.counter_code))
 
             def collect_nodes(node, path):
                 if len(path) == self.half_k:
@@ -129,18 +146,11 @@ class TrieBit:
                         buffer = bytearray()
                         index = sum(base * (4 ** (self.half_k - i - 1))
                                     for i, base in enumerate(path))
-                        print("ANTES")
-                        print(f"tamanho do caminho {len(path)}, indice{index}")
-                        print(f"tamanho half {self.half_k}, tamanho m {self.m}")
                         buffer.extend(struct.pack(f'{self.index_format}',
                                                   index))
-                        if null_count == self.m:
-                            null_count = 0
-                        buffer.extend(struct.pack(f'{self.index_format}',
+                        buffer.extend(struct.pack(f'{self.counter_format}',
                                                   null_count))
                         for v2_index in nullomers:
-                            if v2_index == self.m:
-                                print("ACHOU")
                             buffer.extend(struct.pack(f'{self.index_format}',
                                           v2_index))
                         f.write(buffer)
