@@ -56,10 +56,9 @@ def main():
 
     for stat in stats:
         try:
-            if stat in dispatch_table.keys():
-                func = dispatch_table[stat]
-                if callable(func):
-                    retrieved_stats[stat] = func(nullomer_file)
+            func = dispatch_table[stat]
+            if callable(func):
+                retrieved_stats[stat] = func(nullomer_file)
         except Exception as err:
             print("Unexpected occurence processing the"
                   f"following statistic: {stat}.\n"

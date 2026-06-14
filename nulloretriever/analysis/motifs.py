@@ -89,37 +89,15 @@ def retrieve_nullomers_cpg_stats(filename):
                 nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
                 i = 0
                 while i < nullomer_count:
-                    #end_g = 0
                     nullomer_byte = f.read(byte_size)
                     nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
                     v2_first = nullomer_index >> (((k//2)*2)-2)
                     if v1_last == 2 and v2_first == 3:
                         cpg_tot += 1
-                    #null_idx = v1 << (v2_size*2) | nullomer_index
-                    #full_mask = 15
-                    #mask = 11 # 1011 (CG)
-                    #print(k, k//2, bin(full_mask), bin(mask))
-                    #middle_cg = null_idx >> (((k*2)-4) - k)
-                    #amiddle_cg = (middle_cg & full_mask)
-                    #final = amiddle_cg ^ mask
-                    #if final ==  mask:
-                    #    cpg_tot += 1
-                    # print(f"mask {bin(full_mask)}")
-                    # print(f"origin {bin(null_idx)}")
-                    # print(f"first shift {bin(middle_cg)}")
-                    # print(f"extracted middle {bin(amiddle_cg)}")
-                    # print(f"final {bin(final)}")
-                    # print(f"v1 {v1}, v2 {nullomer_index}, final {null_idx}")
                     try:
                         cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
-                        #if cpg_dict[nullomer_index][2] == 1:
-                        #    end_g = 1
-                        #if end_c and end_g:
-                        #        cpg_tot +=1
                         if cpg_exists:
                             null_with_cpg += 1
-                       # elif end_c and end_g:
-                       #     null_with_cpg += 1
                         else:
                             if cpg_dict[nullomer_index][0] > 0:
                                 null_with_cpg += 1
