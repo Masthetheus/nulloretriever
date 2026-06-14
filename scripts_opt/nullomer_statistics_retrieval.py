@@ -43,10 +43,10 @@ def main():
         gc_mean -> calculate the mean gc of all existing nullomers
     """
     out_path = "teste"
-    stats = ["composition","counter","motifs"]
-    nullomer_file = "teste" 
+    stats = ["motifs"]
+    nullomer_file = "testenullfile_result" 
     organism = "GCA_000412225_2"
-    k_val = 14
+    k_val = 10
     dispatch_table = {
         "composition": nullomers_gc_mean,
         "counter": quick_nullomer_count,

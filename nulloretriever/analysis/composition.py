@@ -45,7 +45,11 @@ def nullomers_gc_mean(filename):
         half_k = struct.unpack('<H', l_bytes)[0]
         byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
         byte_size = struct.unpack('<B', f.read(1))[0]
+        counter_size = struct.unpack('<B', f.read(1))[0]
+        print(byte_size, counter_size)
+
         byte_format = byte_to_format[byte_size]
+        counter_byte_format = byte_to_format[counter_size]
         gc_dict = generate_gc_dict(half_k)
         gc_tot = 0
         v1_count = 0
@@ -57,17 +61,17 @@ def nullomers_gc_mean(filename):
                 v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
                 v1_count += 1
                 gc_tot += gc_dict[v1]
-                nullomer_count_bytes = f.read(byte_size)
-                if len(nullomer_count_bytes) < byte_size:
+                nullomer_count_bytes = f.read(counter_size)
+                if len(nullomer_count_bytes) < counter_size:
                     break
-                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
                 i = 0
+                if nullomer_count == 0 or nullomer_count == 4**half_k:
+                    print("pulou")
+                    continue
                 while i < nullomer_count:
                     nullomer_byte = f.read(byte_size)
                     nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
-                    if nullomer_index == 256 and half_k == 4:
-                        print("ESSE")
-                        print(half_k, byte_format, nullomer_byte)
                     try:
                         gc_tot += gc_dict[nullomer_index]
                     except:
@@ -75,11 +79,14 @@ def nullomers_gc_mean(filename):
                         print(half_k, byte_format, nullomer_byte)
                     i += 1
                 count += nullomer_count
-        except (struct.error, OSError):
+        except struct.error as e:
+            print(e)
             pass
     total_bases = (v1_count*half_k)+(count*half_k)
+    print(f"Total bases {total_bases} and gc_tot {gc_tot}.")
     if total_bases > 0:
         gc_percent = (gc_tot/total_bases)*100
     else:
         gc_percent = 0
+    print(f"v1 count {v1_count}")
     return gc_percent

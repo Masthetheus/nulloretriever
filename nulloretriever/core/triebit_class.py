@@ -47,9 +47,10 @@ class TrieBit:
     Return:
         triebit(trie)S: An initialized TrieBit object with half_k depth.
     """
-    def __init__(self, m, half_k):
+    def __init__(self, m, k, half_k):
         self.root = TrieBitNode()
         self.m = m
+        self.k = k
         self.half_k = half_k
 
         # m-1 aiming to adjust to the 0 index, since m = 4**half_k, m will
@@ -116,6 +117,14 @@ class TrieBit:
                        if child is not None)
         return dfs(self.root, 0)
 
+    def missing_path_idx(self, path):
+        print(path)
+        init_idx = sum(base*(4**(self.half_k - i - 1)) for i, base in
+                       enumerate(path))
+        abs_idx = 4**(self.half_k - len(path))
+        print(f"abs: {abs_idx}")
+        return range(init_idx, init_idx + abs_idx)
+
     def write_bit_format(self, output):
         """Saves TrieBit to a compact binary format.
             Format: [header][nodes...]
@@ -136,12 +145,11 @@ class TrieBit:
             f.write(b'TRIE')  # Magic number
             version = 1
             # version, half_k, byte_size
-            f.write(struct.pack('<HHBB', version, self.half_k, self.format_code, self.counter_code))
-
+            f.write(struct.pack('<HHHBB', version, self.k, self.half_k, self.format_code, self.counter_code))
             def collect_nodes(node, path):
                 if len(path) == self.half_k:
                     nullomers = node.v2_set.search(bitarray('0'))
-                    null_count = node.v2_set.count()
+                    null_count = node.v2_set.count(bitarray('0'))
                     if nullomers and null_count > 0:
                         buffer = bytearray()
                         index = sum(base * (4 ** (self.half_k - i - 1))
@@ -150,7 +158,7 @@ class TrieBit:
                                                   index))
                         buffer.extend(struct.pack(f'{self.counter_format}',
                                                   null_count))
-                        for v2_index in nullomers:
+                        for v2_index in node.v2_set.search(bitarray('0')):
                             buffer.extend(struct.pack(f'{self.index_format}',
                                           v2_index))
                         f.write(buffer)
@@ -158,6 +166,14 @@ class TrieBit:
                 for child_value, child_node in enumerate(node.children):
                     if child_node is not None:
                         collect_nodes(child_node, path + [child_value])
+                    else:
+                        for missing_idx in self.missing_path_idx(path+[child_value]):
+                            buffer = bytearray()
+                            buffer.extend(struct.pack(f'{self.index_format}',
+                                                      missing_idx))
+                            buffer.extend(struct.pack(f'{self.counter_format}',
+                                                      0))
+                            f.write(buffer)
             collect_nodes(self.root, [])
 
     def write_txt_format(self, output):

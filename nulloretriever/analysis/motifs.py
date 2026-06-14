@@ -58,13 +58,18 @@ def retrieve_nullomers_cpg_stats(filename):
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
         l_bytes = f.read(2)
+        k = struct.unpack('<H', l_bytes)[0]
+        l_bytes = f.read(2)
         half_k = struct.unpack('<H', l_bytes)[0]
         byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
         byte_size = struct.unpack('<B', f.read(1))[0]
         byte_format = byte_to_format[byte_size]
+        counter_size = struct.unpack('<B', f.read(1))[0]
+        counter_byte_format = byte_to_format[counter_size]
         cpg_dict = generate_cpg_dict(half_k)
         cpg_tot = 0
         null_with_cpg = 0
+        v2_size = half_k
         try:
             while True:
                 end_c = 0
@@ -73,29 +78,48 @@ def retrieve_nullomers_cpg_stats(filename):
                 if len(index_bytes) < byte_size:
                     break
                 v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
-                if cpg_dict[v1][1] == 1:
-                    end_c = 1
+                v1_last = v1 & 3
+                #if cpg_dict[v1][1] == 1:
+                #    end_c = 1
                 if cpg_dict[v1][0] != 0:
                     cpg_exists = 1
-                nullomer_count_bytes = f.read(byte_size)
+                nullomer_count_bytes = f.read(counter_size)
                 if len(nullomer_count_bytes) < byte_size:
                     break
-                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
                 i = 0
                 while i < nullomer_count:
-                    end_g = 0
+                    #end_g = 0
                     nullomer_byte = f.read(byte_size)
                     nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
+                    v2_first = nullomer_index >> (((k//2)*2)-2)
+                    if v1_last == 2 and v2_first == 3:
+                        cpg_tot += 1
+                    #null_idx = v1 << (v2_size*2) | nullomer_index
+                    #full_mask = 15
+                    #mask = 11 # 1011 (CG)
+                    #print(k, k//2, bin(full_mask), bin(mask))
+                    #middle_cg = null_idx >> (((k*2)-4) - k)
+                    #amiddle_cg = (middle_cg & full_mask)
+                    #final = amiddle_cg ^ mask
+                    #if final ==  mask:
+                    #    cpg_tot += 1
+                    # print(f"mask {bin(full_mask)}")
+                    # print(f"origin {bin(null_idx)}")
+                    # print(f"first shift {bin(middle_cg)}")
+                    # print(f"extracted middle {bin(amiddle_cg)}")
+                    # print(f"final {bin(final)}")
+                    # print(f"v1 {v1}, v2 {nullomer_index}, final {null_idx}")
                     try:
                         cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
-                        if cpg_dict[nullomer_index][2] == 1:
-                            end_g = 1
-                        if end_c and end_g:
-                                cpg_tot +=1
+                        #if cpg_dict[nullomer_index][2] == 1:
+                        #    end_g = 1
+                        #if end_c and end_g:
+                        #        cpg_tot +=1
                         if cpg_exists:
                             null_with_cpg += 1
-                        elif end_c and end_g:
-                            null_with_cpg += 1
+                       # elif end_c and end_g:
+                       #     null_with_cpg += 1
                         else:
                             if cpg_dict[nullomer_index][0] > 0:
                                 null_with_cpg += 1
@@ -120,6 +144,7 @@ def retrieve_nullomers_cpg_stats(filename):
         "global_mean": cpg_global_mean,
         "mean_nullomers_with_cpg": cpg_count_mean
     }
+    print(cpg_stats)
     return cpg_stats
 
 def generate_complement_index_dict(half_k):
@@ -158,11 +183,15 @@ def retrieve_palindrome_stats(filename):
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
         l_bytes = f.read(2)
+        k = struct.unpack('<H', l_bytes)[0]
+        l_bytes = f.read(2)
         half_k = struct.unpack('<H', l_bytes)[0]
         byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
         byte_size = struct.unpack('<B', f.read(1))[0]
         byte_format = byte_to_format[byte_size]
-        total_null = 0 
+        counter_size = struct.unpack('<B', f.read(1))[0]
+        counter_byte_format = byte_to_format[counter_size]
+        total_null = 0
         complement_index_dict = generate_complement_index_dict(half_k)
         try:
             while True:
@@ -171,10 +200,10 @@ def retrieve_palindrome_stats(filename):
                     break
                 v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
                 v1_comp = complement_index_dict[v1]
-                nullomer_count_bytes = f.read(byte_size)
-                if len(nullomer_count_bytes) < byte_size:
+                nullomer_count_bytes = f.read(counter_size)
+                if len(nullomer_count_bytes) < counter_size:
                     break
-                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
                 total_null += nullomer_count
                 # Skip v2 indices (nullomer IDs)
                 total_bytes = nullomer_count * byte_size
@@ -253,10 +282,15 @@ def retrieve_homopolymer_stats(filename):
     with open(filename, 'rb') as f:
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)
-        half_k = struct.unpack('<H', f.read(2))[0]
-        half_k = int(half_k)
+        l_bytes = f.read(2)
+        k = struct.unpack('<H', l_bytes)[0]
+        l_bytes = f.read(2)
+        half_k = struct.unpack('<H', l_bytes)[0]
+        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
         byte_size = struct.unpack('<B', f.read(1))[0]
         byte_format = byte_to_format[byte_size]
+        counter_size = struct.unpack('<B', f.read(1))[0]
+        counter_byte_format = byte_to_format[counter_size]
         homopolymers = generate_homopolymer_array(half_k)
         try:
             while True:
@@ -264,10 +298,10 @@ def retrieve_homopolymer_stats(filename):
                 if len(index_bytes) < byte_size:
                     break
                 v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
-                nullomer_count_bytes = f.read(byte_size)
-                if len(nullomer_count_bytes) < byte_size:
+                nullomer_count_bytes = f.read(counter_size)
+                if len(nullomer_count_bytes) < counter_size:
                     break
-                nullomer_count = struct.unpack(f'<{byte_format}', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
                 total_bytes = nullomer_count * byte_size
                 i = 0
                 if v1 in homopolymers:
