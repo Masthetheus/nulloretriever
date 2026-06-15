@@ -100,6 +100,22 @@ class TrieBit:
             else:
                 node = node.children[value]
 
+    def insert_from_bit(self, v1, v2s):
+        node = self.root
+        count = 0
+        for value in v1:
+            count += 1
+            if node.children[value] is None:
+                if count != self.half_k:
+                    node.children[value] = TrieBitNode()
+                else:
+                    node.children[value] = TrieBitLeaf(self.m)
+            if count == self.half_k:
+                list(map(node.children[value].v2_set.__setitem__, v2s, [1] *
+                         len(v2s)))
+            else:
+                node = node.children[value]
+
     def iterate(self):
         yield from self.root.iterate([])
 

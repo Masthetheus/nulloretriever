@@ -9,6 +9,7 @@ from nulloretriever.analysis.motifs import (
     retrieve_homopolymer_stats
 )
 from nulloretriever.analysis.counter import quick_nullomer_count
+from nulloretriever.analysis.processing import mount_trie_from_bitfile
 
 def motif_wrapper(filename):
     """Calls all functions related to motif statistics."""
@@ -53,7 +54,7 @@ def main():
         "motifs": motif_wrapper
     }
     retrieved_stats = {}
-
+    trie = mount_trie_from_bitfile(nullomer_file)
     for stat in stats:
         try:
             func = dispatch_table[stat]
