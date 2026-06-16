@@ -41,7 +41,7 @@ def generate_cpg_dict(half_k):
         cpg_dict[index] = (cpg,c,g)
     return cpg_dict
 
-def retrieve_nullomers_cpg_stats(filename):
+def retrieve_nullomers_cpg_stats(trie):
     """Retrieve multiple CpG stats for nullomers in a bit file
     Args:
         filename(str): location of bit file containing the nullomeric sequences
@@ -54,22 +54,10 @@ def retrieve_nullomers_cpg_stats(filename):
     Counts the percentage of nullomers that have at least 1 CpG dinucleotide.
     """
     count = 0
-    with open(filename, 'rb') as f:
-        # Skip header
-        f.seek(6)  # Skip magic(4) + version(2)
-        l_bytes = f.read(2)
-        k = struct.unpack('<H', l_bytes)[0]
-        l_bytes = f.read(2)
-        half_k = struct.unpack('<H', l_bytes)[0]
-        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-        byte_size = struct.unpack('<B', f.read(1))[0]
-        byte_format = byte_to_format[byte_size]
-        counter_size = struct.unpack('<B', f.read(1))[0]
-        counter_byte_format = byte_to_format[counter_size]
-        cpg_dict = generate_cpg_dict(half_k)
-        cpg_tot = 0
-        null_with_cpg = 0
-        v2_size = half_k
+    cpg_dict = generate_cpg_dict(half_k)
+    cpg_tot = 0
+    null_with_cpg = 0
+    v2_size = half_k
         try:
             while True:
                 end_c = 0

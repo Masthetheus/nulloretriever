@@ -2,6 +2,7 @@
 
 import struct
 
+
 def calculate_gc_index(index, half_k):
     """Calculate nullomeric gc content for each relative index
     Args:
@@ -17,6 +18,7 @@ def calculate_gc_index(index, half_k):
             gc += 1
     return gc
 
+
 def generate_gc_dict(half_k):
     """Generate a dict pairing each possible index to it's total GC count
     Args:
@@ -30,7 +32,8 @@ def generate_gc_dict(half_k):
         gc_dict[index] = gc
     return gc_dict
 
-def nullomers_gc_mean(filename):
+
+def nullomers_gc_mean(trie):
     """Calculate mean GC% of all nullomeric sequences on given organism
     Args:
         filename(str): TrieBit bit file
@@ -38,54 +41,44 @@ def nullomers_gc_mean(filename):
         gc_percent(float): mean of GC presence in all nullomeric sequences of given organism for given k value
     """
     count = 0
-    with open(filename, 'rb') as f:
-        # Skip header
-        f.seek(6)  # Skip magic(4) + version(2)
-        l_bytes = f.read(2)
-        half_k = struct.unpack('<H', l_bytes)[0]
-        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-        byte_size = struct.unpack('<B', f.read(1))[0]
-        counter_size = struct.unpack('<B', f.read(1))[0]
-        print(byte_size, counter_size)
 
-        byte_format = byte_to_format[byte_size]
-        counter_byte_format = byte_to_format[counter_size]
-        gc_dict = generate_gc_dict(half_k)
-        gc_tot = 0
-        v1_count = 0
-        try:
-            while True:
-                index_bytes = f.read(byte_size)
-                if len(index_bytes) < byte_size:
-                    break
-                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
-                v1_count += 1
-                gc_tot += gc_dict[v1]
-                nullomer_count_bytes = f.read(counter_size)
-                if len(nullomer_count_bytes) < counter_size:
-                    break
-                nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
-                i = 0
-                if nullomer_count == 0 or nullomer_count == 4**half_k:
-                    print("pulou")
-                    continue
-                while i < nullomer_count:
-                    nullomer_byte = f.read(byte_size)
-                    nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
-                    try:
-                        gc_tot += gc_dict[nullomer_index]
-                    except:
-                        print("TIRAAA")
-                        print(half_k, byte_format, nullomer_byte)
-                    i += 1
-                count += nullomer_count
-        except struct.error as e:
-            print(e)
-            pass
-    total_bases = (v1_count*half_k)+(count*half_k)
+    gc_dict = generate_gc_dict(half_k)
+    gc_tot = 0
+    v1_count = 0
+    try:
+        while True:
+            index_bytes = f.read(byte_size)
+            if len(index_bytes) < byte_size:
+                break
+            v1 = struct.unpack(f"<{byte_format}", index_bytes)[0]
+            v1_count += 1
+            gc_tot += gc_dict[v1]
+            nullomer_count_bytes = f.read(counter_size)
+            if len(nullomer_count_bytes) < counter_size:
+                break
+            nullomer_count = struct.unpack(
+                f"<{counter_byte_format}", nullomer_count_bytes
+            )[0]
+            i = 0
+            if nullomer_count == 0 or nullomer_count == 4**half_k:
+                print("pulou")
+                continue
+            while i < nullomer_count:
+                nullomer_byte = f.read(byte_size)
+                nullomer_index = struct.unpack(f"<{byte_format}", nullomer_byte)[0]
+                try:
+                    gc_tot += gc_dict[nullomer_index]
+                except:
+                    print(half_k, byte_format, nullomer_byte)
+                i += 1
+            count += nullomer_count
+    except struct.error as e:
+        print(e)
+        pass
+    total_bases = (v1_count * half_k) + (count * half_k)
     print(f"Total bases {total_bases} and gc_tot {gc_tot}.")
     if total_bases > 0:
-        gc_percent = (gc_tot/total_bases)*100
+        gc_percent = (gc_tot / total_bases) * 100
     else:
         gc_percent = 0
     print(f"v1 count {v1_count}")

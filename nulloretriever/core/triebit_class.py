@@ -133,6 +133,25 @@ class TrieBit:
                        if child is not None)
         return dfs(self.root, 0)
 
+    def count_gc(self):
+        half_k = target_length
+        gc_dict = generate_gc_dict(half_k)
+        gc_tot = 0
+        def collect_nodes(node, path):
+            if len(path) == self.half_k:
+                v2_idxs = node.v2_set.search(1)
+                for v2 in v2_idxs:
+                    gc_tot += gc_dict[v2]
+                null_count = node.v2_set.count(bitarray('1'))
+                index = sum(base * (4 ** (self.half_k - i - 1))
+                            for i, base in enumerate(path))
+                gc_tot += gc_dict[index]
+                return gc_tot
+            for child_value, child_node in enumerate(node.children):
+                if child_node is not None:
+                    collect_nodes(child_node, path + [child_value])
+        collect_nodes(self.root, [])
+
     def missing_path_idx(self, path):
         print(path)
         init_idx = sum(base*(4**(self.half_k - i - 1)) for i, base in
