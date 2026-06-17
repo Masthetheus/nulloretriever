@@ -1,5 +1,6 @@
-configfile: "config/config.yaml"
 import re
+configfile: "config/config.yaml"
+
 
 def needed_threads_k_value(wildcards):
     try:
@@ -16,6 +17,7 @@ def needed_threads_k_value(wildcards):
     else:
         return 8
 
+
 organisms = config["organisms"]
 ks = config["k"]
 paths = list(config["paths"].values())
@@ -25,14 +27,15 @@ benchmark = config["paths"]["bench"].rstrip('/')
 
 rule all:
     input:
-        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms),
+        expand("results/k{k}/{organism}/nullomer_statistics.csv",
+               k=ks, organism=organisms),
         "results/nullomer_statistics_summarized.csv"
     benchmark:
         "{}/complete_snakemake_pipeline_benchmark.txt".format(benchmark)
 
 rule create_base_directories:
     output:
-        expand("{dir}.directories_created", dir = paths)
+        expand("{dir}.directories_created", dir=paths)
     params:
         dirs = paths
     shell:
@@ -47,7 +50,8 @@ rule create_results_directories:
     output:
         "results/k{k}/{organism}/.results_directories_created"
     params:
-        dirs = lambda wildcards: 'results/k' + wildcards.k + '/' + wildcards.organism
+        def dirs(wildcards): return 'results/k' + \
+            wildcards.k + '/' + wildcards.organism
     shell:
         """
         mkdir -p {params.dirs}
@@ -65,12 +69,12 @@ rule generate_c_binaries:
 rule extract_nullomers:
     input:
         "results/k{k}/{organism}/.results_directories_created",
-        bin =  "scripts/c/bin_fasta_kmer_extraction",
-        genome = lambda wildcards: config["genomes"] + wildcards.organism
+        bin = "scripts/c/bin_fasta_kmer_extraction",
+        def genome(wildcards): return config["genomes"] + wildcards.organism
     output:
         "results/k{k}/{organism}/null_bit_format"
     params:
-        k_val = lambda wildcards: wildcards.k
+        def k_val(wildcards): return wildcards.k
     benchmark:
         f"{benchmark}/k" + "{k}/{organism}/extract_nullomers_benchmark.txt"
     threads: needed_threads_k_value
@@ -92,7 +96,8 @@ rule retrieve_nullomer_statistics:
 
 rule summarize_nullomer_statistics:
     input:
-        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms)
+        expand("results/k{k}/{organism}/nullomer_statistics.csv",
+               k=ks, organism=organisms)
     output:
         "results/nullomer_statistics_summarized.csv"
     params:

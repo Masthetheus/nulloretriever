@@ -1,6 +1,7 @@
 """Defines functions aimed at analysis of trivial nullomer extensions."""
 
 import struct
+from collections import defaultdict
 
 from nulloretriever.analysis.parsings import obtain_trie_infos
 
@@ -73,106 +74,6 @@ def assign_v2_to_v1(v2s, half_k):
         for value in v2s_extended:
             v2s_extensions[first_base].append(value)
     return v2s_extensions
-
-
-def first_half_extensions(smaller_v1, v2s, half_k, file, new_counter, trivial_extensions):
-    """Search extended nullomers from a v1 in a file."""
-    v1_extensions = v1_possible_extensions(smaller_v1, half_k)
-    v2s_extensions = []
-    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-    with open(file, 'rb') as f:
-        # Skip header
-        f.seek(8)
-        byte_size = struct.unpack('<B', f.read(1))[0]
-        byte_format = byte_to_format[byte_size]
-        try:
-            while True:
-                bytes_v1 = f.read(byte_size)
-                if len(bytes_v1) < byte_size:
-                    break
-                v1 = struct.unpack(f'<{byte_format}', bytes_v1)[0]
-                nullomer_count_bytes = f.read(byte_size)
-                if len(nullomer_count_bytes) < byte_size:
-                    break
-                nullomer_count = struct.unpack(
-                    f'<{byte_format}', nullomer_count_bytes)[0]
-                if v1 in v1_extensions:
-                    counter = 0
-                    while counter < nullomer_count:
-                        v2_bytes = f.read(byte_size)
-                        v2s_extensions.append(struct.unpack(
-                            f'<{byte_format}', v2_bytes)[0])
-                        counter += 1
-                    set_v2s = set(v2s)
-                    set_v2s_ext = set(v2s_extensions)
-                    extensions = set_v2s_ext & set_v2s
-                    if not extensions:
-                        # found_extensions[v1] = v2s
-                        # found_extensions[v1].append('all_found')
-                        # found_extensions[v1] = 1
-                        continue
-                    else:
-                        # found_extensions[v1] = extensions
-                        new_counter += len(extensions)
-                        trivial_extensions[v1].update(extensions)
-                else:
-                    f.seek(nullomer_count * byte_size, 1)
-        except (struct.error, OSError) as e:
-            print(e)
-            pass
-        return new_counter
-
-
-def second_half_extensions(v1, v2s, half_k, file, new_counter, trivial_extensions):
-    """Search extended nullomers from a v2 in a file."""
-    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-    v1_extensions = v1_possible_extensions(v1, half_k)
-    orig_v2_extensions = assign_v2_to_v1(v2s, half_k)
-    # found_extensions = {}
-    v2s_extensions = set()
-    with open(file, 'rb') as f:
-        # Skip header
-        f.seek(8)
-        byte_size = struct.unpack('<B', f.read(1))[0]
-        byte_format = byte_to_format[byte_size]
-        try:
-            while True:
-                bytes_v1 = f.read(byte_size)
-                if len(bytes_v1) < byte_size:
-                    break
-                v1 = struct.unpack(f'<{byte_format}', bytes_v1)[0]
-                v1_pos = f.tell()
-                nullomer_count_bytes = f.read(byte_size)
-                if len(nullomer_count_bytes) < byte_size:
-                    break
-                nullomer_count = struct.unpack(
-                    f'<{byte_format}', nullomer_count_bytes)[0]
-                if v1 in v1_extensions:
-                    print(f"DEBUG: v1 {v1} at pos {v1_pos}.")
-                    counter = 0
-                    v1_first = v1 >> (((half_k-1)*2) - 2) & 3
-                    while counter < nullomer_count:
-                        v2_bytes = f.read(byte_size)
-                        v2s_extensions.add(struct.unpack(
-                            f'<{byte_format}', v2_bytes)[0])
-                        counter += 1
-                    set_v2s = set(orig_v2_extensions[v1_first])
-                    set_v2s_ext = v2s_extensions
-                    extensions = set_v2s_ext & set_v2s
-                    if not extensions:
-                        continue
-                        # found_extensions[v1] = v2s
-                        # found_extensions[v1].append('all_found')
-                    else:
-                        new_counter += len(extensions)
-                        trivial_extensions[v1].update(extensions)
-                        # found_extensions[v1] = extensions
-                else:
-                    f.seek(nullomer_count * byte_size, 1)
-        except (struct.error, OSError) as e:
-            print(e)
-            pass
-        return new_counter
 
 
 def retrieve_trivial_extensions(v1, v2s, v1_indexes_file2, file2, half_k,
