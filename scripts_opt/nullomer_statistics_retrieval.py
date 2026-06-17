@@ -8,7 +8,6 @@ from nulloretriever.analysis.motifs import (
     retrieve_palindrome_stats,
     retrieve_homopolymer_stats
 )
-from nulloretriever.analysis.counter import quick_nullomer_count
 from nulloretriever.analysis.processing import mount_trie_from_bitfile
 
 def motif_wrapper(filename):
@@ -44,27 +43,31 @@ def main():
         gc_mean -> calculate the mean gc of all existing nullomers
     """
     out_path = "teste"
-    stats = ["motifs"]
+    stats = ["composition"]
     nullomer_file = "testenullfile_result" 
     organism = "GCA_000412225_2"
     k_val = 10
     dispatch_table = {
         "composition": nullomers_gc_mean,
-        "counter": quick_nullomer_count,
         "motifs": motif_wrapper
     }
     retrieved_stats = {}
     trie = mount_trie_from_bitfile(nullomer_file)
-    for stat in stats:
-        try:
-            func = dispatch_table[stat]
-            if callable(func):
-                retrieved_stats[stat] = func(nullomer_file)
-        except Exception as err:
-            print("Unexpected occurence processing the"
-                  f"following statistic: {stat}.\n"
-                  f"Error: {err=}, {type(err)=}")
-            raise
+    print(trie.count_gc())
+    print(trie.retrieve_nullomers_cpg_stats())
+    print(trie.count_kmers())
+    print(trie.retrieve_palindrome_stats())
+    print(trie.retrieve_homopolymer_stats())
+    #for stat in stats:
+    #    try:
+    #        func = dispatch_table[stat]
+    #        if callable(func):
+    #            retrieved_stats[stat] = func(nullomer_file)
+    #    except Exception as err:
+    #        print("Unexpected occurence processing the"
+    #              f"following statistic: {stat}.\n"
+    #              f"Error: {err=}, {type(err)=}")
+    #        raise
 
     base_dict = {}
     base_dict['organism'] = organism

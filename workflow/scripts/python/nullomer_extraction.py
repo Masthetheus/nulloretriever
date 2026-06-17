@@ -23,7 +23,7 @@ def main():
         k_mask = (2**(k-1)) - 1
         v1_size = half_k
         v2_size = k - half_k
-    trie = TrieBit(m, half_k)
+    trie = TrieBit(m, k, half_k)
     proc = subprocess.Popen(
         [snakemake.input.bin,
          genome_path, k_str],

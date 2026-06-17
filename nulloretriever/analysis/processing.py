@@ -61,15 +61,19 @@ def mount_trie_from_bitfile(filename):
                 if len(nullomer_count_bytes) < counter_size:
                     break
                 nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
-                total_bytes = nullomer_count * byte_size
                 v2s = []
-                i = 0
-                while i < nullomer_count:
-                    nullomer_byte = f.read(byte_size)
-                    total_bytes -= byte_size
-                    v2s.append(struct.unpack(f'<{byte_format}',
-                                             nullomer_byte)[0])
-                    i += 1
+                if nullomer_count == 0:
+                    for i in range(m):
+                        v2s.append(i)
+                else:
+                    total_bytes = nullomer_count * byte_size
+                    i = 0
+                    while i < nullomer_count:
+                        nullomer_byte = f.read(byte_size)
+                        total_bytes -= byte_size
+                        v2s.append(struct.unpack(f'<{byte_format}',
+                                                 nullomer_byte)[0])
+                        i += 1
                 trie.insert_from_bit(tuple(v1_bits), v2s)
         except (struct.error, OSError):
             pass

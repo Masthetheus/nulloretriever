@@ -3,6 +3,17 @@
 from bitarray import bitarray
 import struct
 
+from nulloretriever.analysis.composition import (
+    generate_gc_dict
+)
+from nulloretriever.analysis.motifs import (
+    generate_cpg_dict,
+    generate_complement_index_dict,
+    generate_homopolymer_array,
+    retrieve_nullomers_cpg_stats,
+    retrieve_palindrome_stats,
+    retrieve_homopolymer_stats
+)
 
 class TrieBitNode:
     """Class for non-terminal nodes.
@@ -53,37 +64,20 @@ class TrieBit:
         self.k = k
         self.half_k = half_k
 
-        # m-1 aiming to adjust to the 0 index, since m = 4**half_k, m will
-        # represent the total possible indexes, not accounting 0. 
+        byte_to_format = {1:'B', 2:'H', 4:'I', 8:'Q'}
         if half_k < 4:
-            self.index_format = self.counter_format = 'B'
-            self.format_code = self.counter_code = 1
+            idx_sz, cnt_sz = 1, 1
         elif half_k == 4:
-            self.index_format = 'B'
-            self.format_code = 1
-            self.counter_format = 'H'
-            self.counter_code = 2
+            idx_sz, cnt_sz = 1, 2
         elif half_k < 8:
-            self.index_format = self.counter_format = 'H'
-            self.format_code = self.counter_code = 2
-            self.index_format = 'H'
-            self.format_code = 2
+            idx_sz, cnt_sz = 2, 2
         elif half_k == 8:
-            self.index_format = 'H'
-            self.format_code = 2
-            self.counter_format = 'I'
-            self.counter_code = 4
-        elif half_k < 9:
-            self.index_format = self.counter_format = 'I'
-            self.format_code = self.counter_code = 4
-        elif half_k == 9:
-            self.index_format = 'I'
-            self.format_code = 4
-            self.counter_format = 'Q'
-            self.counter_code = 8
+            idx_sz, cnt_sz = 2, 4
         else:
-            self.index_format = 'Q'
-            self.format_code = 8
+            idx_sz, cnt_sz = 4, 8
+
+        self.format_code, self.counter_code = idx_sz, cnt_sz
+        self.index_format, self.counter_format = byte_to_format[idx_sz], byte_to_format[cnt_sz]
 
     def insert(self, v1, v2):
         node = self.root
@@ -133,24 +127,125 @@ class TrieBit:
                        if child is not None)
         return dfs(self.root, 0)
 
-    def count_gc(self):
-        half_k = target_length
-        gc_dict = generate_gc_dict(half_k)
-        gc_tot = 0
-        def collect_nodes(node, path):
-            if len(path) == self.half_k:
-                v2_idxs = node.v2_set.search(1)
-                for v2 in v2_idxs:
-                    gc_tot += gc_dict[v2]
-                null_count = node.v2_set.count(bitarray('1'))
-                index = sum(base * (4 ** (self.half_k - i - 1))
-                            for i, base in enumerate(path))
-                gc_tot += gc_dict[index]
-                return gc_tot
+    def traverse_till_half_k(self, callback):
+        def walk(node, depth, idx_acc):
+            if depth == self.half_k:
+                callback(node, idx_acc)
+                return
             for child_value, child_node in enumerate(node.children):
                 if child_node is not None:
-                    collect_nodes(child_node, path + [child_value])
-        collect_nodes(self.root, [])
+                    next_idx = (idx_acc << 2) | child_value
+                    walk(child_node, depth + 1, next_idx)
+        walk(self.root, 0, 0)
+
+    def count_gc(self):
+        """Count percentage of GC of organism nullomers.
+            Args:
+                self(TrieBit): TrieBit object to be saved in compact binary
+                output(str): path to save the file
+            Returns:
+                gc_percent(float): GC counted/number of nullomer bases
+        """
+        #half_k = target_length
+        gc_dict = generate_gc_dict(self.half_k)
+        gc_tot = 0
+        null_count = 0
+        v1_count = 0
+        def count_gc(node, v1_idx):
+            nonlocal gc_tot, null_count
+            v2_idxs = node.v2_set.search(1)
+            for v2 in v2_idxs:
+                gc_tot += gc_dict[v2]
+            v2_count = node.v2_set.count(bitarray('1'))
+            null_count += v2_count
+            v1_gc = gc_dict[v1_idx]
+            gc_tot += (v1_gc*v2_count)
+            return
+        self.traverse_till_half_k(callback=count_gc)
+
+        tot_bases = null_count * self.k
+        if tot_bases > 0:
+            gc_percent = (gc_tot / tot_bases) * 100
+        else:
+            gc_percent = 0
+        return gc_percent
+
+    def retrieve_nullomers_cpg_stats(self):
+        null_count = 0
+        cpg_dict = generate_cpg_dict(self.half_k)
+        cpg_tot = 0
+        null_with_cpg = 0
+        v2_size = self.half_k
+        v2_shift = (self.half_k - 1) * 2
+        def count_cpg(node, idx_acc):
+            nonlocal cpg_tot, null_count, null_with_cpg
+            v1_cpg = cpg_dict[idx_acc]
+            v1_last = idx_acc & 3
+            v2_idxs = node.v2_set.search(1)
+            for v2 in v2_idxs:
+                v2_first = v2 >> v2_shift
+                has_cpg = False
+                if cpg_dict[v2] != 0:
+                    cpg_tot += cpg_dict[v2]
+                    has_cpg = True
+                if v1_last == 2 and v2_first == 3:
+                    cpg_tot +=1
+                    has_cpg = True
+                if has_cpg:
+                    null_with_cpg += 1
+            v2_count = node.v2_set.count(bitarray('1'))
+            null_count += v2_count
+            cpg_tot += (v1_cpg * v2_count)
+            return
+        self.traverse_till_half_k(callback=count_cpg)
+        try:
+            cpg_count_mean = cpg_tot/null_with_cpg
+        except ZeroDivisionError:
+            cpg_count_mean = 0
+        try:
+            cpg_global_mean = (null_with_cpg/null_count)*100
+        except ZeroDivisionError:
+            cpg_global_mean = 0
+        cpg_stats = {
+            "total": cpg_tot,
+            "nullomers_with_cpg": null_with_cpg,
+            "global_mean": cpg_global_mean,
+            "mean_nullomers_with_cpg": cpg_count_mean
+        }
+        return cpg_stats
+
+    def retrieve_palindrome_stats(self):
+        palindrome_count = 0
+        total_null = 0
+        complement_index_dict = generate_complement_index_dict(self.half_k)
+        def check_palindromy(node, idx_acc):
+            nonlocal palindrome_count, total_null
+            v1_comp = complement_index_dict[idx_acc]
+            total_null += node.v2_set.count(bitarray('1'))
+            if node.v2_set[v1_comp]:
+                palindrome_count += 1
+            return
+        self.traverse_till_half_k(callback=check_palindromy)
+        try:
+            palindrome_relative = (palindrome_count/total_null) * 100
+        except ZeroDivisionError:
+            palindrome_relative = 0
+        palindrome_stats = {
+            "count": palindrome_count,
+            "relative_fraction": palindrome_relative
+        }
+        return palindrome_stats
+
+    def retrieve_homopolymer_stats(self):
+        found_homopolymers = []
+        homopolymers = set(generate_homopolymer_array(self.half_k))
+        def gather_homopolymer(node, idx_acc):
+            nonlocal found_homopolymers
+            if idx_acc in homopolymers and node.v2_set[idx_acc]:
+                found_homopolymers.append(idx_acc)
+            return
+        self.traverse_till_half_k(callback=gather_homopolymer)
+        return found_homopolymers
 
     def missing_path_idx(self, path):
         print(path)

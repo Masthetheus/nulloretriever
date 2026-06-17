@@ -8,16 +8,16 @@ from nulloretriever.analysis.motifs import (
     retrieve_palindrome_stats,
     retrieve_homopolymer_stats
 )
-from nulloretriever.analysis.counter import quick_nullomer_count
+from nulloretriever.analysis.processing import mount_trie_from_bitfile
 from snakemake.script import snakemake
 
 
 def motif_wrapper(filename):
     """Calls all functions related to motif statistics."""
     motifs_results = {
-        "cpg": retrieve_nullomers_cpg_stats(filename),
-        "palindromy": retrieve_palindrome_stats(filename),
-        "homopolymers": retrieve_homopolymer_stats(filename)
+        "cpg": trie.retrieve_nullomers_cpg_stats(),
+        "palindromy": trie.retrieve_palindrome_stats(),
+        "homopolymers": trie.retrieve_homopolymer_stats()
     }
     return motifs_results
 
@@ -49,25 +49,28 @@ def main():
     nullomer_file = snakemake.input[0]
     organism = snakemake.wildcards.organism
     k_val = snakemake.wildcards.k
+    trie = mount_trie_from_bitfile(nullomer_file)
     dispatch_table = {
-        "composition": nullomers_gc_mean,
-        "counter": quick_nullomer_count,
+        "composition": trie.count_gc(),
+        "counter": trie.count_kmers(),
         "motifs": motif_wrapper
     }
     retrieved_stats = {}
 
-    for stat in stats:
-        try:
-            if stat in dispatch_table.keys():
-                func = dispatch_table[stat]
-                if callable(func):
-                    retrieved_stats[stat] = func(nullomer_file)
-        except Exception as err:
-            print("Unexpected occurence processing the"
-                  f"following statistic: {stat}.\n"
-                  f"Error: {err=}, {type(err)=}")
-            raise
+#    for stat in stats:
+#        try:
+#            if stat in dispatch_table.keys():
+#                func = dispatch_table[stat]
+#                if callable(func):
+#                    retrieved_stats[stat] = func(nullomer_file)
+#        except Exception as err:
+#            print("Unexpected occurence processing the"
+#                  f"following statistic: {stat}.\n"
+#                  f"Error: {err=}, {type(err)=}")
+#            raise
 
+    for stat in stats:
+        retrieved_stats[stat] = dispatch_table[stat]
     base_dict = {}
     base_dict['organism'] = organism
     base_dict['k'] = k_val
