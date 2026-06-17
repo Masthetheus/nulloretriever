@@ -44,7 +44,8 @@ def main():
     """
     out_path = "teste"
     stats = ["composition"]
-    nullomer_file = "testenullfile_result" 
+    nullomer_file = "testenullfile_result"
+    anchor_trie = "othernullfile_result"
     organism = "GCA_000412225_2"
     k_val = 10
     dispatch_table = {
@@ -53,11 +54,13 @@ def main():
     }
     retrieved_stats = {}
     trie = mount_trie_from_bitfile(nullomer_file)
+    second_trie = mount_trie_from_bitfile(anchor_trie)
     print(trie.count_gc())
     print(trie.retrieve_nullomers_cpg_stats())
     print(trie.count_kmers())
     print(trie.retrieve_palindrome_stats())
     print(trie.retrieve_homopolymer_stats())
+    print(trie.retrieve_prime_null(second_trie))
     #for stat in stats:
     #    try:
     #        func = dispatch_table[stat]

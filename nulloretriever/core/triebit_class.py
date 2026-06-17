@@ -138,6 +138,17 @@ class TrieBit:
                     walk(child_node, depth + 1, next_idx)
         walk(self.root, 0, 0)
 
+    def traverse_till_custom(self, callback, target_idx):
+        def walk(node, depth, idx_acc):
+            i = 1
+            if depth == self.half_k:
+                callback(node, idx_acc)
+                return
+            else:
+                next_idx = (target_idx >> (2*(self.half_k - depth - 1)) & 3)
+                walk(node.children[next_idx], depth+1, idx_acc)
+        walk(self.root, 0, 0)
+
     def count_gc(self):
         """Count percentage of GC of organism nullomers.
             Args:
@@ -246,6 +257,41 @@ class TrieBit:
             return
         self.traverse_till_half_k(callback=gather_homopolymer)
         return found_homopolymers
+
+    def retrieve_v1_list(self):
+        v1s = bitarray(self.m)
+        def gather_v1s(node, idx_acc):
+            nonlocal v1s
+            v1s[idx_acc] = 1
+            return
+        self.traverse_till_half_k(callback=gather_v1s)
+        return v1s
+
+    def retrieve_v2_list(self, target_idx):
+        v2s = bitarray(self.m)
+        def gather_v2s(node,idx_acc):
+            nonlocal v2s
+            v2s = node.v2_set
+            return
+        self.traverse_till_custom(target_idx=target_idx, callback=gather_v2s)
+        return v2s
+
+    def retrieve_prime_null(self, second_trie):
+        v1s = self.retrieve_v1_list()
+        second_v1s = second_trie.retrieve_v1_list()
+        common = v1s & second_v1s
+        common_idxs = list(common.search(bitarray('1')))
+        common_v2s = {}
+        count = 0
+        for v1 in common_idxs:
+            v2s = self.retrieve_v2_list(v1)
+            second_v2s = self.retrieve_v2_list(v1)
+            common_v2s_array = v2s & second_v2s
+            common_v2s_idxs = list(common_v2s_array.search(bitarray('1')))
+            common_v2s[v1] = common_v2s_idxs
+            count += 1
+        print(f"length {len(common_v2s_idxs)}")
+        return common_v2s
 
     def missing_path_idx(self, path):
         print(path)
