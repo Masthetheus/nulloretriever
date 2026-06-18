@@ -45,13 +45,15 @@ int main(int argc, char *argv[]) {
                                 // Process forward strand
                                 process_kmers(seq, seqlen, k, seen,
                                               bytes_per_sequence, &tot);
-
-                                // Generate and process reverse complement
-                                char *revcomp_seq = generate_revcomp_seq(seqlen, seq);
-                                process_kmers(revcomp_seq, seqlen, k, seen,
+                                process_rev(seq, seqlen, k, seen,
                                               bytes_per_sequence, &tot);
 
-                                free(revcomp_seq);
+                                // Generate and process reverse complement
+                                //char *revcomp_seq = generate_revcomp_seq(seqlen, seq);
+                                //process_kmers(revcomp_seq, seqlen, k, seen,
+                                //              bytes_per_sequence, &tot);
+
+                                //free(revcomp_seq);
                                 seqlen = 0;
                         }
                 } else {
@@ -65,10 +67,10 @@ int main(int argc, char *argv[]) {
         // Process last sequence
         if (seqlen > 0) {
                 process_kmers(seq, seqlen, k, seen, bytes_per_sequence, &tot);
-                char *revcomp_seq = generate_revcomp_seq(seqlen, seq);
-                process_kmers(revcomp_seq, seqlen, k, seen,
-                              bytes_per_sequence, &tot);
-                free(revcomp_seq);
+                //char *revcomp_seq = generate_revcomp_seq(seqlen, seq);
+                //process_kmers(revcomp_seq, seqlen, k, seen,
+                //              bytes_per_sequence, &tot);
+                //free(revcomp_seq);
         }
         fprintf(stderr, "DEBUG: Program finished\n");
         free(seen);

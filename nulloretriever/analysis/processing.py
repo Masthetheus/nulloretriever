@@ -7,18 +7,31 @@ from nulloretriever.core.triebit_class import TrieBit
 
 def json_to_csv_mapping(df_json, df_csv):
     """Add all json columns to a csv df."""
+    df_json.index = df_json.index.str.replace('.', '_', regex = False)
+    print(df_json)
+    df_json.columns = df_json.columns.str.lower()
+    df_json.columns = df_json.columns.str.replace(' ', '_')
     columns_to_add = list(df_json)
+    print(f"COLUMNS TO ADD:")
     print(columns_to_add)
-    print(df_json.index())
+    print(f"COLUMNS JSON:")
+    print(df_json.columns)
+    print(f"COLUMNS CSV:")
+    print(df_csv.columns)
     for column in columns_to_add:
+        print(column)
+        print("========== INICIO ==========")
+        print(df_json.columns)
+        print(df_csv.columns)
         try:
-            mapping = df_json.set_index('e')[column].replace(".","_")
+            mapping = df_json[column]
             print("\n")
-            print(mapping)
-            column = column.lower().replace(" ", "_")
             df_csv[column] = df_csv['organism'].map(mapping)
-        except Exception:
-            print(f"Colum {column} Nao foi")
+            print(df_csv[column])
+        except Exception as e:
+            print(f"Column {column} Nao foi")
+            print(f"Razão {e} e motivo {type(e).__name__}")
+            print('\n')
             continue
     return df_csv
 
