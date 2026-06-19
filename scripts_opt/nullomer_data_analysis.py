@@ -48,19 +48,26 @@ def main():
     print(nulldata.head())
     print(nulldata.columns)
     print(nulldata['counter'])
+    df = json_to_csv_mapping(orgdbt, nulldata)
+    print(df.columns)
     media = nulldata.groupby('k')['counter'].sum()
     values = nulldata.groupby('k')['counter'].apply(lambda x: (x > 0).sum())
+    comp_mean = nulldata.groupby('k')['composition'].mean()
+    print(df['speciesname'])
+    df['genome_length'] = df['genome_length'].astype(int)
+    df.loc[:,'max_poss_kmer'] = df.loc[:,'genome_length'] - df.loc[:,'k'] + 1
+    df.loc['null_poss_perc'] = (df.loc[:,'counter']/df.loc[:,'max_poss_kmer'])*100
+    maxpo = nulldata.groupby('k')['composition'].mean()
+    composition_max_count = nulldata[nulldata['composition'] > 1].groupby(
+        'k')['composition'].agg(['min', 'max', 'mean'])
     try:
         cpg_mean = nulldata.groupby('k')['motifs_cpg_global_mean'].mean()
         with_cpg_mean = nulldata.groupby(
             'k')['motifs_cpg_mean_nullomers_with_cpg'].mean()
-        comp_mean = nulldata.groupby('k')['composition'].mean()
         max_count = nulldata[nulldata['counter'] > 1].groupby(
             'k')['counter'].agg(['min', 'max', 'mean'])
         cpg_max_count = nulldata[nulldata['motifs_cpg_total'] > 1].groupby(
             'k')['motifs_cpg_total'].agg(['min', 'max', 'mean'])
-        composition_max_count = nulldata[nulldata['composition'] > 1].groupby(
-            'k')['composition'].agg(['min', 'max', 'mean'])
         palindromy_max_count = nulldata[nulldata['motifs_palindromy_count'] > 1].groupby(
             'k')['motifs_palindromy_count'].agg(['min', 'max', 'mean'])
     except:
@@ -68,15 +75,15 @@ def main():
     grouping_columns = {'k', 'organism', 'organism_name',
                             'tax_id', 'class_id',
                             'assemblystatus', 'taxid', 'speciestaxid'}
-    df = json_to_csv_mapping(orgdbt, nulldata)
     df.to_csv("treated_final_results.csv")
     print(df)
-#    data_columns = list(set(list(nulldata)) - grouping_columns)
-#    for column in data_columns:
-#        plt.figure(figsize=(12, 6))
-#        sns.lineplot(data=nulldata, x='k', y=column, hue="phylum_id")
-#        plt.savefig(f'{graph_output}/phylum_id/{column}')
-#    pass
+    data_columns = list(set(list(nulldata)) - grouping_columns)
+    graph_output = "workflow/results/graphs"
+    for column in data_columns:
+        plt.figure(figsize=(12, 6))
+        sns.lineplot(data=nulldata, x='k', y=column, hue="phylum_id")
+        plt.savefig(f'{graph_output}/{column}')
+    pass
 #    print(media)
 #    print(values)
 #    print(cpg_mean)
