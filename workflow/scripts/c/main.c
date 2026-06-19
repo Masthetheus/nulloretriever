@@ -45,8 +45,8 @@ int main(int argc, char *argv[]) {
                                 // Process forward strand
                                 process_kmers(seq, seqlen, k, seen,
                                               bytes_per_sequence, &tot);
-                                process_rev(seq, seqlen, k, seen,
-                                              bytes_per_sequence, &tot);
+                                //process_rev(seq, seqlen, k, seen,
+                                //              bytes_per_sequence, &tot);
 
                                 // Generate and process reverse complement
                                 //char *revcomp_seq = generate_revcomp_seq(seqlen, seq);

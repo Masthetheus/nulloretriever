@@ -7,27 +7,23 @@
 #include <string.h>
 
 uint64_t encode_kmer(const char *seq, int k) {
-        uint64_t val = 0, revval = 0;
+        uint64_t val = 0;
         for (int i = 0; i < k; i++) {
                 val <<= 2;
                 val |= (seq[i]>>1) & 3; 
-                revval |= ((seq[i]>>1) & 3) ^ 2; 
-                printf("revval: %ld.", revval);
-                revval >>= 2;
                 }
-        printf("FINAL revval: %ld.", revval);
         return val;
 }
 
-uint64_t encode_rev(const char *seq, int k, int seqlen, int cont) {
-        uint64_t val = 0;
-        seqlen--;
+uint64_t encode_rev(uint64_t val, int k) {
+        uint64_t revval = 0;
         for (int i = 0; i < k; i++) {
-                val <<= 2;
-                uint64_t base = (seq[seqlen - i - cont] >> 1) & 3;
-                val |= base ^ 2; 
+                uint64_t base = val & 3;
+                uint64_t basecomp = base ^ 2;
+                revval = (revval << 2) | basecomp; 
+                val >>= 2;
                 }
-        return val;
+        return revval;
 }
 
 
