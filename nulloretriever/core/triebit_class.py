@@ -293,6 +293,19 @@ class TrieBit:
         print(f"length {len(common_v2s_idxs)}")
         return common_v2s
 
+    def find_root_v2(self):
+        v2s = bitarray(self.m)
+        def v2_minus_last(node,idx_acc):
+            nonlocal v2s
+            v2_idxs = list(node.v2_set.search(1))
+            for v2 in v2_idxs:
+                print(v2)
+                v2_minus = v2 >> 2
+                print(f"v2 {v2} and minud {v2_minus}")
+                v2s[v2_minus] = 1
+                return
+        self.traverse_till_half_k(callback=v2_minus_last)
+        return v2s
     def missing_path_idx(self, path):
         print(path)
         init_idx = sum(base*(4**(self.half_k - i - 1)) for i, base in

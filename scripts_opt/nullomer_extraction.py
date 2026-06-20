@@ -42,7 +42,7 @@ def main():
     k_values = args.kvalues
     mode = args.mode
     out_path = args.output+'_result'
-    genome_path = "workflow/data/genomes/GCF_000001405_40"
+    genome_path = "workflow/data/genomes/GCF_000146045_2"
     k = int(k_values[0])
     if k % 2 == 0:
         half_k = int(k/2)
@@ -57,7 +57,7 @@ def main():
         v2_size = k - half_k
     trie = TrieBit(m, k, half_k)
     proc = subprocess.Popen(
-        ["workflow/scripts/c/c_kmer_extraction_novo",
+        ["workflow/scripts/c/c_extractor",
          genome_path, k_values[0]],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
