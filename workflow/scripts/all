@@ -1,0 +1,107 @@
+#include "../h/kmer_extraction.h"
+#include "../h/kmerio.h"
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_SEQ 40000000
+#define MAX_K 20
+#define BUFFER_SIZE 65536
+
+static int buff_tot = 0;
+static unsigned char write_buffer[BUFFER_SIZE];
+static size_t buffer_position = 0;
+
+int main(int argc, char *argv[]) {
+        if (argc != 3) {
+                fprintf(stderr, "Usage: %s <fasta_file> <k>\n", argv[0]);
+                return 1;
+        }
+
+        fprintf(stderr, "DEBUG: Starting program with file=%s, k=%s\n", argv[1],
+                argv[2]);
+
+        FILE *f = fopen(argv[1], "r");
+        if (!f) {
+                perror("Error opening file!");
+                return 1;
+        }
+
+        int k = atoi(argv[2]);
+        fprintf(stderr, "DEBUG: k=%d\n", k);
+        uint64_t total = 1ULL << (2 * k);
+        char *seen = calloc((total + 7) / 8, 1);
+        char *seq = malloc(MAX_SEQ);
+        int seqlen = 0;
+        char line[1024];
+        int line_count = 0;
+        int bytes_per_sequence = (k * 2 + 7) / 8;
+        int tot = 0;
+
+        while (fgets(line, sizeof(line), f)) {
+                line_count++;
+                if (line[0] == '>') {
+                        fprintf(stderr,
+                                "DEBUG: Found header at line %d: %.50s\n",
+                                line_count, line);
+                        if (seqlen > 0) {
+                                // Process forward strand
+                                process_kmers(seq, seqlen, k, seen,
+                                              bytes_per_sequence, &tot);
+
+                                // Generate and process reverse complement
+                                char *revcomp_seq = generate_revcomp_seq(seqlen, seq);
+                                process_kmers(revcomp_seq, seqlen, k, seen,
+                                              bytes_per_sequence, &tot);
+                                free(revcomp_seq);
+
+                                seqlen = 0;
+                        }
+                } else {
+                        char *p = line;
+                        while (*p && *p != '\n' && *p != '\r') {
+                                seq[seqlen++] = *p++;
+                                fprintf(stderr,"DEBUG: seq: %s at index %d. p = %s\n", seq, seqlen, p);
+                        }
+                }
+        }
+
+        // Process last sequence
+        if (seqlen > 0) {
+                process_kmers(seq, seqlen, k, seen, bytes_per_sequence, &tot);
+                char *revcomp_seq = malloc(seqlen + 1);
+                for (int i = 0; i < seqlen; i++) {
+                        char b = seq[seqlen - 1 - i];
+                        switch (b) {
+                        case 'A':
+                                revcomp_seq[i] = 'T';
+                                break;
+                        case 'C':
+                                revcomp_seq[i] = 'G';
+                                break;
+                        case 'G':
+                                revcomp_seq[i] = 'C';
+                                break;
+                        case 'T':
+                                revcomp_seq[i] = 'A';
+                                break;
+                        default:
+                                revcomp_seq[i] = 'N';
+                        }
+                }
+                revcomp_seq[seqlen] = '\0';
+                process_kmers(revcomp_seq, seqlen, k, seen, bytes_per_sequence,
+                              &tot);
+                free(revcomp_seq);
+        }
+        //flush_output_buffer(&buff_tot);
+        fprintf(stderr, "DEBUG: Program finished\n");
+        free(seen);
+        free(seq);
+        fclose(f);
+        fprintf(stderr, "DEBUG: Total of %d sequences inserted\n", tot);
+        fprintf(stderr, "DEBUG: Total of %d buffers sent", buff_tot);
+        return 0;
+}

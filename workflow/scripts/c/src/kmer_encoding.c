@@ -1,4 +1,4 @@
-#include "../h/kmer_encoding.h"
+#include "../include/kmer_encoding.h"
 
 #include <stdio.h>
 #include <stdlib.h>

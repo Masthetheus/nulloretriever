@@ -1,4 +1,4 @@
-#include "../h/fasta_kmer_extraction.h"
+#include "../include/fasta_kmer_extraction.h"
 
 #include <stdio.h>
 #include <stdlib.h>

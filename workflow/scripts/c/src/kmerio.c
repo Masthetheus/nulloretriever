@@ -1,4 +1,4 @@
-#include "../h/kmerio.h"
+#include "../include/kmerio.h"
 
 #define BUFFER_SIZE 65536
 

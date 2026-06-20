@@ -3,10 +3,10 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include "../h/kmer_extraction.h"
-#include "../h/kmer_encoding.h"
-#include "../h/kmerio.h"
-#include "../h/chained_bitarray.h"
+#include "../include/kmer_extraction.h"
+#include "../include/kmer_encoding.h"
+#include "../include/kmerio.h"
+#include "../include/chained_bitarray.h"
 
 #define MAX_SEQ 40000000
 
