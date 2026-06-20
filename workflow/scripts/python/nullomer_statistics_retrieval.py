@@ -12,7 +12,7 @@ from nulloretriever.analysis.processing import mount_trie_from_bitfile
 from snakemake.script import snakemake
 
 
-def motif_wrapper(filename):
+def motif_wrapper(trie):
     """Calls all functions related to motif statistics."""
     motifs_results = {
         "cpg": trie.retrieve_nullomers_cpg_stats(),
@@ -53,7 +53,7 @@ def main():
     dispatch_table = {
         "composition": trie.count_gc(),
         "counter": trie.count_kmers(),
-        "motifs": motif_wrapper
+        "motifs": motif_wrapper(trie)
     }
     retrieved_stats = {}
 

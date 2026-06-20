@@ -10,12 +10,12 @@ from nulloretriever.analysis.motifs import (
 )
 from nulloretriever.analysis.processing import mount_trie_from_bitfile
 
-def motif_wrapper(filename):
+def motif_wrapper(trie):
     """Calls all functions related to motif statistics."""
     motifs_results = {
-        "cpg": retrieve_nullomers_cpg_stats(filename),
-        "palindromy": retrieve_palindrome_stats(filename),
-        "homopolymers": retrieve_homopolymer_stats(filename)
+        "cpg": trie.retrieve_nullomers_cpg_stats(),
+        "palindromy": trie.retrieve_palindrome_stats(),
+        "homopolymers": trie.retrieve_homopolymer_stats()
     }
     return motifs_results
 
@@ -42,36 +42,37 @@ def main():
     Composition:
         gc_mean -> calculate the mean gc of all existing nullomers
     """
-    out_path = "teste"
-    stats = ["composition"]
-    nullomer_file = "testenullfile_result"
+    out_path = "retrieval_test.csv"
+    stats = ["composition", "motifs"]
+    nullomer_file = "workflow/results/k10/GCA_000412225_2/null_bit_format"
     anchor_trie = "othernullfile_result"
     organism = "GCA_000412225_2"
     k_val = 10
+    half_k = k_val//2
+    trie = mount_trie_from_bitfile(nullomer_file)
     dispatch_table = {
-        "composition": nullomers_gc_mean,
-        "motifs": motif_wrapper
+        "composition": trie.count_gc(),
+        "counter": trie.count_kmers(),
+        "motifs": motif_wrapper(trie)
     }
     retrieved_stats = {}
-    trie = mount_trie_from_bitfile(nullomer_file)
-    second_trie = mount_trie_from_bitfile(anchor_trie)
-    print(trie.count_gc())
-    print(trie.retrieve_nullomers_cpg_stats())
-    print(trie.count_kmers())
-    print(trie.retrieve_palindrome_stats())
-    print(trie.retrieve_homopolymer_stats())
-    print(trie.retrieve_prime_null(second_trie))
-    #for stat in stats:
-    #    try:
-    #        func = dispatch_table[stat]
-    #        if callable(func):
-    #            retrieved_stats[stat] = func(nullomer_file)
-    #    except Exception as err:
-    #        print("Unexpected occurence processing the"
-    #              f"following statistic: {stat}.\n"
-    #              f"Error: {err=}, {type(err)=}")
-    #        raise
 
+#    for stat in stats:
+#        try:
+#            if stat in dispatch_table.keys():
+#                func = dispatch_table[stat]
+#                if callable(func):
+#                    retrieved_stats[stat] = func(nullomer_file)
+#        except Exception as err:
+#            print("Unexpected occurence processing the"
+#                  f"following statistic: {stat}.\n"
+#                  f"Error: {err=}, {type(err)=}")
+#            raise
+
+    for stat in stats:
+        retrieved_stats[stat] = dispatch_table[stat]
+    print(retrieved_stats)
+    print(retrieved_stats["motifs"])
     base_dict = {}
     base_dict['organism'] = organism
     base_dict['k'] = k_val

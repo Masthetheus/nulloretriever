@@ -226,15 +226,27 @@ class TrieBit:
         return cpg_stats
 
     def retrieve_palindrome_stats(self):
+        if self.k%2 !=0:
+            palindrome_stats = {
+                "count": 0,
+                "relative_fraction": 0
+            }
+            return palindrome_stats
         palindrome_count = 0
         total_null = 0
         complement_index_dict = generate_complement_index_dict(self.half_k)
+        print(complement_index_dict)
         def check_palindromy(node, idx_acc):
             nonlocal palindrome_count, total_null
             v1_comp = complement_index_dict[idx_acc]
             total_null += node.v2_set.count(bitarray('1'))
-            if node.v2_set[v1_comp]:
-                palindrome_count += 1
+            try:
+                if node.v2_set[v1_comp]:
+                    palindrome_count += 1
+            except Exception as e:
+                print(e)
+                print(f"v2 set len {len(node.v2_set)}")
+                print(f"k {self.k} and half {self.half_k}")
             return
         self.traverse_till_half_k(callback=check_palindromy)
         try:
@@ -249,6 +261,8 @@ class TrieBit:
 
     def retrieve_homopolymer_stats(self):
         found_homopolymers = []
+        if self.k%2 != 0:
+            return found_homopolymers
         homopolymers = set(generate_homopolymer_array(self.half_k))
         def gather_homopolymer(node, idx_acc):
             nonlocal found_homopolymers
