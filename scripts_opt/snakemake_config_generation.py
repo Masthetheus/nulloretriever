@@ -74,10 +74,6 @@ def main():
             pre_existing_data = yaml.safe_load(f)
             try:
                 yaml_dump['organisms'] = pre_existing_data['organisms']
-                org_set = set(yaml_dump['organisms'])
-                for org_list in organisms:
-                    org_set.update(organisms[org_list])
-                yaml_dump['organisms'] = list(org_set)
             except Exception as e:
                 yaml_dump['organisms'] = ''
                 print(f"The following exception was encountered: {e}")

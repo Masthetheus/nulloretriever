@@ -2,8 +2,6 @@
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-from nulloretriever.analysis.processing import json_to_csv_mapping
 # from nulloretriever.analysis.results import *
 
 
@@ -44,57 +42,35 @@ def main():
     orgdbt = orgdb.transpose()
     print(orgdbt)
     nulldata = pd.read_csv(
-        'workflow/results/nullomer_statistics_summarized.csv')
+        'workflow/results/nullomer_statistics_summarized_9_to_14.csv')
     print(nulldata.head())
     print(nulldata.columns)
     print(nulldata['counter'])
-    df = json_to_csv_mapping(orgdbt, nulldata)
-    print(df.columns)
     media = nulldata.groupby('k')['counter'].sum()
     values = nulldata.groupby('k')['counter'].apply(lambda x: (x > 0).sum())
+    cpg_mean = nulldata.groupby('k')['motifs_cpg_global_mean'].mean()
+    with_cpg_mean = nulldata.groupby(
+        'k')['motifs_cpg_mean_nullomers_with_cpg'].mean()
     comp_mean = nulldata.groupby('k')['composition'].mean()
-    print(df['speciesname'])
-    df['genome_length'] = df['genome_length'].astype(int)
-    df.loc[:,'max_poss_kmer'] = df.loc[:,'genome_length'] - df.loc[:,'k'] + 1
-    df.loc['null_poss_perc'] = (df.loc[:,'counter']/df.loc[:,'max_poss_kmer'])*100
-    maxpo = nulldata.groupby('k')['composition'].mean()
+    max_count = nulldata[nulldata['counter'] > 1].groupby(
+        'k')['counter'].agg(['min', 'max', 'mean'])
+    cpg_max_count = nulldata[nulldata['motifs_cpg_total'] > 1].groupby(
+        'k')['motifs_cpg_total'].agg(['min', 'max', 'mean'])
     composition_max_count = nulldata[nulldata['composition'] > 1].groupby(
         'k')['composition'].agg(['min', 'max', 'mean'])
-    try:
-        cpg_mean = nulldata.groupby('k')['motifs_cpg_global_mean'].mean()
-        with_cpg_mean = nulldata.groupby(
-            'k')['motifs_cpg_mean_nullomers_with_cpg'].mean()
-        max_count = nulldata[nulldata['counter'] > 1].groupby(
-            'k')['counter'].agg(['min', 'max', 'mean'])
-        cpg_max_count = nulldata[nulldata['motifs_cpg_total'] > 1].groupby(
-            'k')['motifs_cpg_total'].agg(['min', 'max', 'mean'])
-        palindromy_max_count = nulldata[nulldata['motifs_palindromy_count'] > 1].groupby(
-            'k')['motifs_palindromy_count'].agg(['min', 'max', 'mean'])
-    except:
-        print("Some stats not found lol")
-    grouping_columns = {'k', 'organism', 'organism_name',
-                            'tax_id', 'class_id',
-                            'assemblystatus', 'taxid', 'speciestaxid'}
-    df.to_csv("treated_final_results.csv")
-    print(df)
-    data_columns = list(set(list(nulldata)) - grouping_columns)
-    graph_output = "workflow/results/graphs"
-    for column in data_columns:
-        plt.figure(figsize=(12, 6))
-        sns.lineplot(data=nulldata, x='k', y=column, hue="phylum_id")
-        plt.savefig(f'{graph_output}/{column}')
-    pass
-#    print(media)
-#    print(values)
-#    print(cpg_mean)
-#    print(comp_mean)
-#    print(with_cpg_mean)
-#    print(max_count)
-#    print(cpg_max_count)
-#    print(composition_max_count)
-#    print(palindromy_max_count)
-#    print(nulldata[['k', 'counter']])
-#
+    palindromy_max_count = nulldata[nulldata['motifs_palindromy_count'] > 1].groupby(
+        'k')['motifs_palindromy_count'].agg(['min', 'max', 'mean'])
+    print(media)
+    print(values)
+    print(cpg_mean)
+    print(comp_mean)
+    print(with_cpg_mean)
+    print(max_count)
+    print(cpg_max_count)
+    print(composition_max_count)
+    print(palindromy_max_count)
+    print(nulldata[['k', 'counter']])
+
 
 if __name__ == "__main__":
     main()
