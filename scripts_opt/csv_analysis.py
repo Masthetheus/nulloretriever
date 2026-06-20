@@ -7,7 +7,7 @@ import seaborn as sns
 
 columns_erase = {'k', 'organism', 'organism_name',
                  'tax_id', 'motifs_homopolymers', 'class_id'}
-df = pd.read_csv('workflow/results/nullomer_statistics_summarized_9_to_14.csv')
+df = pd.read_csv('workflow/results/nullomer_statistics_summarized_8_to_15.csv')
 # for column in columns:
 #     sns.lineplot(data=df, x="k",
 #                  y=column, hue=' .')
