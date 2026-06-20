@@ -1,4 +1,0 @@
-#ifndef CHAINED_BITARRAY_H_
-#define CHAINED_BITARRAY_H_
-
-#endif // CHAINED_BITARRAY_H_

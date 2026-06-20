@@ -8,7 +8,7 @@ OBJ = $(patsubst %.c, build/%.o, $(SRC))
 all: kmer_extractor
 
 kmer_extractor: $(OBJ)
-	$(CC) -o $@ $^
+	$(CC) -o bin/$@ $^
 build/%.o: src/%.c | build
 	$(CC) -c $(CFLAGS) $< -o $@
 build:
