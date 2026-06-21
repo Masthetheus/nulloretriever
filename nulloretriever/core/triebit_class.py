@@ -140,13 +140,12 @@ class TrieBit:
         def walk(node, depth, idx_acc):
             i = 1
             if depth == self.half_k:
-                callback(node, idx_acc,v2)
-                return
+                return callback(node, idx_acc,v2)
             else:
                 next_idx = (target_idx >> (2*(self.half_k - depth - 1)) & 3)
                 idx_acc = (idx_acc << 2)|next_idx 
-                walk(node.children[next_idx], depth+1, idx_acc)
-        walk(self.root, 0, 0)
+                return walk(node.children[next_idx], depth+1, idx_acc)
+        return walk(self.root, 0, 0)
 
     def count_gc(self):
         """Count percentage of GC of organism nullomers.
@@ -314,30 +313,30 @@ class TrieBit:
 
     def find_trivial_ext(self, small_trie):
         trivial = 0
+        found = 0
         half_k = self.k//2
         smaller_k= self.k - 1
         is_odd = smaller_k%2
         smaller_hk = (smaller_k//2) + is_odd
         smaller_mask = (1 << ((smaller_hk-is_odd)*2)) - 1
         mask = (1 << ((self.k *2)-2)) - 1
+        small_v2_idxs = []
         def is_in_trie(node, target_idx, v2):
-            nonlocal trivial
-            if node.v2_set[v2]:
-                trivial += 1
-            return
+            print(node.v2_set[v2])
+            return node.v2_set[v2]
         def search_trivial(node, v1_idx):
-            nonlocal trivial, smaller_mask
-            ext_idxs = set()
+            nonlocal trivial, smaller_mask, small_v2_idxs, found
+            ext_idxs = {}
             v2_idxs = node.v2_set.search(1)
             for v2 in v2_idxs:
                 idx = (v1_idx << (self.half_k*2))|v2
-                ext_idxs.add(idx & mask)
-                ext_idxs.add(idx >> 2)
-            for idx in ext_idxs:
-                v1 = idx >> ((smaller_hk-is_odd)*2)
-                v2 = idx & smaller_mask
-                small_trie.traverse_till_custom(target_idx=v1, callback=is_in_trie, v2 = v2)
-
+                for possibility in (idx >> 2, idx&mask):
+                    v1 = possibility >> ((smaller_hk-is_odd)*2)
+                    v2_loop = possibility & smaller_mask
+                    found = small_trie.traverse_till_custom(target_idx=v1, callback=is_in_trie, v2=v2_loop)
+                    if found:
+                        trivial +=  1
+                        break
         self.traverse_till_half_k(callback=search_trivial)
         print(trivial)
         return trivial
