@@ -11,8 +11,6 @@ from nulloretriever.analysis.motifs import (
     generate_complement_index_dict,
     generate_homopolymer_array,
     retrieve_nullomers_cpg_stats,
-    retrieve_palindrome_stats,
-    retrieve_homopolymer_stats
 )
 
 class TrieBitNode:
@@ -139,6 +137,7 @@ class TrieBit:
         walk(self.root, 0, 0)
 
     def traverse_till_custom(self, callback, target_idx):
+        print(f"Target {target_idx}")
         def walk(node, depth, idx_acc):
             i = 1
             if depth == self.half_k:
@@ -146,6 +145,7 @@ class TrieBit:
                 return
             else:
                 next_idx = (target_idx >> (2*(self.half_k - depth - 1)) & 3)
+                idx_acc = (idx_acc << 2)|next_idx 
                 walk(node.children[next_idx], depth+1, idx_acc)
         walk(self.root, 0, 0)
 
@@ -157,11 +157,10 @@ class TrieBit:
             Returns:
                 gc_percent(float): GC counted/number of nullomer bases
         """
-        #half_k = target_length
-        gc_dict = generate_gc_dict(self.half_k)
+        half_k = self.k//2
+        gc_dict = generate_gc_dict(half_k)
         gc_tot = 0
         null_count = 0
-        v1_count = 0
         def count_gc(node, v1_idx):
             nonlocal gc_tot, null_count
             v2_idxs = node.v2_set.search(1)
@@ -169,6 +168,9 @@ class TrieBit:
                 gc_tot += gc_dict[v2]
             v2_count = node.v2_set.count(bitarray('1'))
             null_count += v2_count
+            v1_gc = 0
+            for base in range(self.half_k):
+                v1_gc += (v1_idx >> (2*1) & 1)
             v1_gc = gc_dict[v1_idx]
             gc_tot += (v1_gc*v2_count)
             return
@@ -182,15 +184,21 @@ class TrieBit:
         return gc_percent
 
     def retrieve_nullomers_cpg_stats(self):
+        half_k = self.k // 2
         null_count = 0
-        cpg_dict = generate_cpg_dict(self.half_k)
+        cpg_dict = generate_cpg_dict(half_k)
         cpg_tot = 0
         null_with_cpg = 0
-        v2_size = self.half_k
-        v2_shift = (self.half_k - 1) * 2
+        v2_size = half_k
+        v2_shift = (half_k - 1) * 2
+        v1_cpg = 0
         def count_cpg(node, idx_acc):
-            nonlocal cpg_tot, null_count, null_with_cpg
-            v1_cpg = cpg_dict[idx_acc]
+            nonlocal v1_cpg, cpg_tot, null_count, null_with_cpg
+            for i in range (self.half_k -1):
+                shift = (self.half_k - i - 2) * 2
+                pair = (idx_acc >> shift) & 15
+                if pair == 6:
+                    v1_cpg += 1
             v1_last = idx_acc & 3
             v2_idxs = node.v2_set.search(1)
             for v2 in v2_idxs:
@@ -199,7 +207,7 @@ class TrieBit:
                 if cpg_dict[v2] != 0:
                     cpg_tot += cpg_dict[v2]
                     has_cpg = True
-                if v1_last == 2 and v2_first == 3:
+                if v1_last == 1 and v2_first == 3:
                     cpg_tot +=1
                     has_cpg = True
                 if has_cpg:
@@ -226,19 +234,14 @@ class TrieBit:
         return cpg_stats
 
     def retrieve_palindrome_stats(self):
-        if self.k%2 !=0:
-            palindrome_stats = {
-                "count": 0,
-                "relative_fraction": 0
-            }
-            return palindrome_stats
+        half_k = self.k//2
         palindrome_count = 0
         total_null = 0
-        complement_index_dict = generate_complement_index_dict(self.half_k)
-        print(complement_index_dict)
+        complement_index_dict = generate_complement_index_dict(half_k)
         def check_palindromy(node, idx_acc):
             nonlocal palindrome_count, total_null
-            v1_comp = complement_index_dict[idx_acc]
+            v1_adjusted = idx_acc >> 2
+            v1_comp = complement_index_dict[v1_adjusted]
             total_null += node.v2_set.count(bitarray('1'))
             try:
                 if node.v2_set[v1_comp]:
@@ -260,16 +263,19 @@ class TrieBit:
         return palindrome_stats
 
     def retrieve_homopolymer_stats(self):
+        half_k = self.k//2
         found_homopolymers = []
-        if self.k%2 != 0:
-            return found_homopolymers
-        homopolymers = set(generate_homopolymer_array(self.half_k))
-        def gather_homopolymer(node, idx_acc):
+        homopolymers = set(generate_homopolymer_array(half_k))
+        homopolymers_v1 = set(generate_homopolymer_array(self.half_k))
+        def gather_homopolymer(node, target_idx):
             nonlocal found_homopolymers
-            if idx_acc in homopolymers and node.v2_set[idx_acc]:
-                found_homopolymers.append(idx_acc)
+            if self.half_k != half_k:
+                target_idx = target_idx >> 2
+            if node.v2_set[target_idx]:
+                found_homopolymers.append(target_idx)
             return
-        self.traverse_till_half_k(callback=gather_homopolymer)
+        for homopolymer in homopolymers_v1:
+            self.traverse_till_custom(target_idx = homopolymer, callback = gather_homopolymer)
         return found_homopolymers
 
     def retrieve_v1_list(self):

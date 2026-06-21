@@ -17,7 +17,7 @@ def calculate_cpg_index(index, half_k):
     for i in range(half_k - 1):
         shift = (half_k - i - 2) * 2
         pair = (index >> shift) & 15
-        if pair == 11:
+        if pair == 6:
             cpg += 1
     return cpg
 
@@ -188,31 +188,6 @@ def retrieve_palindrome_stats(filename):
     }
     return palindrome_stats
 
-def is_homopolymer(index,half_k):
-    """Checks if given index is a homopolymer
-    Args:
-        index(int): index relative to a k-mer sequence
-        half_k(int): original length of the k-mer sequence
-    Returns:
-        same(bool): boolean indicating if the index represents a homopolymeric sequence or not
-    """
-    same = False
-    count = 0
-    current = 0
-    for i in range(half_k):
-        base = (index // (4 ** (half_k - i - 1))) % 4
-        if i == 0:
-            current = base
-        if base == current:
-            count += 1
-            continue
-        else:
-            same = False
-            break
-    if count == half_k:
-        same = True
-    return same
-
 def generate_homopolymer_array(half_k):
     """Generates an array containing all homopolymer indexes for given half_k
     Args:
@@ -221,60 +196,9 @@ def generate_homopolymer_array(half_k):
         homopolymer_array(arr): all possible indexes that represent homopolymeric sequences
     """
     homopolymer_array = []
-    for i in range(4**half_k):
-        homopolymer = is_homopolymer(i, half_k)
-        if homopolymer:
-            homopolymer_array.append(i)
+    for i in range(4):
+        idx = 0
+        for j in range(half_k):
+            idx = (idx << 2) | i
+        homopolymer_array.append(idx)
     return homopolymer_array
-
-def retrieve_homopolymer_stats(filename):
-    """Retrieves which homopolymers can be found as nullomers of given organism
-    Args:
-        filename(str): path to nullomer data in binary
-    Returns:
-        found_homopolymers(arr): which homopolymers are present in the nullomer collection of given organism
-    Obs:
-        In this initial approach, a homopolymer is considered only if all bases of the sequence with length k are the same
-    """
-    byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-    found_homopolymers = []
-    with open(filename, 'rb') as f:
-        # Skip header
-        f.seek(6)  # Skip magic(4) + version(2)
-        l_bytes = f.read(2)
-        k = struct.unpack('<H', l_bytes)[0]
-        l_bytes = f.read(2)
-        half_k = struct.unpack('<H', l_bytes)[0]
-        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-        byte_size = struct.unpack('<B', f.read(1))[0]
-        byte_format = byte_to_format[byte_size]
-        counter_size = struct.unpack('<B', f.read(1))[0]
-        counter_byte_format = byte_to_format[counter_size]
-        homopolymers = generate_homopolymer_array(half_k)
-        try:
-            while True:
-                index_bytes = f.read(byte_size)
-                if len(index_bytes) < byte_size:
-                    break
-                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
-                nullomer_count_bytes = f.read(counter_size)
-                if len(nullomer_count_bytes) < counter_size:
-                    break
-                nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
-                total_bytes = nullomer_count * byte_size
-                i = 0
-                if v1 in homopolymers:
-                    while i < nullomer_count:
-                        nullomer_byte = f.read(byte_size)
-                        total_bytes -= byte_size
-                        v2_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
-                        if v2_index == v1:
-                            found_homopolymers.append(v1)
-                            f.seek(total_bytes,1)
-                            break
-                        i += 1
-                else:
-                    f.seek(total_bytes,1)
-        except (struct.error, OSError):
-            pass
-    return found_homopolymers

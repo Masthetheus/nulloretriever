@@ -2,12 +2,6 @@
 
 import csv
 
-from nulloretriever.analysis.composition import nullomers_gc_mean
-from nulloretriever.analysis.motifs import (
-    retrieve_nullomers_cpg_stats,
-    retrieve_palindrome_stats,
-    retrieve_homopolymer_stats
-)
 from nulloretriever.analysis.processing import mount_trie_from_bitfile
 
 def motif_wrapper(trie):
@@ -43,8 +37,8 @@ def main():
         gc_mean -> calculate the mean gc of all existing nullomers
     """
     out_path = "retrieval_test.csv"
-    stats = ["composition", "motifs"]
-    nullomer_file = "workflow/results/k10/GCA_000412225_2/null_bit_format"
+    stats = ["composition"]
+    nullomer_file = "novoresult_result"
     anchor_trie = "othernullfile_result"
     organism = "GCA_000412225_2"
     k_val = 10
@@ -56,6 +50,7 @@ def main():
         "motifs": motif_wrapper(trie)
     }
     retrieved_stats = {}
+    print(trie.half_k)
 
 #    for stat in stats:
 #        try:
@@ -71,8 +66,6 @@ def main():
 
     for stat in stats:
         retrieved_stats[stat] = dispatch_table[stat]
-    print(retrieved_stats)
-    print(retrieved_stats["motifs"])
     base_dict = {}
     base_dict['organism'] = organism
     base_dict['k'] = k_val
