@@ -19,7 +19,7 @@ class TrieBitNode:
     Each node is composed of up to four referenced children nodes.
     """
     def __init__(self):
-        self.children = [None] * 4  
+        self.children = [None] * 4
 
     def iterate(self, path=None):
         if path is None:
@@ -136,12 +136,11 @@ class TrieBit:
                     walk(child_node, depth + 1, next_idx)
         walk(self.root, 0, 0)
 
-    def traverse_till_custom(self, callback, target_idx):
-        print(f"Target {target_idx}")
+    def traverse_till_custom(self, callback, target_idx,v2=None):
         def walk(node, depth, idx_acc):
             i = 1
             if depth == self.half_k:
-                callback(node, idx_acc)
+                callback(node, idx_acc,v2)
                 return
             else:
                 next_idx = (target_idx >> (2*(self.half_k - depth - 1)) & 3)
@@ -279,7 +278,8 @@ class TrieBit:
         return found_homopolymers
 
     def retrieve_v1_list(self):
-        v1s = bitarray(self.m)
+        m = 4**self.half_k
+        v1s = bitarray(m)
         def gather_v1s(node, idx_acc):
             nonlocal v1s
             v1s[idx_acc] = 1
@@ -310,8 +310,37 @@ class TrieBit:
             common_v2s_idxs = list(common_v2s_array.search(bitarray('1')))
             common_v2s[v1] = common_v2s_idxs
             count += 1
-        print(f"length {len(common_v2s_idxs)}")
         return common_v2s
+
+    def find_trivial_ext(self, small_trie):
+        trivial = 0
+        half_k = self.k//2
+        smaller_k= self.k - 1
+        is_odd = smaller_k%2
+        smaller_hk = (smaller_k//2) + is_odd
+        smaller_mask = (1 << ((smaller_hk-is_odd)*2)) - 1
+        mask = (1 << ((self.k *2)-2)) - 1
+        def is_in_trie(node, target_idx, v2):
+            nonlocal trivial
+            if node.v2_set[v2]:
+                trivial += 1
+            return
+        def search_trivial(node, v1_idx):
+            nonlocal trivial, smaller_mask
+            ext_idxs = set()
+            v2_idxs = node.v2_set.search(1)
+            for v2 in v2_idxs:
+                idx = (v1_idx << (self.half_k*2))|v2
+                ext_idxs.add(idx & mask)
+                ext_idxs.add(idx >> 2)
+            for idx in ext_idxs:
+                v1 = idx >> ((smaller_hk-is_odd)*2)
+                v2 = idx & smaller_mask
+                small_trie.traverse_till_custom(target_idx=v1, callback=is_in_trie, v2 = v2)
+
+        self.traverse_till_half_k(callback=search_trivial)
+        print(trivial)
+        return trivial
 
     def find_root_v2(self):
         v2s = bitarray(self.m)
