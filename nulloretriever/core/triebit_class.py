@@ -143,8 +143,9 @@ class TrieBit:
                 return callback(node, idx_acc,v2)
             else:
                 next_idx = (target_idx >> (2*(self.half_k - depth - 1)) & 3)
-                idx_acc = (idx_acc << 2)|next_idx 
-                return walk(node.children[next_idx], depth+1, idx_acc)
+                idx_acc = (idx_acc << 2)|next_idx
+                if(node.children[next_idx]):
+                    return walk(node.children[next_idx], depth+1, idx_acc)
         return walk(self.root, 0, 0)
 
     def count_gc(self):
@@ -156,7 +157,7 @@ class TrieBit:
                 gc_percent(float): GC counted/number of nullomer bases
         """
         half_k = self.k//2
-        gc_dict = generate_gc_dict(half_k)
+        gc_dict = generate_gc_dict(self.half_k)
         gc_tot = 0
         null_count = 0
         def count_gc(node, v1_idx):
@@ -169,7 +170,7 @@ class TrieBit:
             v1_gc = 0
             for base in range(self.half_k):
                 v1_gc += (v1_idx >> (2*1) & 1)
-            v1_gc = gc_dict[v1_idx]
+            #v1_gc = gc_dict[v1_idx]
             gc_tot += (v1_gc*v2_count)
             return
         self.traverse_till_half_k(callback=count_gc)
@@ -263,10 +264,9 @@ class TrieBit:
     def retrieve_homopolymer_stats(self):
         half_k = self.k//2
         found_homopolymers = []
-        homopolymers = set(generate_homopolymer_array(half_k))
         homopolymers_v1 = set(generate_homopolymer_array(self.half_k))
-        def gather_homopolymer(node, target_idx):
-            nonlocal found_homopolymers
+        def gather_homopolymer(node, target_idx, v2=None):
+            nonlocal found_homopolymers, half_k
             if self.half_k != half_k:
                 target_idx = target_idx >> 2
             if node.v2_set[target_idx]:
@@ -322,7 +322,6 @@ class TrieBit:
         mask = (1 << ((self.k *2)-2)) - 1
         small_v2_idxs = []
         def is_in_trie(node, target_idx, v2):
-            print(node.v2_set[v2])
             return node.v2_set[v2]
         def search_trivial(node, v1_idx):
             nonlocal trivial, smaller_mask, small_v2_idxs, found
@@ -347,9 +346,7 @@ class TrieBit:
             nonlocal v2s
             v2_idxs = list(node.v2_set.search(1))
             for v2 in v2_idxs:
-                print(v2)
                 v2_minus = v2 >> 2
-                print(f"v2 {v2} and minud {v2_minus}")
                 v2s[v2_minus] = 1
                 return
         self.traverse_till_half_k(callback=v2_minus_last)

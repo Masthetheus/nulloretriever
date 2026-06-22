@@ -2,12 +2,6 @@
 
 import csv
 
-from nulloretriever.analysis.composition import nullomers_gc_mean
-from nulloretriever.analysis.motifs import (
-    retrieve_nullomers_cpg_stats,
-    retrieve_palindrome_stats,
-    retrieve_homopolymer_stats
-)
 from nulloretriever.analysis.processing import mount_trie_from_bitfile
 from snakemake.script import snakemake
 
@@ -46,34 +40,37 @@ def main():
     """
     out_path = snakemake.output[0]
     stats = snakemake.params.stats
-    nullomer_file = snakemake.input[0]
+    bigger_null_file = snakemake.input.current
+    smaller_null_file = str(snakemake.input.get("previous", None))
     organism = snakemake.wildcards.organism
     k_val = snakemake.wildcards.k
-    trie = mount_trie_from_bitfile(nullomer_file)
-    dispatch_table = {
-        "composition": trie.count_gc(),
-        "counter": trie.count_kmers(),
-        "motifs": motif_wrapper(trie)
-    }
+    bigger_trie = mount_trie_from_bitfile(bigger_null_file)
+    counter = bigger_trie.count_kmers()
+    if counter > 0 and int(k_val)<= 13 and smaller_null_file != '':
+        print("Pegando trivial")
+        smaller_trie = mount_trie_from_bitfile(smaller_null_file)
+        dispatch_table = {
+            "composition": bigger_trie.count_gc(),
+            "trivial": bigger_trie.find_trivial_ext(smaller_trie),
+            "motifs": motif_wrapper(bigger_trie)
+        }
+    else:
+        dispatch_table = {
+            "composition": bigger_trie.count_gc(),
+            "motifs": motif_wrapper(bigger_trie)
+        }
     retrieved_stats = {}
-
-#    for stat in stats:
-#        try:
-#            if stat in dispatch_table.keys():
-#                func = dispatch_table[stat]
-#                if callable(func):
-#                    retrieved_stats[stat] = func(nullomer_file)
-#        except Exception as err:
-#            print("Unexpected occurence processing the"
-#                  f"following statistic: {stat}.\n"
-#                  f"Error: {err=}, {type(err)=}")
-#            raise
+    retrieved_stats['counter'] = counter
 
     for stat in stats:
-        retrieved_stats[stat] = dispatch_table[stat]
+        try:
+            retrieved_stats[stat] = dispatch_table[stat]
+        except Exception as e:
+            print(f"Stat {stat} no available for this organism")
     base_dict = {}
     base_dict['organism'] = organism
     base_dict['k'] = k_val
+    print(retrieved_stats)
     final_stats = dict_flattener(retrieved_stats, base_dict)
     with open(out_path, mode='w', newline='') as f:
         writer = csv.writer(f)

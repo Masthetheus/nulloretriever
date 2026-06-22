@@ -16,6 +16,15 @@ def needed_threads_k_value(wildcards):
     else:
         return 8
 
+def get_previous_k_input(wildcards):
+    bigger_k = int(wildcards.k)
+    min_k = int(ks[0])
+
+    if bigger_k <= min_k:
+        return []
+    smaller_k = bigger_k - 1
+    return f"results/k{smaller_k}/{wildcards.organism}/null_bit_format"
+
 organisms = config["organisms"]
 ks = config["k"]
 paths = list(config["paths"].values())
@@ -60,12 +69,12 @@ rule generate_c_binaries:
     output:
         "scripts/c/bin_fasta_kmer_extraction"
     shell:
-        "gcc -O3 -Wall -Wextra -fsanitize=address,undefined -g {input.c_source}/{{main,kmerio,kmer_extraction,kmer_encoding}}.c -o {output} "
+        "make -C scripts/c/"
 
 rule extract_nullomers:
     input:
         "results/k{k}/{organism}/.results_directories_created",
-        bin =  "scripts/c/bin_fasta_kmer_extraction",
+        bin =  "scripts/c/bin/kmer_extractor",
         genome = lambda wildcards: config["genomes"] + wildcards.organism
     output:
         "results/k{k}/{organism}/null_bit_format"
@@ -79,7 +88,8 @@ rule extract_nullomers:
 
 rule retrieve_nullomer_statistics:
     input:
-        "results/k{k}/{organism}/null_bit_format"
+        current = "results/k{k}/{organism}/null_bit_format",
+        previous = get_previous_k_input
     output:
         "results/k{k}/{organism}/nullomer_statistics.csv"
     params:

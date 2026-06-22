@@ -175,7 +175,6 @@ organisms:
 - GCA_016413765_1
 - GCF_009017415_1
 - GCA_033182465_1
-- test_genome
 - GCA_024499215_1
 - GCA_050947605_1
 - GCA_947243795_1
@@ -228,7 +227,6 @@ organisms:
 - GCF_000001405_40
 - GCA_003856775_1
 - GCF_035594765_1
-- .directories_created
 - GCF_006542625_1
 - GCF_963989305_1
 - GCA_015708445_2
@@ -278,5 +276,5 @@ paths:
   results: results/
 statistics:
 - composition
-- counter
+- trivial
 - motifs

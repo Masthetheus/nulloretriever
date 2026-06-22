@@ -62,31 +62,24 @@ def mount_trie_from_bitfile(filename):
         try:
             while True:
                 index_bytes = f.read(byte_size)
+                shift_ranges = list(range(half_k - 1, -1, -1))
                 if len(index_bytes) < byte_size:
                     break
-                v1= struct.unpack(f'<{byte_format}', index_bytes)[0]
+                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
+                v1_bits = tuple((v1 >> (i * 2)) & 3 for i in shift_ranges)
                 i = half_k - 1
-                v1_bits = []
-                while i >= 0:
-                    v1_bits.append(v1 >> (i*2) & 3)
-                    i -= 1
                 nullomer_count_bytes = f.read(counter_size)
                 if len(nullomer_count_bytes) < counter_size:
                     break
                 nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
-                v2s = []
                 if nullomer_count == 0:
-                    for i in range(m):
-                        v2s.append(i)
+                    v2s=list(range(m))
                 else:
                     total_bytes = nullomer_count * byte_size
-                    i = 0
-                    while i < nullomer_count:
-                        nullomer_byte = f.read(byte_size)
-                        total_bytes -= byte_size
-                        v2s.append(struct.unpack(f'<{byte_format}',
-                                                 nullomer_byte)[0])
-                        i += 1
+                    null_bytes = f.read(total_bytes)
+                    if len(null_bytes) < total_bytes:
+                        break
+                    v2s = struct.unpack(f'<{nullomer_count}{byte_format}', null_bytes)
                 trie.insert_from_bit(tuple(v1_bits), v2s)
         except (struct.error, OSError):
             pass

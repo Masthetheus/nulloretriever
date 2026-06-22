@@ -77,7 +77,7 @@ void process_kmers(const char *seq, int seqlen, int k, char *seen,
                                 buffers_sent++;
                         }
                         for (int i = bytes_per_sequence - 1; i >= 0; i--) {
-                                unsigned char byte = (idx >> (i * 8)) & 0xFF;
+                                unsigned char byte = (idx_comp >> (i * 8)) & 0xFF;
                                 write_buffer[buffer_position++] = byte;
                         }
 

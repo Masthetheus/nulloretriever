@@ -3,6 +3,7 @@ import argparse
 import subprocess
 
 from nulloretriever.core.triebit_class import TrieBit
+from nulloretriever.analysis.processing import *
 
 
 def setup_argparser() -> argparse.ArgumentParser:
@@ -57,7 +58,7 @@ def main():
         v2_size = k - half_k
     trie = TrieBit(m, k, half_k)
     proc = subprocess.Popen(
-        ["workflow/scripts/c/c_extractor",
+        ["workflow/scripts/c/bin/kmer_extractor",
          genome_path, k_values[0]],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
@@ -68,17 +69,19 @@ def main():
     bytes_per_sequence = (k * 2 + 7) // 8
     wasted_space = (bytes_per_sequence * 8) - (k * 2)
     mask = (4**k) - 1
+    kmers = set()
     print(f"DEBUG: Variables in use:\n"
           f"bytes_per_sequence: {bytes_per_sequence}"
           f"\nwasted_space:{wasted_space}"
           f"\nk_mask: {k_mask}"
-          f"\nmask: {mask}")
+          f"\nmask: {bin(mask)}")
     while True:
         kmer_bytes = proc.stdout.read(bytes_per_sequence)
         if len(kmer_bytes) < bytes_per_sequence:
             break
         kmer_idx = int.from_bytes(kmer_bytes, byteorder='big')
         kmer_idx = (kmer_idx) & (mask)
+        kmers.add(kmer_idx)
         sequences_received += 1
         v1 = kmer_idx >> (v2_size*2)
         v2 = kmer_idx & k_mask
@@ -91,15 +94,17 @@ def main():
         total += 1
     proc.wait()
     trie.write_bit_format(out_path)
+    trie1 = mount_trie_from_bitfile(out_path)
     print(trie.count_kmers())
-    #expected = 4**k
-    #null_count = trie.count_nullomers()
-    #obtained = null_count + total
-    #diff = expected - total
-    #print(f"{total} k-mkers were inserted, and {trie.count_nullomers()}"
-     #     f" nullomers were counted.\n {expected} total were expected."
-      #    f"We have total + null equals {obtained}.")
-    #print(f"A total of {sequences_received} sequences were read.")
+    expected = 4**k
+    null_count = trie1.count_kmers()
+    obtained = null_count + total
+    diff = expected - total - null_count
+    print(f"{total} k-mkers were inserted, and {trie.count_kmers()}"
+          f" kmers were counted.\n {expected} total were expected."
+          f"We have total + null equals {obtained}/{expected}.")
+    print(f"A total of {null_count} nullomers were found.")
+    print(len(kmers))
 
 
 if __name__ == "__main__":

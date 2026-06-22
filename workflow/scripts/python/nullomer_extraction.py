@@ -8,7 +8,6 @@ from snakemake.script import snakemake
 def main():
     """K-mer extraction and nullomer trie generation snakemake compatible."""
     out_path = snakemake.output[0]
-    # See later how to sync with snakemake pipeline
     genome_path = snakemake.input.genome
     k_str = str(snakemake.params.k_val)
     k = int(snakemake.params.k_val)
@@ -63,13 +62,6 @@ def main():
     proc.wait()
     trie.write_bit_format(out_path)
     expected = 4**k
-    #null_count = trie.count_nullomers()
-    #obtained = null_count + total
-    #diff = expected - total
-    #print(f"{total} k-mkers were inserted, and {trie.count_nullomers()}"
-    #      f" nullomers were counted.\n {expected} total were expected."
-    #      f"We have total + null equals {obtained}.")
-    #print(f"A total of {sequences_received} sequences were read.")
 
 
 if __name__ == "__main__":

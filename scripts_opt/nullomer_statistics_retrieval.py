@@ -37,8 +37,8 @@ def main():
         gc_mean -> calculate the mean gc of all existing nullomers
     """
     out_path = "retrieval_test.csv"
-    stats = ["composition"]
-    nullomer_file = "novoresult_result"
+    stats = ["composition","counter","motifs"]
+    nullomer_file = "workflow/results/k14/GCF_000146045_2/null_bit_format"
     anchor_trie = "othernullfile_result"
     organism = "GCA_000412225_2"
     k_val = 10
@@ -50,7 +50,6 @@ def main():
         "motifs": motif_wrapper(trie)
     }
     retrieved_stats = {}
-    print(trie.half_k)
 
 #    for stat in stats:
 #        try:
@@ -74,6 +73,7 @@ def main():
         writer = csv.writer(f)
         writer.writerow(final_stats.keys())
         writer.writerow(final_stats.values())
+    print(retrieved_stats)
 
 
 if __name__ == "__main__":
