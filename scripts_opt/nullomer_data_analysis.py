@@ -57,6 +57,12 @@ def main():
     df['genome_length'] = df['genome_length'].astype(int)
     df.loc[:,'max_poss_kmer'] = df.loc[:,'genome_length'] - df.loc[:,'k'] + 1
     df.loc['null_poss_perc'] = (df.loc[:,'counter']/df.loc[:,'max_poss_kmer'])*100
+    df.loc[:,'non_trivial'] = df.loc[:,'counter']-df.loc[:,'trivial']
+    df.loc[:,'trivial_porc'] = (df.loc[:,'trivial']/df.loc[:,'counter'])*100
+    df.loc[:,'unique_kmers'] = df.loc[:,'max_poss_kmer']-((4**(df.loc[:,'k']))-df.loc[:,'counter'])
+    df.loc[:,'trivial_coverage'] = (df.loc[:,'trivial']/df.loc[:,'genome_length'])*100
+    df.loc[:,'trivial_non_trivial'] = (df.loc[:,'trivial']/df.loc[:,'non_trivial'])*100
+    df.loc[:,'possible_trivial'] = df.loc[:,'counter']*8
     maxpo = nulldata.groupby('k')['composition'].mean()
     composition_max_count = nulldata[nulldata['composition'] > 1].groupby(
         'k')['composition'].agg(['min', 'max', 'mean'])
@@ -79,10 +85,30 @@ def main():
     print(df)
     data_columns = list(set(list(nulldata)) - grouping_columns)
     graph_output = "workflow/results/graphs"
+    sns.scatterplot(data=df, x="genome_length",y="trivial_porc", hue="phylum_id")
+    plt.xscale("log")
+    plt.savefig(f"{graph_output}/scatter_trivial")
+    plt.close()
+    sns.scatterplot(data=df, x="unique_kmers",y="counter", hue="phylum_id")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.savefig(f"{graph_output}/unique_to_counter_ratio")
+    plt.close()
+    sns.scatterplot(data=df, x="genome_length",y="trivial_non_trivial", hue="phylum_id")
+    plt.xscale("log")
+    plt.savefig(f"{graph_output}/scatter_trivial_non_trivial")
+    plt.close()
+    sns.violinplot(data=df, x="k",y="counter", hue="phylum_id")
+    plt.savefig(f"{graph_output}/violin_counter")
+    plt.close()
+    sns.boxplot(data=df, x="phylum_id",y="composition", hue="phylum_id")
+    plt.savefig(f"{graph_output}/composition_box")
+    plt.close()
     for column in data_columns:
         plt.figure(figsize=(12, 6))
         sns.lineplot(data=nulldata, x='k', y=column, hue="phylum_id")
         plt.savefig(f'{graph_output}/{column}')
+        plt.close()
     pass
 #    print(media)
 #    print(values)

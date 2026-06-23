@@ -320,11 +320,10 @@ class TrieBit:
         smaller_hk = (smaller_k//2) + is_odd
         smaller_mask = (1 << ((smaller_hk-is_odd)*2)) - 1
         mask = (1 << ((self.k *2)-2)) - 1
-        small_v2_idxs = []
         def is_in_trie(node, target_idx, v2):
             return node.v2_set[v2]
         def search_trivial(node, v1_idx):
-            nonlocal trivial, smaller_mask, small_v2_idxs, found
+            nonlocal trivial, smaller_mask, found
             ext_idxs = {}
             v2_idxs = node.v2_set.search(1)
             for v2 in v2_idxs:
@@ -332,6 +331,7 @@ class TrieBit:
                 for possibility in (idx >> 2, idx&mask):
                     v1 = possibility >> ((smaller_hk-is_odd)*2)
                     v2_loop = possibility & smaller_mask
+                    print(bin(v1),'\n',bin(v2_loop))
                     found = small_trie.traverse_till_custom(target_idx=v1, callback=is_in_trie, v2=v2_loop)
                     if found:
                         trivial +=  1

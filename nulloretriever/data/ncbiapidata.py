@@ -3,6 +3,7 @@ import csv
 import os
 import time
 import xml.etree.ElementTree as ET
+import urllib.request
 
 from Bio import Entrez
 
@@ -91,7 +92,7 @@ def get_accesion_summary_data(acc):
         record = Entrez.read(handle)
         handle.close()
 
-        time.sleep(0.35)
+        time.sleep(0.05)
 
         if not record["IdList"]:
             print(f"No result found for {acc}")
@@ -103,15 +104,27 @@ def get_accesion_summary_data(acc):
         assembly_id = record["IdList"][0]
         print(f"Assembly ID found: {assembly_id}")
 
+
         # Get assembly summary
         print(f"Searching summary for Assembly ID: {assembly_id}")
         handle = Entrez.esummary(db="assembly", id=assembly_id, retmode="xml")
         summary = Entrez.read(handle)
         handle.close()
+        stats_url = summary["DocumentSummarySet"]["DocumentSummary"][0]["FtpPath_Stats_rpt"]
+#        with urllib.request.urlopen(stats_url) as response:
+#            lines = response.read().decode('utf-8').splitlines()
+#            for line in lines:
+#                if "GC" in line or "gc" in line:
+#                    if line.startswith("#") or not line.strip():
+#                        continue
+#                    columns = line.split('\t')
+#                    if columns[0] == "all" and columns[1] == "all":
+#                        gc_tot = float(columns[5])
+#                        break
+        time.sleep(0.05)
 
-        time.sleep(0.35)
-
-        return summary
+        gc_tot = 0
+        return summary,gc_tot
     except Exception as e:
         print(f"Error during {acc}: {e}")
         return None
@@ -177,19 +190,21 @@ def get_genome_metadata(accessions, params=None):
             'SpeciesName',
             'AssemblyStatus',
             'Meta'
+            #'gc'
         ]
     elif isinstance(params, str):
         params = [params]
     metadata = {}
     try:
         for acc in accessions:
-            summary = get_accesion_summary_data(acc)
+            summary, gc_tot = get_accesion_summary_data(acc)
             if not summary:
                 continue
             data = {}
             for param in params:
                 data[param] = summary['DocumentSummarySet']['DocumentSummary'][0].get(
                     param)
+            #data["gc_perc"] = gc_tot
             metadata[acc] = data
         return metadata
     except Exception as e:

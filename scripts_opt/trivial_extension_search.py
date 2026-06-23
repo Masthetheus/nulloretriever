@@ -6,7 +6,8 @@ from nulloretriever.analysis.processing import mount_trie_from_bitfile
 
 smaller_file = "novoresult_doze_result"
 bigger_file = "novoresult_treze_result"
-
+smaller_file = "/home/leveduras/integranteslab/matheus/nulloretriever/workflow/results/k11/GCF_000146045_2/null_bit_format"
+bigger_file = "/home/leveduras/integranteslab/matheus/nulloretriever/workflow/results/k12/GCF_000146045_2/null_bit_format"
 smaller_trie = mount_trie_from_bitfile(smaller_file)
 bigger_trie = mount_trie_from_bitfile(bigger_file)
 #temq ser na bigger

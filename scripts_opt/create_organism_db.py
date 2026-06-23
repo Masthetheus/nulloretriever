@@ -59,6 +59,7 @@ def main():
         organisms = content['organisms']
     format_accesion_code(organisms)
     metadata = get_genome_metadata(organisms)
+    print(metadata)
     new_metadata = get_genome_length(metadata)
     get_taxonomy_metadata(metadata)
     print(metadata)
