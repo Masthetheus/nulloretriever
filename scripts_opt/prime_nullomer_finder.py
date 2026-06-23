@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from nulloretriever.analysis.prime_nullomer import *
 from nulloretriever.analysis.parsings import *
+from nulloretriever.analysis.processing import *
 
 
 def setup_argparser() -> argparse.ArgumentParser:
@@ -54,50 +55,24 @@ def main():
 
     k = int(k_range[0])
     while k <= k_range[1]:
+        is_odd = k%2
+        half_k = (k//2) + is_odd
+        m = 4**(k//2)
         remove_counter = 0
         print(f"======{k}======")
-        anchor_file = f"workflow/results/k{k}/{genomes[0]}/null_bit_format"
-        anchor_v1_locations = obtain_v1_positions(anchor_file)
-        common_nullomer_set = obtain_nullomer_set(
-            anchor_file, anchor_v1_locations)
-        common_test = defaultdict(set)
+        anchor_trie = mount_trie_from_bitfile(f"workflow/results/k{k}/{genomes[0]}/null_bit_format")
         for genome in genomes[1:]:
-            file2 = f"workflow/results/k{k}/{genome}/null_bit_format"
-            file2_v1_locations = obtain_v1_positions(file2)
-            file2_null_set = obtain_nullomer_set(file2, file2_v1_locations)
-            common_v1 = common_nullomer_set.keys() & file2_v1_locations.keys()
-            if len(common_v1) == 0:
-                remove_counter += 1
+            try:
+                trie2 = mount_trie_from_bitfile(f"workflow/results/k{k}/{genome}/null_bit_format")
+                anchor_trie.retrieve_prime_null(trie2)
+                print(anchor_trie.count_kmers())
+                if (anchor_trie.count_kmers()) == 0:
+                    break
+            except Exception as e:
                 continue
-            else:
-                count_key = 0
-                for key in common_v1:
-                    comp = common_nullomer_set[key] & file2_null_set[key]
-                    count_key += 1
-                    if comp:
-                        print(f"Entrou {comp}.")
-                        common_test[key] = comp
-                    else:
-                        common_test = defaultdict(set)
-                        continue
-                total_len = sum(len(s)for s in common_nullomer_set.values())
-                print(f"Total len antes do if {total_len}")
-                if common_test.values() != 0:
-                    common_nullomer_set = common_test
-                total_len = sum(len(s)for s in common_nullomer_set.values())
-                print(f"Total len depois do if {total_len}")
-                breakpoint()
-            # common_nullomer_set = search_prime_nullomers(
-            #     common_nullomer_set, common_v1, file2_v1_locations, file2)
-        # print(len(common_nullomer_set))
-        # total_len = sum(len(s) for s in common_nullomer_set.values())
-        # print(total_len)
-        print(f"Common: {len(common_nullomer_set)}")
-        total_len = sum(len(s) for s in common_nullomer_set.values())
-        print(f"Total len: {total_len}")
-        print(f"Genomes skipped: {remove_counter}")
+        if anchor_trie.count_kmers() > 0:
+            anchor_trie.write_txt_format("aqui")
         k += 1
-
 
 if __name__ == "__main__":
     main()

@@ -288,7 +288,7 @@ class TrieBit:
 
     def retrieve_v2_list(self, target_idx):
         v2s = bitarray(self.m)
-        def gather_v2s(node,idx_acc):
+        def gather_v2s(node,idx_acc, v2=None):
             nonlocal v2s
             v2s = node.v2_set
             return
@@ -296,20 +296,26 @@ class TrieBit:
         return v2s
 
     def retrieve_prime_null(self, second_trie):
+        primes = {}
         v1s = self.retrieve_v1_list()
         second_v1s = second_trie.retrieve_v1_list()
         common = v1s & second_v1s
+        v1_only_self = v1s & ~second_v1s
         common_idxs = list(common.search(bitarray('1')))
-        common_v2s = {}
-        count = 0
+        def change_v2_set(node, idx_acc, v2=None):
+            nonlocal second_v2s
+            node.v2_set = second_v2s & node.v2_set
+            return
+        def zero_v2_set(node, idx_acc, v2=None):
+            node.v2_set = bitarray(len(node.v2_set))
+            return
         for v1 in common_idxs:
             v2s = self.retrieve_v2_list(v1)
-            second_v2s = self.retrieve_v2_list(v1)
-            common_v2s_array = v2s & second_v2s
-            common_v2s_idxs = list(common_v2s_array.search(bitarray('1')))
-            common_v2s[v1] = common_v2s_idxs
-            count += 1
-        return common_v2s
+            second_v2s = second_trie.retrieve_v2_list(v1)
+            self.traverse_till_custom(target_idx=v1,callback=change_v2_set)
+        for v1 in v1_only_self:
+            self.traverse_till_custom(target_idx=v1, callback=zero_v2_set)
+        return
 
     def find_trivial_ext(self, small_trie):
         trivial = 0
@@ -351,6 +357,7 @@ class TrieBit:
                 return
         self.traverse_till_half_k(callback=v2_minus_last)
         return v2s
+
     def missing_path_idx(self, path):
         print(path)
         init_idx = sum(base*(4**(self.half_k - i - 1)) for i, base in
@@ -427,7 +434,7 @@ class TrieBit:
             def dfs(node, path):
                 if len(path) == self.half_k:
                     nullomers = [i for i, bit in enumerate(
-                        node.v2_set) if not bit]
+                        node.v2_set) if bit]
                     if nullomers:
                         v1_index = sum(base * (4 ** (self.half_k - i - 1))
                                        for i, base in enumerate(path))

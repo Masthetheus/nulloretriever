@@ -60,11 +60,12 @@ def main():
     format_accesion_code(organisms)
     metadata = get_genome_metadata(organisms)
     print(metadata)
-    new_metadata = get_genome_length(metadata)
-    get_taxonomy_metadata(metadata)
-    print(metadata)
-    with open(out_path, 'w') as f:
-        json.dump(new_metadata, f)
+    if metadata:
+        new_metadata = get_genome_length(metadata)
+        get_taxonomy_metadata(metadata)
+        print(metadata)
+        with open(out_path, 'w') as f:
+            json.dump(new_metadata, f)
 
 
 if __name__ == "__main__":

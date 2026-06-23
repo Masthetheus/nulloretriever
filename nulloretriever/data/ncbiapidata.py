@@ -239,7 +239,16 @@ def get_taxonomy_metadata(metadata):
         fetch.close()
         taxonomy_data = {d['Rank']: d['TaxId']
                          for d in data[0]['LineageEx']}
-        family_id = taxonomy_data.get('phylum', 'N/A')
+        family_id = taxonomy_data.get('family', 'N/A')
+        phylum_id = taxonomy_data.get('phylum', 'N/A')
+        genus_id = taxonomy_data.get('genus', 'N/A')
+        order_id = taxonomy_data.get('order', 'N/A')
         if family_id is not None:
-            metadata[organism]['phylum_id'] = family_id
+            metadata[organism]['family_id'] = family_id
+        if phylum_id is not None:
+            metadata[organism]['phylum_id'] = phylum_id
+        if genus_id is not None:
+            metadata[organism]['genus_id'] = genus_id
+        if order_id is not None:
+            metadata[organism]['order_id'] = order_id
     return metadata

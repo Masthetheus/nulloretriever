@@ -56,12 +56,14 @@ def main():
     print(df['speciesname'])
     df['genome_length'] = df['genome_length'].astype(int)
     df.loc[:,'max_poss_kmer'] = df.loc[:,'genome_length'] - df.loc[:,'k'] + 1
-    df.loc['null_poss_perc'] = (df.loc[:,'counter']/df.loc[:,'max_poss_kmer'])*100
+    df.loc[:,'null_poss_perc'] = (df.loc[:,'counter']/df.loc[:,'max_poss_kmer'])*100
     df.loc[:,'non_trivial'] = df.loc[:,'counter']-df.loc[:,'trivial']
     df.loc[:,'trivial_porc'] = (df.loc[:,'trivial']/df.loc[:,'counter'])*100
     df.loc[:,'unique_kmers'] = df.loc[:,'max_poss_kmer']-((4**(df.loc[:,'k']))-df.loc[:,'counter'])
     df.loc[:,'trivial_coverage'] = (df.loc[:,'trivial']/df.loc[:,'genome_length'])*100
+    #df.loc[:,'gc_relation'] = (df.loc[:,'gc_perc']-df.loc[:,'composition'])
     df.loc[:,'trivial_non_trivial'] = (df.loc[:,'trivial']/df.loc[:,'non_trivial'])*100
+    print(df['non_trivial'])
     df.loc[:,'possible_trivial'] = df.loc[:,'counter']*8
     maxpo = nulldata.groupby('k')['composition'].mean()
     composition_max_count = nulldata[nulldata['composition'] > 1].groupby(
@@ -85,30 +87,32 @@ def main():
     print(df)
     data_columns = list(set(list(nulldata)) - grouping_columns)
     graph_output = "workflow/results/graphs"
-    sns.scatterplot(data=df, x="genome_length",y="trivial_porc", hue="phylum_id")
-    plt.xscale("log")
-    plt.savefig(f"{graph_output}/scatter_trivial")
-    plt.close()
-    sns.scatterplot(data=df, x="unique_kmers",y="counter", hue="phylum_id")
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.savefig(f"{graph_output}/unique_to_counter_ratio")
-    plt.close()
-    sns.scatterplot(data=df, x="genome_length",y="trivial_non_trivial", hue="phylum_id")
-    plt.xscale("log")
-    plt.savefig(f"{graph_output}/scatter_trivial_non_trivial")
-    plt.close()
-    sns.violinplot(data=df, x="k",y="counter", hue="phylum_id")
-    plt.savefig(f"{graph_output}/violin_counter")
-    plt.close()
-    sns.boxplot(data=df, x="phylum_id",y="composition", hue="phylum_id")
-    plt.savefig(f"{graph_output}/composition_box")
-    plt.close()
-    for column in data_columns:
-        plt.figure(figsize=(12, 6))
-        sns.lineplot(data=nulldata, x='k', y=column, hue="phylum_id")
-        plt.savefig(f'{graph_output}/{column}')
+    groups = ["phylum_id","family_id","genus_id","order_id"]
+    for group in groups:
+        sns.scatterplot(data=df, x="genome_length",y="trivial_porc", hue=f"{group}")
+        plt.xscale("log")
+        plt.savefig(f"{graph_output}/{group}_scatter_trivial")
         plt.close()
+        sns.scatterplot(data=df, x="unique_kmers",y="counter", hue= f"{group}")
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.savefig(f"{graph_output}/{group}_unique_to_counter_ratio")
+        plt.close()
+        sns.scatterplot(data=df, x="genome_length",y="trivial_non_trivial", hue= f"{group}")
+        plt.xscale("log")
+        plt.savefig(f"{graph_output}/{group}_scatter_trivial_non_trivial")
+        plt.close()
+        sns.violinplot(data=df, x="k",y="counter", hue=f"{group}")
+        plt.savefig(f"{graph_output}/{group}_violin_counter")
+        plt.close()
+        sns.boxplot(data=df, x="phylum_id",y="composition", hue=f"{group}")
+        plt.savefig(f"{graph_output}/{group}_composition_box")
+        plt.close()
+        for column in data_columns:
+            plt.figure(figsize=(12, 6))
+            sns.lineplot(data=nulldata, x='k', y=column, hue=f"{group}")
+            plt.savefig(f'{graph_output}/{group}_{column}')
+            plt.close()
     pass
 #    print(media)
 #    print(values)
