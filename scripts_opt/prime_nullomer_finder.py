@@ -1,6 +1,7 @@
 """Compares multiple organisms nullomer tries for primes."""
 import argparse
 import yaml
+import csv
 from collections import defaultdict
 
 from nulloretriever.analysis.prime_nullomer import *
@@ -38,6 +39,18 @@ def setup_argparser() -> argparse.ArgumentParser:
     )
     return parser
 
+def dict_flattener(full_dict, final_dict=None, parent_key=''):
+    if final_dict is None:
+        final_dict = {}
+
+    for key, value in full_dict.items():
+        new_key = f"{parent_key}_{key}" if parent_key else key
+        if isinstance(value, dict):
+            dict_flattener(value, final_dict, parent_key=new_key)
+        else:
+            final_dict[new_key] = value
+
+    return final_dict
 
 def main():
     """Search for nullomer primes."""
@@ -46,6 +59,7 @@ def main():
     output = args.output
     k_range = args.k_range
     config_path = args.config
+    all_stats = []
     with open(config_path, 'r') as f:
         try:
             data = yaml.safe_load(f)
@@ -54,6 +68,7 @@ def main():
             print(f"An error was found parsing the yaml file: {exc}.")
 
     k = int(k_range[0])
+    orgs_analyzed = len(genomes)
     while k <= k_range[1]:
         is_odd = k%2
         half_k = (k//2) + is_odd
@@ -70,9 +85,27 @@ def main():
                     break
             except Exception as e:
                 continue
-        if anchor_trie.count_kmers() > 0:
-            anchor_trie.write_txt_format("aqui")
+        count = anchor_trie.count_kmers()
+        if count > 0:
+            retrieved_stats = {
+            'counter':count,
+            'org_count': orgs_analyzed,
+            'gc': anchor_trie.count_gc(),
+            'cpg_stats': anchor_trie.retrieve_nullomers_cpg_stats(),
+            'palindrome_stats': anchor_trie.retrieve_palindrome_stats()
+            }
+            base_dict = {'k': k}
+            row_data = dict_flattener(retrieved_stats, base_dict)
+            all_stats.append(row_data)
         k += 1
+    if all_stats:
+        anchor_trie.write_txt_format("prime_null")
+        file_name = f"prime_null_k_{k_range[0]}_to_{k}.csv"
+        header = list({column: True for line in all_stats for column in line.keys()}.keys())
+        with open(file_name, "w", newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=header)
+            writer.writeheader()
+            writer.writerows(all_stats)
 
 if __name__ == "__main__":
     main()

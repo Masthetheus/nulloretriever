@@ -2,6 +2,7 @@
 
 from bitarray import bitarray
 import struct
+import csv
 
 from nulloretriever.analysis.composition import (
     generate_gc_dict
