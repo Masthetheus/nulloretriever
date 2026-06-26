@@ -201,18 +201,21 @@ class TrieBit:
                     v1_cpg += 1
             v1_last = idx_acc & 3
             v2_idxs = node.v2_set.search(1)
+            v2_count = 0
             for v2 in v2_idxs:
                 v2_first = v2 >> v2_shift
                 has_cpg = False
                 if cpg_dict[v2] != 0:
                     cpg_tot += cpg_dict[v2]
                     has_cpg = True
+                    v2_count += 1
                 if v1_last == 1 and v2_first == 3:
                     cpg_tot +=1
                     has_cpg = True
+                    if cpg_dict[v2] == 0 and v1_cpg == 0:
+                        v2_count += 1
                 if has_cpg:
                     null_with_cpg += 1
-            v2_count = node.v2_set.count(bitarray('1'))
             null_count += v2_count
             cpg_tot += (v1_cpg * v2_count)
             return

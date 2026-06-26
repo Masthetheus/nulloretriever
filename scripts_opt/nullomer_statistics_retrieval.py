@@ -63,17 +63,18 @@ def main():
 #                  f"Error: {err=}, {type(err)=}")
 #            raise
 
-    for stat in stats:
-        retrieved_stats[stat] = dispatch_table[stat]
-    base_dict = {}
-    base_dict['organism'] = organism
-    base_dict['k'] = k_val
-    final_stats = dict_flattener(retrieved_stats, base_dict)
-    with open(out_path, mode='w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(final_stats.keys())
-        writer.writerow(final_stats.values())
-    print(retrieved_stats)
+    print(trie.kmer_count())
+    #for stat in stats:
+    #    retrieved_stats[stat] = dispatch_table[stat]
+    #base_dict = {}
+    #base_dict['organism'] = organism
+    #base_dict['k'] = k_val
+    #final_stats = dict_flattener(retrieved_stats, base_dict)
+    #with open(out_path, mode='w', newline='') as f:
+    #    writer = csv.writer(f)
+    #    writer.writerow(final_stats.keys())
+    #    writer.writerow(final_stats.values())
+    #print(retrieved_stats)
 
 
 if __name__ == "__main__":
