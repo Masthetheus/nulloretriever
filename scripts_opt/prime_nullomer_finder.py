@@ -121,9 +121,9 @@ def main():
                 base_dict = {'k': k, 'group_id': group_id, 'group_by': args.group_by}
                 row_data = dict_flattener(retrieved_stats, base_dict)
                 all_stats.append(row_data)
+                anchor_trie.write_txt_format(f"prime_null_{group_id}_{k}")
             k += 1
     if all_stats:
-        anchor_trie.write_txt_format(f"prime_null_{group_id}_{k}")
         file_name = f"prime_null_k_{k_range[0]}_to_{k-1}.csv"
         header = list({column: True for line in all_stats for column in line.keys()}.keys())
         with open(file_name, "w", newline='', encoding='utf-8') as f:
