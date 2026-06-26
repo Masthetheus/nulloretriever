@@ -185,15 +185,14 @@ class TrieBit:
 
     def retrieve_nullomers_cpg_stats(self):
         half_k = self.k // 2
-        null_count = 0
         cpg_dict = generate_cpg_dict(half_k)
         cpg_tot = 0
         null_with_cpg = 0
         v2_size = half_k
         v2_shift = (half_k - 1) * 2
-        v1_cpg = 0
         def count_cpg(node, idx_acc):
-            nonlocal v1_cpg, cpg_tot, null_count, null_with_cpg
+            nonlocal cpg_tot, null_with_cpg
+            v1_cpg = 0
             for i in range (self.half_k -1):
                 shift = (self.half_k - i - 2) * 2
                 pair = (idx_acc >> shift) & 15
@@ -216,10 +215,10 @@ class TrieBit:
                         v2_count += 1
                 if has_cpg:
                     null_with_cpg += 1
-            null_count += v2_count
             cpg_tot += (v1_cpg * v2_count)
             return
         self.traverse_till_half_k(callback=count_cpg)
+        null_count = self.count_kmers()
         try:
             cpg_count_mean = cpg_tot/null_with_cpg
         except ZeroDivisionError:
@@ -317,7 +316,8 @@ class TrieBit:
             v2s = self.retrieve_v2_list(v1)
             second_v2s = second_trie.retrieve_v2_list(v1)
             self.traverse_till_custom(target_idx=v1,callback=change_v2_set)
-        for v1 in v1_only_self:
+        v1_only_self_idxs = list(v1_only_self.search(bitarray('1')))
+        for v1 in v1_only_self_idxs:
             self.traverse_till_custom(target_idx=v1, callback=zero_v2_set)
         return
 
