@@ -40,8 +40,8 @@ def setup_argparser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
             '-g', '--group_by',
-            default='phylum_id',
-            choices=['phylum_id', 'order_id', 'family_id', 'genus_id']
+            choices=['none','phylum_id', 'order_id', 'family_id', 'genus_id'],
+            default = 'none'
         )
     return parser
 
@@ -83,14 +83,15 @@ def main():
         except yaml.YAMLError as exc:
             print(f"An error was found parsing the yaml file: {exc}.")
     grouping = defaultdict(list)
-    for accession in genomes:
-        norm = normalize_accession(accession)
-        if norm in org_lookup:
-            org_group = org_lookup[norm].get(f'{group}', 'unknown')
-            grouping[org_group].append(accession)
+    if group == 'none':
+        grouping['all'] = genomes
+    else:
+        for accession in genomes:
+            norm = normalize_accession(accession)
+            if norm in org_lookup:
+                org_group = org_lookup[norm].get(f'{group}', 'unknown')
+                grouping[org_group].append(accession)
     k = int(k_range[0])
-    orgs_analyzed = len(genomes)
-    print(grouping.items())
     for group_id, group_genomes in grouping.items():
         k = k_range[0]
         while k <= k_range[1]:
@@ -100,6 +101,7 @@ def main():
             remove_counter = 0
             print(f"======{k}======")
             anchor_trie = mount_trie_from_bitfile(f"workflow/results/k{k}/{group_genomes[0]}/null_bit_format")
+            orgs_analyzed = len(group_genomes)
             for genome in group_genomes[1:]:
                 try:
                     trie2 = mount_trie_from_bitfile(f"workflow/results/k{k}/{genome}/null_bit_format")
@@ -121,7 +123,9 @@ def main():
                 base_dict = {'k': k, 'group_id': group_id, 'group_by': args.group_by}
                 row_data = dict_flattener(retrieved_stats, base_dict)
                 all_stats.append(row_data)
-                anchor_trie.write_txt_format(f"prime_null_{group_id}_{k}")
+                if group_id == 'N/A':
+                    group_id = 'not_found'
+                anchor_trie.write_sequences(f"prime_null_{group_id}_{k}")
             k += 1
     if all_stats:
         file_name = f"prime_null_k_{k_range[0]}_to_{k-1}.csv"

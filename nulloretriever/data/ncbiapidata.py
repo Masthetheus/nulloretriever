@@ -150,10 +150,10 @@ def get_genome_download_link(accessions):
                 print("Vai quebrar")
                 break
             # Obtain FTP Assembly link
-            ftp_path = summary['DocumentSummarySet']['DocumentSummary'][0].get(
+            ftp_path = summary[0]['DocumentSummarySet']['DocumentSummary'][0].get(
                 'FtpPath_RefSeq')
             if not ftp_path:
-                ftp_path = summary['DocumentSummarySet']['DocumentSummary'][0].get(
+                ftp_path = summary[0]['DocumentSummarySet']['DocumentSummary'][0].get(
                     'FtpPath_GenBank')
             if ftp_path:
                 link = ftp_path + "/" + \
@@ -168,6 +168,7 @@ def get_genome_download_link(accessions):
                 return None
         return links
     except Exception as e:
+        print(summary)
         print(f"Error during {accession}: {e}")
         return None
 

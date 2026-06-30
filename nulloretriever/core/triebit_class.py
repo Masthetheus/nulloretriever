@@ -341,13 +341,11 @@ class TrieBit:
                 for possibility in (idx >> 2, idx&mask):
                     v1 = possibility >> ((smaller_hk-is_odd)*2)
                     v2_loop = possibility & smaller_mask
-                    print(bin(v1),'\n',bin(v2_loop))
                     found = small_trie.traverse_till_custom(target_idx=v1, callback=is_in_trie, v2=v2_loop)
                     if found:
                         trivial +=  1
                         break
         self.traverse_till_half_k(callback=search_trivial)
-        print(trivial)
         return trivial
 
     def find_root_v2(self):
@@ -420,6 +418,24 @@ class TrieBit:
                                                       0))
                             f.write(buffer)
             collect_nodes(self.root, [])
+
+    def idx_to_seq(self, idx, k):
+        DECODE = {0: 'A', 1: 'C', 2: 'T', 3: 'G'}
+        bases = []
+        for i in range(k):
+            bases.append(DECODE[idx & 3])
+            idx >>= 2
+        return ''.join(reversed(bases))
+    def write_sequences(self, filepath):
+        results = []
+        def collect(node, v1_idx):
+            for v2 in node.v2_set.search(1):
+                seq_v1 = self.idx_to_seq(v1_idx, self.half_k)
+                seq_v2 = self.idx_to_seq(v2, self.k - self.half_k)
+                results.append(seq_v1 + seq_v2)
+        self.traverse_till_half_k(callback=collect)
+        with open(filepath, 'w') as f:
+            f.write('\n'.join(results))
 
     def write_txt_format(self, output):
         """Writes a trie paths and relative v2 values in a compact txt format

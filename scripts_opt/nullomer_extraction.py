@@ -43,7 +43,7 @@ def main():
     k_values = args.kvalues
     mode = args.mode
     out_path = args.output+'_result'
-    genome_path = "workflow/data/genomes/GCF_000181295_1"
+    genome_path = "workflow/data/genomes/GCF_000512565_2"
     k = int(k_values[0])
     if k % 2 == 0:
         half_k = int(k/2)
