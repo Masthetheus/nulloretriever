@@ -1,4 +1,4 @@
-c_script: scripts/c/main.c
+c_script: scripts/c/fasta_kmer_extraction.c
 genomes: data/genomes/
 k:
 - 10
