@@ -33,6 +33,11 @@ def setup_argparser() -> argparse.ArgumentParser:
         help="Output for the found nullomers file. Default = workflow/data/",
         default='workflow/data'
     )
+    parser.add_argument(
+        '-g',
+        '--genome',
+        help="Genome to be analyzed"
+    )
     return parser
 
 
@@ -43,7 +48,7 @@ def main():
     k_values = args.kvalues
     mode = args.mode
     out_path = args.output+'_result'
-    genome_path = "workflow/data/genomes/GCF_000512565_2"
+    genome_path = args.genome
     k = int(k_values[0])
     if k % 2 == 0:
         half_k = int(k/2)
@@ -58,7 +63,7 @@ def main():
         v2_size = k - half_k
     trie = TrieBit(m, k, half_k)
     proc = subprocess.Popen(
-        ["workflow/scripts/c/bin/kmer_extractor",
+        ["../workflow/scripts/c/bin/kmer_extractor",
          genome_path, k_values[0]],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
