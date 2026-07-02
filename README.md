@@ -1,6 +1,6 @@
-# Nullomer extraction pipeline 
+# NulloRetriever: a nullomer extraction and analysis workflow 
 
-The current pipeline aims to extract nullomer data from multiple organisms in an compact data format(triebit and txt files), leadin to low memory usage and time optimization.
+NulloRetriever is a workflow that operates integrating an authoral package and custom scripts in C and Python with Snakemake, to rule definition and execution. It receives one or more organisms FASTA files, extract complete nullomeric information and obtain a set of related statistics from those sequences. File output occurs in two main formats, a bit file containing the Trie information or complete sequence format. 
 
 ## Summary
 
@@ -17,31 +17,71 @@ The current pipeline aims to extract nullomer data from multiple organisms in an
 The project is organized to separate raw data, scripts, results, configuration, and documentation. Below is the folder structure and a brief description of each component:
 
 ```
-nullomer_c_trie_bit/
-├── config/           # Configuration files (e.g., config.yaml for pipeline parameters)
-├── data/
-│   ├── genomas/      # Reference genomes (FASTA files)
-│   ├── raw/          # Raw input data (original downloads, unprocessed)
-│   └── processed/    # Intermediate processed data (e.g., k-mers, tries)
-├── results/
-│   ├── k/            # Results organized by k-mer size (e.g., results/8/, results/12/)
-│   └── summary/      # Aggregated results, tables, and figures
-├── scripts/
-│   ├── c/            # C source code for k-mer extraction and processing
-│   ├── python/       # Python scripts for trie construction, analysis, and post-processing
-├── workflow/
-│   ├── Snakefile     # Main Snakemake workflow file
-│   └── rules/        # (Optional) Modular Snakemake rules
-├── logs/             # Execution and error logs
-├── benchmarks/       # Benchmark files for resource usage tracking
-├── tests/            # Unit and integration tests
-├── README.md         # Project documentation
-├── .gitignore        # Files and folders to ignore in version control
-├── LICENSE           # Project license
-├── requirements.txt  # Python dependencies
-└── environment.yml   # Conda environment specification (optional)
+.
+├── benchmarking
+│   ├── benchmark_wrapper.py
+│   ├── config.yaml
+│   ├── data
+│   ├── georgakopoulos-soares-2021
+│   └── maw-master
+├── degenerate_analysis.py
+├── environment.yaml
+├── examples
+│   ├── data
+│   ├── opt-scripts
+│   ├── output
+│   ├── README.md
+│   └── snakemake-pipeline
+├── LICENSE
+├── nulloretriever
+│   ├── analysis
+│   ├── core
+│   ├── data
+│   ├── __init__.py
+│   ├── __pycache__
+│   └── utils
+├── README.md
+├── requirements.txt
+├── scripts_opt
+│   ├── configlog
+│   ├── create_organism_db.py
+│   ├── csv_analysis.py
+│   ├── data_analysis_hub.py
+│   ├── download_genomes.py
+│   ├── idx_relations.py
+│   ├── nullomer_comparison.py
+│   ├── nullomer_data_analysis.py
+│   ├── nullomer_extraction.py
+│   ├── nullomer_statistics_retrieval.py
+│   ├── null_plots.py
+│   ├── order_null_plots.py
+│   ├── prime_nullomer_finder.py
+│   ├── prime_to_aa.py
+│   ├── snakemake_config_generation.py
+│   └── trivial_extension_search.py
+├── setup.py
+├── setup.sh
+├── testing
+│   ├── c
+│   ├── modules
+│   ├── opt-scripts
+│   ├── README.md
+│   └── snakemake-pipeline
+└── workflow
+    ├── archive
+    ├── benchmarks
+    ├── config
+    ├── data
+    ├── data_result
+    ├── decoded_kmers.txt
+    ├── log
+    ├── logs
+    ├── report.html
+    ├── results
+    ├── runs
+    ├── scripts
+    └── Snakefile
 ```
-
 **Key points:**
 - **config/**: Centralizes all configuration files for easy parameter management and snakemake parameter calling.
 - **data/**: Stores all input data, both raw and processed, but large files should not be versioned.
