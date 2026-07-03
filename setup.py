@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="nulloretriever",
     version="0.1.0",
-    description="Base package for the needed functions of the nullo-retriever pipeline.",
+    description="Base package for the nullo-retriever pipeline.",
     url="https://github.com/Masthetheus/nulloretriever",
     author="Matheus Pedron Cassol",
     classifiers=[

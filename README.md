@@ -17,70 +17,99 @@ NulloRetriever is a workflow that operates integrating an authoral package and c
 The project is organized to separate raw data, scripts, results, configuration, and documentation. Below is the folder structure and a brief description of each component:
 
 ```
-.
-├── benchmarking
-│   ├── benchmark_wrapper.py
-│   ├── config.yaml
-│   ├── data
-│   ├── georgakopoulos-soares-2021
-│   └── maw-master
-├── degenerate_analysis.py
-├── environment.yaml
-├── examples
-│   ├── data
-│   ├── opt-scripts
-│   ├── output
-│   ├── README.md
-│   └── snakemake-pipeline
+./
+├── config/
+│   └── backup_lista_completa.yaml
+├── docs/
+├── examples/
+│   ├── data/
+│   │   ├── config.yaml
+│   │   ├── example_config.yaml
+│   │   └── simple_genome_example
+│   ├── opt-scripts/
+│   │   ├── README.md
+│   │   ├── example_create_organism_db.py
+│   │   └── example_snakemake_config_generation.py
+│   ├── output/
+│   │   └── example_organisms_db.json
+│   ├── snakemake-pipeline/
+│   │   └── README.md
+│   └── README.md
+├── nulloretriever/
+│   ├── analysis/
+│   │   ├── composition.py
+│   │   ├── counter.py
+│   │   ├── graphs.py
+│   │   ├── motifs.py
+│   │   ├── parsings.py
+│   │   ├── prime_nullomer.py
+│   │   ├── processing.py
+│   │   ├── results.py
+│   │   └── trivial_extensions.py
+│   ├── core/
+│   │   └── triebit_class.py
+│   ├── data/
+│   │   ├── ncbiapidata.py
+│   │   └── ncbidownload.py
+│   └── utils/
+│       ├── csv_manipulation.py
+│       ├── integrity.py
+│       ├── paths.py
+│       ├── progress_bar.py
+│       ├── snakemake_path_tools.py
+│       ├── test_file_tools.py
+│       └── validation.py
+├── scripts_opt/
+├── testing/
+│   ├── c/
+│   │   └── test_fasta_kmer_extraction.c
+│   ├── data/
+│   │   ├── cerevisiae.fna
+│   │   └── test_genome
+│   ├── misc/
+│   ├── modules/
+│   │   ├── README.md
+│   │   ├── general_utils_test.py
+│   │   ├── triebit_class_test.py
+│   │   ├── triebit_composition_analysis_test.py
+│   │   ├── triebit_counter_analysis_test.py
+│   │   ├── triebit_motif_analysis_test.py
+│   │   └── trivial_extensions_test.py
+│   ├── opt-scripts/
+│   │   └── README.md
+│   ├── snakemake-pipeline/
+│   │   └── README.md
+│   └── README.md
+├── workflow/
+│   ├── config/
+│   │   └── config.yaml
+│   ├── data/
+│   │   └── genomes/
+│   ├── scripts/
+│   │   ├── archive/
+│   │   ├── c
+│   │   │   ├── Makefile
+│   │   │   ├── bin
+│   │   │   ├── bugs.md
+│   │   │   ├── build
+│   │   │   ├── erros
+│   │   │   ├── include
+│   │   │   └── src
+│   │   └── python
+│   │       ├── bugs.md
+│   │       ├── genome_checking.py
+│   │       ├── nullomer_extraction.py
+│   │       ├── nullomer_statistics_retrieval.py
+│   │       ├── nullomer_statistics_summary.py
+│   │       └── path_checking.py
+│   └── Snakefile
 ├── LICENSE
-├── nulloretriever
-│   ├── analysis
-│   ├── core
-│   ├── data
-│   ├── __init__.py
-│   ├── __pycache__
-│   └── utils
 ├── README.md
+├── environment.yaml
 ├── requirements.txt
-├── scripts_opt
-│   ├── configlog
-│   ├── create_organism_db.py
-│   ├── csv_analysis.py
-│   ├── data_analysis_hub.py
-│   ├── download_genomes.py
-│   ├── idx_relations.py
-│   ├── nullomer_comparison.py
-│   ├── nullomer_data_analysis.py
-│   ├── nullomer_extraction.py
-│   ├── nullomer_statistics_retrieval.py
-│   ├── null_plots.py
-│   ├── order_null_plots.py
-│   ├── prime_nullomer_finder.py
-│   ├── prime_to_aa.py
-│   ├── snakemake_config_generation.py
-│   └── trivial_extension_search.py
 ├── setup.py
-├── setup.sh
-├── testing
-│   ├── c
-│   ├── modules
-│   ├── opt-scripts
-│   ├── README.md
-│   └── snakemake-pipeline
-└── workflow
-    ├── archive
-    ├── benchmarks
-    ├── config
-    ├── data
-    ├── data_result
-    ├── decoded_kmers.txt
-    ├── log
-    ├── logs
-    ├── report.html
-    ├── results
-    ├── runs
-    ├── scripts
-    └── Snakefile
+├── setup.sh*
+└── structure
 ```
 **Key points:**
 - **config/**: Centralizes all configuration files for easy parameter management and snakemake parameter calling.

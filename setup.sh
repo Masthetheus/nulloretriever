@@ -36,12 +36,8 @@ fi
 
 # 5. Compile needed C files in the correct Scripts places
 echo "Compiling C files..."
-C_DIR="scripts/c"
-for cfile in $C_DIR/*.c; do
-	exe="${cfile%.c}"
-	gcc -O2 -o "$exe" "$cfile"
-	echo "$exe correctly compiled!"
-done
+C_DIR="workflow/scripts/c/src"
+make -C C_DIR
 
 # 6. Create data directory structure
 echo "Creating data directory structure..."
