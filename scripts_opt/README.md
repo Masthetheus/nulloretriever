@@ -23,17 +23,13 @@ Inside this directory resides **strictly** auxiliary scripts that are **not** pa
 
 - **`nullomer_extraction.py`** – K-mer processing and nullomer extraction used in the Snakemake pipeline. Operates on a given genome and k value, outputting all possible nullomers in binary format.
 
-- **`nullomer_statistics_retrieval.py`** – Retrieve nullomer statistics from a bit file. Snakemake-compatible script that computes composition, counter, and motif statistics (CPG, palindromy, homopolymers).
+- **`nullomer_statistics_retrieval.py`** – Retrieve nullomer statistics from a bit file. From the Snakemake pipeline, computes composition, counter, trivial extensions and motif statistics (CPG, palindromy, homopolymers) on top of the previously generated nullomer bit file..
 
-- **`nullomer_data_analysis.py`** – Multiple nullomer data analysis. Processes CSV data and a JSON organism database to generate graphs and derived metrics.
+- **`prime_nullomer_finder.py`** – Compares multiple organisms nullomer tries to find primes. Obtain the sequences and write them in a txt file and it's statistics in a centralized csv. 
 
-- **`data_analysis_hub.py`** – Generate graphs and CSVs from nullomer data analysis. Supports grouping, parameter selection, and export of processed data.
+- **`create_organism_db.py`** – Creates a JSON file with metadata for a given organism list. Fetches genome length and taxonomy metadata from NCBI via API.
 
-- **`prime_nullomer_finder.py`** – Compares multiple organisms' nullomer tries to find primes. Searches for nullomers that are prime across organisms in a given group.
-
-- **`create_organism_db.py`** – Creates a JSON file with metadata for a given organism list. Fetches genome length and taxonomy metadata from NCBI.
-
-- **`snakemake_config_generation.py`** – Script to generate a `config.yaml` file for the Snakemake pipeline. Includes integrity checking and configurable k-values.
+- **`snakemake_config_generation.py`** – Script to generate a `config.yaml` file for the Snakemake pipeline. Includes genome integrity checking and configurable k-values.
 
 ---
 

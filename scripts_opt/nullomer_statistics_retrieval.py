@@ -33,7 +33,7 @@ def setup_argparser() -> argparse.ArgumentParser:
         help="Stats to be analyzed. Default ="
         "all. Choices = composition, trivial, motifs.",
         choices=["all", "composition", "trivial", "motifs"],
-        default="all"
+        default="all",
     )
     return parser
 
