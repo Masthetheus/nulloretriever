@@ -33,16 +33,17 @@ def setup_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         '-k',
         '--k_range',
-        help="Range of k values to search trivial extensions. Default = 10-12",
+        help="Range of k values to search prime nullomers. Default = 10-12",
         nargs=2,
         type=int,
         default=[10, 12]
     )
     parser.add_argument(
-            '-g', '--group_by',
-            choices=['none','phylum_id', 'order_id', 'family_id', 'genus_id'],
-            default = 'none'
-        )
+        '-g', '--group_by',
+        help="Mode of grouping organisms while searching for primes.",
+        choices=['none','phylum_id', 'order_id', 'family_id', 'genus_id'],
+        default = 'none'
+    )
     return parser
 
 def dict_flattener(full_dict, final_dict=None, parent_key=''):

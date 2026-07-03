@@ -42,9 +42,9 @@ def main():
         "--mode",
         type=str,
         choices=['all','capitalize'],
-        help="Mode for running the script. Options all and capitalize. All downloads
-            the genome list from NCBI, decompress and capitalize them. Capitalize only
-            capitalizes all genomes on --output directory."
+        help="Mode for running the script. Options all and capitalize. All downloads"
+           "the genome list from NCBI, decompress and capitalize them. Capitalize only"
+            "capitalizes all genomes on --output directory."
     )
     args = parser.parse_args()
     accession_file = args.accession_list
