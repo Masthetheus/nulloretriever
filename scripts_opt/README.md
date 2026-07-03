@@ -19,21 +19,21 @@ Inside this directory resides **strictly** auxiliary scripts that are **not** pa
 
 ## Scripts overview
 
-- **`genome_utilities.py`** – Download genome assemblies from NCBI.
-  *Input:* Accession list (`.tsv`/`.csv`).
-  *Output:* FASTA files in output directory.
+- **`genomes_utilities.py`** – Script for direct genome download and decompression via NCBI API. Supports `all` mode (download, decompress, and capitalize) and `capitalize` mode (capitalize existing FASTA files).
 
-- **`nullomer_extraction.py`** – Extract nullomers from a single genome.
-  *Input:* FASTA file, k value.
-  *Output:* List of nullomers (CSV).
+- **`nullomer_extraction.py`** – K-mer processing and nullomer extraction used in the Snakemake pipeline. Operates on a given genome and k value, outputting all possible nullomers in binary format.
 
-- **`nullomer_data_analysis.py`** – Analyze nullomer distribution, GC content, and feature overlap.
-  *Input:* Nullomer list, genome annotation (optional GFF).
-  *Output:* Summary tables and plots.
+- **`nullomer_statistics_retrieval.py`** – Retrieve nullomer statistics from a bit file. Snakemake-compatible script that computes composition, counter, and motif statistics (CPG, palindromy, homopolymers).
 
-- **`nullomer_statistics_retrieval.py`** – Aggregate results across multiple genomes into one table.
-  *Input:* Multiple nullomer lists.
-  *Output:* Combined CSV/TSV.
+- **`nullomer_data_analysis.py`** – Multiple nullomer data analysis. Processes CSV data and a JSON organism database to generate graphs and derived metrics.
+
+- **`data_analysis_hub.py`** – Generate graphs and CSVs from nullomer data analysis. Supports grouping, parameter selection, and export of processed data.
+
+- **`prime_nullomer_finder.py`** – Compares multiple organisms' nullomer tries to find primes. Searches for nullomers that are prime across organisms in a given group.
+
+- **`create_organism_db.py`** – Creates a JSON file with metadata for a given organism list. Fetches genome length and taxonomy metadata from NCBI.
+
+- **`snakemake_config_generation.py`** – Script to generate a `config.yaml` file for the Snakemake pipeline. Includes integrity checking and configurable k-values.
 
 ---
 
