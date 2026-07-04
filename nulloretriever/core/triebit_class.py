@@ -144,7 +144,10 @@ class TrieBit:
     def traverse_till_custom(self, callback, target_idx, v2=None):
         def walk(node, depth, idx_acc):
             if depth == self.half_k:
-                return callback(node, idx_acc, v2)
+                if v2:
+                    return callback(node, idx_acc, v2)
+                else:
+                    return callback(node, idx_acc)
             else:
                 next_idx = target_idx >> (2 * (self.half_k - depth - 1)) & 3
                 idx_acc = (idx_acc << 2) | next_idx

@@ -65,9 +65,9 @@ rule create_results_directories:
 
 rule generate_c_binaries:
     input:
-        c_source = config["c_script"]
+        c_source = "scripts/c/src/main.c"
     output:
-        "scripts/c/bin_fasta_kmer_extraction"
+        "scripts/c/bin/kmer_extractor"
     shell:
         "make -C scripts/c/"
 

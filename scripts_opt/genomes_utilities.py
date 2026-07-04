@@ -97,8 +97,7 @@ def main():
             print(f"Directory {target_dir} not found.")
             return
         fasta_files = list(target_dir.glob("*.fasta")) + list(
-            target_dir.glob("*.fa")
-        )
+            target_dir.glob("*.fa")) + list(target_dir.glob("*.fna"))
         if not fasta_files:
             print(f"No FASTA files found in {target_dir}")
             return
