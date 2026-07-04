@@ -9,3 +9,6 @@ testing/module-testing/data/*
 workflow/data/genomes/*
 *.directories_created
 *.results_directories_created
+benchmarking/data/genomes/*
+*.fasta
+kmers_*

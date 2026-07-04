@@ -67,7 +67,6 @@ def main():
     Snakemake compatible script aimed to operate on nullomer bit files and
     retrieve statistics of such. The details on each function operation can be
     found in their module of origin.
-    Composition:
     """
     parser = setup_argparser()
     args = parser.parse_args()
@@ -88,6 +87,7 @@ def main():
         smaller_null_file = args.null2
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
+
     if counter > 0:
         print("Gathering trivial information")
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
@@ -99,6 +99,7 @@ def main():
     else:
         print("No nullomers found in the given bit file.")
         return
+
     retrieved_stats = {}
     retrieved_stats["counter"] = counter
 
@@ -107,6 +108,8 @@ def main():
             retrieved_stats[stat] = dispatch_table[stat]
         except Exception as e:
             print(f"Stat {stat} no available for this organism")
+            print(f"Exception= {e}.")
+
     base_dict = {}
     final_stats = dict_flattener(retrieved_stats, base_dict)
     with open(out_path, mode="w", newline="") as f:

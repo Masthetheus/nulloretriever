@@ -1,16 +1,48 @@
 """Optional script for direct genome download via NCBI API."""
+
 from nulloretriever.utils.validation import get_valid_email, get_valid_tool
 from nulloretriever.data.ncbidownload import download_genome_bioentrez
 from nulloretriever.data.ncbiapidata import read_accession_list
 from nulloretriever.utils.integrity import unzip_fasta_file, capslock_file
 from Bio import Entrez
 import argparse
-import textwrap
 from pathlib import Path
 
 
+def setup_argparser() -> argparse.ArgumentParser:
+    """Parsing function for the genome utilities script."""
+    parser = argparse.ArgumentParser(
+        description="Download" "genomes from NCBI by" "assembly accession list."
+    )
+    parser.add_argument(
+        "--accession-list",
+        type=str,
+        default="workflow/data/ncbi_dataset.tsv",
+        help="Path to the file containing assembly accession numbers"
+        "(default: ncbi_dataset.tsv)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="workflow/data/genomes/",
+        help="Where to store downloaded genomes."
+        "Default = workflow/data/genomes/",
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["all", "capitalize"],
+        help="Mode for running the script. Options all and capitalize. All downloads"
+        "the genome list from NCBI, decompress and capitalize them. Capitalize only"
+        "capitalizes all genomes on --output directory."
+        "Default = all.",
+        default="all",
+    )
+    return parser
+
+
 def main():
-    """Return the genomes files from given set of accession codes.
+    """Download the genomes files from given set of accession codes.
 
     Args:
         Entrez.email(str): e-mail registered on Entrez
@@ -21,31 +53,7 @@ def main():
         directory(file): file containing a genome sequence unzipped and in full
                          capslock.
     """
-    parser = argparse.ArgumentParser(description="Download genomes from NCBI"
-                                     " by assembly accession list.")
-    parser.add_argument(
-        "--accession-list",
-        type=str,
-        default="workflow/data/ncbi_dataset.tsv",
-        help=textwrap.dedent("""
-        Path to the file containing assembly accession numbers
-        (default: ncbi_dataset.tsv)
-        """)
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="workflow/data/genomes/",
-        help="Where to store downloaded genomes"
-    )
-    parser.add_argument(
-        "--mode",
-        type=str,
-        choices=['all','capitalize'],
-        help="Mode for running the script. Options all and capitalize. All downloads"
-           "the genome list from NCBI, decompress and capitalize them. Capitalize only"
-            "capitalizes all genomes on --output directory."
-    )
+    parser = setup_argparser()
     args = parser.parse_args()
     accession_file = args.accession_list
     output = Path(args.output)
@@ -54,12 +62,20 @@ def main():
         Entrez.email = get_valid_email()
         Entrez.tool = get_valid_tool()
         print(f"Using accession file: {accession_file}")
-        print("Do you want to specify a custom .csv/.tsv column name for the"
-              " accession numbers? (y/[n])")
-        custom_column = input().strip().lower() == 'y'
+        print(
+            "Do you want to specify a custom .csv/.tsv column name for the"
+            " accession numbers? (y/[n])"
+        )
+        # remove until the else block to skip verification
+        custom_column = input().strip().lower() == "y"
         if custom_column:
-            column_name = input("Enter the column name (NCBI default is 'Assembly"
-                                " Accession'): ").strip() or "Assembly Accession"
+            column_name = (
+                input(
+                    "Enter the column name (NCBI default is 'Assembly"
+                    " Accession'): "
+                ).strip()
+                or "Assembly Accession"
+            )
         else:
             column_name = None
         accessions = read_accession_list(accession_file, column=column_name)
@@ -80,7 +96,9 @@ def main():
         if not target_dir.is_dir():
             print(f"Directory {target_dir} not found.")
             return
-        fasta_files = list(target_dir.glob("*.fasta")) + list(target_dir.glob("*.fa"))
+        fasta_files = list(target_dir.glob("*.fasta")) + list(
+            target_dir.glob("*.fa")
+        )
         if not fasta_files:
             print(f"No FASTA files found in {target_dir}")
             return
