@@ -1,6 +1,7 @@
 """Functions related to path management and manipulation"""
-import os
+
 from pathlib import Path
+
 
 def gather_files_names(location):
     """Gather the name of all files inside a specified location
@@ -16,6 +17,7 @@ def gather_files_names(location):
     except OSError as e:
         print(f"Unable to gather file names, error {e}")
         return []
+
 
 def gather_files_paths(location):
     """Gather the complete path of all files inside a specified location

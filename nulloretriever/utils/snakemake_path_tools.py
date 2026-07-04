@@ -6,10 +6,12 @@ UNDER DEVELOPMENT:
     retrieve_nullomer_files_path: obtain org list needs implementation
     CURRENTLY RETIRED
 """
+
 import os
 import yaml
 
-def check_config_paths_existence(config_file,yaml_variables):
+
+def check_config_paths_existence(config_file, yaml_variables):
     """Check if the paths on the config.yaml file exists
     Args:
         config_file(str): path to the config.yaml file
@@ -19,18 +21,19 @@ def check_config_paths_existence(config_file,yaml_variables):
     missing_paths = []
     yaml_variables = yaml_variables
     try:
-        with open(config_file, 'r') as f:
+        with open(config_file, "r") as f:
             config_data = yaml.safe_load(f)
         for variable in config_data:
             if variable in yaml_variables:
-                for path in config_data[variable]:     
+                for path in config_data[variable]:
                     current_path = config_data[variable][path]
                     if not os.path.exists(current_path):
                         missing_paths.append(current_path)
     except IOError as e:
-        print("The following error has occurred:",e)
+        print("The following error has occurred:", e)
         print("Please, check you config file integrity and location!")
     return missing_paths
+
 
 def retrieve_analyzed_k_values(base_path):
     """Obtains k values analyzed via snakemake pipeline
@@ -47,6 +50,7 @@ def retrieve_analyzed_k_values(base_path):
             ks.append(int(name))
     return sorted(ks)
 
+
 def retrieve_analyzed_organisms(config_file):
     """Obtains analyzed organisms names as an array
     Args:
@@ -58,12 +62,14 @@ def retrieve_analyzed_organisms(config_file):
     if not os.path.exists(config_file):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     try:
-        with open(config_file, 'r') as f:
+        with open(config_file, "r") as f:
             config_data = yaml.safe_load(f)
-            organisms = config_data.get('organisms',[])
+            organisms = config_data.get("organisms", [])
     except Exception as e:
         print("Please check your config file integrity!")
+        print(f"Exception: {e}")
     return organisms
+
 
 def retrieve_nullomer_files_path(base_path, config_file):
     """Retrieves an array of all nullomer output files path
@@ -76,34 +82,31 @@ def retrieve_nullomer_files_path(base_path, config_file):
     """
     if not os.path.exists(config_file):
         raise FileNotFoundError(f"Config file not found: {config_path}")
-    organisms = retrieve_analyzed_organisms(config_file)
     found_errors = []
     k_values = retrieve_analyzed_k_values(base_path)
     nullomers_paths = {}
     try:
-        with open(config_file, 'r') as f:
+        with open(config_file, "r") as f:
             config_data = yaml.safe_load(f)
-            genome_direct = config_data['paths']['genomes']
+            genome_direct = config_data["paths"]["genomes"]
     except Exception as e:
         print("Please check your config file integrity!")
+        print(f"Exception: {e}")
     for k in k_values:
-        half_k = int(k // 2)
-        k_path = base_path + str(k) + '/'
+        k_path = base_path + str(k) + "/"
         print(f"Checking directory for k={k}")
-        cont = 0
         paths_k = []
         for org in orgs:
-            org_path = k_path + org + '/'
+            org_path = k_path + org + "/"
             genome_path = genome_direct + org
-            nullomer_out_file = org_path + f'nullomers_{org}_{k}'
+            nullomer_out_file = org_path + f"nullomers_{org}_{k}"
             if not os.path.exists(nullomer_out_file):
-                found_errors.append([org, k, 'File not found!'])
+                found_errors.append([org, k, "File not found!"])
                 continue
             if not os.path.exists(genome_path):
-                found_errors.append([org, k, 'Genome not found!'])
+                found_errors.append([org, k, "Genome not found!"])
                 continue
             paths_k.append((genome_path, nullomer_out_file))
         if paths_k:
             nullomers_paths[k] = paths_k
     return nullomers_paths, found_errors
-

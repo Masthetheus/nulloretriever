@@ -1,5 +1,7 @@
 """Manual implemented progress bar for global purposes"""
+
 import time
+
 
 def progress_bar(current, total, start, size=30):
     """Progress bar for general completion tracking
@@ -22,6 +24,10 @@ def progress_bar(current, total, start, size=30):
     proportion = current / total
     complete = int(proportion * size)
     bar = "|" + "o" * complete + "-" * (size - complete) + "|"
-    print(f"\r{bar} {current}/{total} - Estimated: {minutes:02d}:{seconts:02d} left", end='', flush=True)
+    print(
+        f"\r{bar} {current}/{total} - Estimated: {minutes:02d}:{seconts:02d} left",
+        end="",
+        flush=True,
+    )
     if current == total:
         print()

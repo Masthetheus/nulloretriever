@@ -2,6 +2,7 @@
 
 import re
 
+
 def get_valid_email():
     pattern = r"^[^@]+@[^@]+\.[^@]+$"
     while True:
@@ -9,6 +10,7 @@ def get_valid_email():
         if re.match(pattern, email):
             return email
         print("Invalid email format. Check the expected format and please try again.")
+
 
 def get_valid_tool():
     pattern = r"^[\w\-]+$"

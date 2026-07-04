@@ -1,9 +1,9 @@
 """General utils for NCBI API data gathering."""
+
 import csv
 import os
 import time
 import xml.etree.ElementTree as ET
-import urllib.request
 
 from Bio import Entrez
 
@@ -53,8 +53,8 @@ def read_accession_list(filepath, column=None):
     if ext == ".txt":
         accessions = read_accession_txt(filepath)
     elif ext in [".csv", ".tsv"]:
-        delimiter = ',' if ext == ".csv" else '\t'
-        with open(filepath, newline='') as f:
+        delimiter = "," if ext == ".csv" else "\t"
+        with open(filepath, newline="") as f:
             reader = csv.reader(f, delimiter=delimiter)
             header = next(reader)
             # Detect column index
@@ -71,8 +71,7 @@ def read_accession_list(filepath, column=None):
                 if row and len(row) > column:
                     accessions.append(row[column].strip())
     else:
-        raise ValueError(
-            "Unsupported file format. Use .txt, .csv, or .tsv files.")
+        raise ValueError("Unsupported file format. Use .txt, .csv, or .tsv files.")
     return accessions
 
 
@@ -96,7 +95,7 @@ def get_accesion_summary_data(acc):
 
         if not record["IdList"]:
             print(f"No result found for {acc}")
-            with open(log, 'a') as log:
+            with open(log, "a") as log:
                 log.write(f"ID for Assembly Accession {acc} not found.\n")
             return None
 
@@ -104,27 +103,15 @@ def get_accesion_summary_data(acc):
         assembly_id = record["IdList"][0]
         print(f"Assembly ID found: {assembly_id}")
 
-
         # Get assembly summary
         print(f"Searching summary for Assembly ID: {assembly_id}")
         handle = Entrez.esummary(db="assembly", id=assembly_id, retmode="xml")
         summary = Entrez.read(handle)
         handle.close()
-        stats_url = summary["DocumentSummarySet"]["DocumentSummary"][0]["FtpPath_Stats_rpt"]
-#        with urllib.request.urlopen(stats_url) as response:
-#            lines = response.read().decode('utf-8').splitlines()
-#            for line in lines:
-#                if "GC" in line or "gc" in line:
-#                    if line.startswith("#") or not line.strip():
-#                        continue
-#                    columns = line.split('\t')
-#                    if columns[0] == "all" and columns[1] == "all":
-#                        gc_tot = float(columns[5])
-#                        break
         time.sleep(0.05)
 
         gc_tot = 0
-        return summary,gc_tot
+        return summary, gc_tot
     except Exception as e:
         print(f"Error during {acc}: {e}")
         return None
@@ -150,20 +137,21 @@ def get_genome_download_link(accessions):
                 print("Vai quebrar")
                 break
             # Obtain FTP Assembly link
-            ftp_path = summary[0]['DocumentSummarySet']['DocumentSummary'][0].get(
-                'FtpPath_RefSeq')
+            ftp_path = summary[0]["DocumentSummarySet"]["DocumentSummary"][0].get(
+                "FtpPath_RefSeq"
+            )
             if not ftp_path:
-                ftp_path = summary[0]['DocumentSummarySet']['DocumentSummary'][0].get(
-                    'FtpPath_GenBank')
+                ftp_path = summary[0]["DocumentSummarySet"]["DocumentSummary"][0].get(
+                    "FtpPath_GenBank"
+                )
             if ftp_path:
-                link = ftp_path + "/" + \
-                    ftp_path.split("/")[-1] + "_genomic.fna.gz"
+                link = ftp_path + "/" + ftp_path.split("/")[-1] + "_genomic.fna.gz"
                 link = link[3:]
-                link = 'https' + link
+                link = "https" + link
                 links[accession] = link
             else:
                 print(f"Link FTP not found for {accession}")
-                with open(log, 'a') as log:
+                with open(log, "a") as log:
                     log.write(f"Link FTP not found for {accession}.\n")
                 return None
         return links
@@ -186,11 +174,11 @@ def get_genome_metadata(accessions, params=None):
         accessions = [accessions]
     if not params:
         params = [
-            'Taxid',
-            'SpeciesTaxid',
-            'SpeciesName',
-            'AssemblyStatus',
-            'Meta'
+            "Taxid",
+            "SpeciesTaxid",
+            "SpeciesName",
+            "AssemblyStatus",
+            "Meta",
             #'gc'
         ]
     elif isinstance(params, str):
@@ -203,9 +191,10 @@ def get_genome_metadata(accessions, params=None):
                 continue
             data = {}
             for param in params:
-                data[param] = summary['DocumentSummarySet']['DocumentSummary'][0].get(
-                    param)
-            #data["gc_perc"] = gc_tot
+                data[param] = summary["DocumentSummarySet"]["DocumentSummary"][0].get(
+                    param
+                )
+            # data["gc_perc"] = gc_tot
             metadata[acc] = data
         return metadata
     except Exception as e:
@@ -219,12 +208,11 @@ def get_genome_length(metadata):
         xml_content = f"<Root>{old_metadata[organism]['Meta']}</Root>"
         try:
             root = ET.fromstring(xml_content)
-            genome_total_length = root.find(
-                ".//Stat[@category='total_length']")
+            genome_total_length = root.find(".//Stat[@category='total_length']")
 
             if genome_total_length is not None:
                 total_length = genome_total_length.text
-                metadata[organism]['Genome length'] = total_length
+                metadata[organism]["Genome length"] = total_length
                 metadata[organism].pop("Meta")
         except ET.ParseError as e:
             print(f"Error analyzing Meta string: {e}")
@@ -235,21 +223,21 @@ def get_taxonomy_metadata(metadata):
     old_metadata = metadata
     for organism in old_metadata:
         fetch = Entrez.efetch(
-            id=metadata[organism]['Taxid'], db='taxonomy', retmode='xml')
+            id=metadata[organism]["Taxid"], db="taxonomy", retmode="xml"
+        )
         data = Entrez.read(fetch)
         fetch.close()
-        taxonomy_data = {d['Rank']: d['TaxId']
-                         for d in data[0]['LineageEx']}
-        family_id = taxonomy_data.get('family', 'N/A')
-        phylum_id = taxonomy_data.get('phylum', 'N/A')
-        genus_id = taxonomy_data.get('genus', 'N/A')
-        order_id = taxonomy_data.get('order', 'N/A')
+        taxonomy_data = {d["Rank"]: d["TaxId"] for d in data[0]["LineageEx"]}
+        family_id = taxonomy_data.get("family", "N/A")
+        phylum_id = taxonomy_data.get("phylum", "N/A")
+        genus_id = taxonomy_data.get("genus", "N/A")
+        order_id = taxonomy_data.get("order", "N/A")
         if family_id is not None:
-            metadata[organism]['family_id'] = family_id
+            metadata[organism]["family_id"] = family_id
         if phylum_id is not None:
-            metadata[organism]['phylum_id'] = phylum_id
+            metadata[organism]["phylum_id"] = phylum_id
         if genus_id is not None:
-            metadata[organism]['genus_id'] = genus_id
+            metadata[organism]["genus_id"] = genus_id
         if order_id is not None:
-            metadata[organism]['order_id'] = order_id
+            metadata[organism]["order_id"] = order_id
     return metadata

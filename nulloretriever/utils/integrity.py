@@ -1,4 +1,5 @@
 """Module that gather functions aimed at integrity checking and padronization"""
+
 import gzip
 from pathlib import Path
 import os
@@ -12,8 +13,8 @@ def unzip_fasta_file(gzip_path):
         out_path(Path): path to uncompressed fasta file
     """
     gzip_path = Path(gzip_path)
-    out_path = gzip_path.with_suffix('')
-    with gzip.open(gzip_path, 'rb') as fin, open(out_path, 'wb') as fout:
+    out_path = gzip_path.with_suffix("")
+    with gzip.open(gzip_path, "rb") as fin, open(out_path, "wb") as fout:
         for line in fin:
             fout.write(line)
     os.remove(gzip_path)
@@ -27,10 +28,10 @@ def capslock_file(target_file):
     Returns:
         file: same file as input, but with all it's content in upper case
     """
-    with open(target_file, 'r') as f:
+    with open(target_file, "r") as f:
         content = f.read()
     content_upper = content.upper()
-    with open(target_file, 'w') as f:
+    with open(target_file, "w") as f:
         f.write(content_upper)
 
 
@@ -43,8 +44,8 @@ def check_genome_integrity(genome):
     Returns:
         log(bool): discloses if the genome passed the composition integrity check
     """
-    bases = set('ATCG')
-    with open(genome, 'r') as f:
+    bases = set("ATCG")
+    with open(genome, "r") as f:
         for line in f:
             if line.startswith(">"):
                 continue

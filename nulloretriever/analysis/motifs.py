@@ -2,6 +2,7 @@
 
 import struct
 
+
 def calculate_cpg_index(index, half_k):
     """Calculate cpg occurrence, last and first base of each index sequence
     Args:
@@ -13,7 +14,6 @@ def calculate_cpg_index(index, half_k):
         g(bool): marks if given sequence starts in a G nucleotide
     """
     cpg = 0
-    c = False
     for i in range(half_k - 1):
         shift = (half_k - i - 2) * 2
         pair = (index >> shift) & 15
@@ -21,12 +21,13 @@ def calculate_cpg_index(index, half_k):
             cpg += 1
     return cpg
 
+
 def generate_cpg_dict(half_k):
     """Generates a dict with cpg informations by sequence indexes
     Args:
         half_k(int): original k-mer size
     Returns:
-        cpg_dict(dict): dict contaning for each possible index for all k-mers with size half_k it's total cpg count, if it starts with G or ends in C 
+        cpg_dict(dict): dict contaning for each possible index for all k-mers with size half_k it's total cpg count, if it starts with G or ends in C
     """
     cpg_dict = []
     for index in range(4**half_k):
@@ -34,77 +35,6 @@ def generate_cpg_dict(half_k):
         cpg_dict.append(cpg)
     return cpg_dict
 
-def retrieve_nullomers_cpg_stats(trie):
-    """Retrieve multiple CpG stats for nullomers in a bit file
-    Args:
-        filename(str): location of bit file containing the nullomeric sequences
-    Returns:
-        cpg_stats(arr): array containing the following statistics:
-            cpg_tot(int): total occurences of CpG dinucleotides
-            null_with_cpg(int): total number of nullomers with at least one CpG dinucleotide occurrence
-            cpg_global_mean(float): relation between null_with_cpg and total nullomer count
-            cpg_count_mean(float): relation between cpg_tot and null_with_cpg
-    Counts the percentage of nullomers that have at least 1 CpG dinucleotide.
-    """
-    count = 0
-    cpg_dict = generate_cpg_dict(half_k)
-    cpg_tot = 0
-    null_with_cpg = 0
-    v2_size = half_k
-    try:
-        while True:
-            end_c = 0
-            cpg_exists = 0
-            index_bytes = f.read(byte_size)
-            if len(index_bytes) < byte_size:
-                break
-            v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
-            v1_last = v1 & 3
-            #if cpg_dict[v1][1] == 1:
-            #    end_c = 1
-            if cpg_dict[v1][0] != 0:
-                cpg_exists = 1
-            nullomer_count_bytes = f.read(counter_size)
-            if len(nullomer_count_bytes) < byte_size:
-                break
-            nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
-            i = 0
-            while i < nullomer_count:
-                nullomer_byte = f.read(byte_size)
-                nullomer_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
-                v2_first = nullomer_index >> (((k//2)*2)-2)
-                if v1_last == 2 and v2_first == 3:
-                    cpg_tot += 1
-                try:
-                    cpg_tot += cpg_dict[v1][0] + cpg_dict[nullomer_index][0]
-                    if cpg_exists:
-                        null_with_cpg += 1
-                    else:
-                        if cpg_dict[nullomer_index][0] > 0:
-                            null_with_cpg += 1
-                    i += 1
-                except:
-                    print("DEBUG: NAO ACHOU CHAVE")
-                    print(v1,nullomer_index,byte_format, nullomer_byte, half_k)
-            count += nullomer_count     
-    except (struct.error, OSError):
-        pass
-    try:
-        cpg_count_mean = cpg_tot/null_with_cpg
-    except ZeroDivisionError:
-        cpg_count_mean = 0
-    try:
-        cpg_global_mean = (null_with_cpg/count)*100
-    except ZeroDivisionError:
-        cpg_global_mean = 0
-    cpg_stats = {
-        "total": cpg_tot,
-        "nullomers_with_cpg": null_with_cpg,
-        "global_mean": cpg_global_mean,
-        "mean_nullomers_with_cpg": cpg_count_mean
-    }
-    print(cpg_stats)
-    return cpg_stats
 
 def generate_complement_index_dict(half_k):
     """Generates a dict of complementary indexes
@@ -129,6 +59,7 @@ def generate_complement_index_dict(half_k):
         complement_index_dict[number] = comp_index
     return complement_index_dict
 
+
 def retrieve_palindrome_stats(filename):
     """Retrieve palindromic sequences statistics from a nullomer bit file
     Args:
@@ -138,17 +69,15 @@ def retrieve_palindrome_stats(filename):
         palindrome_relative(float): relation between palindromic nullomers and non palindromic nullomers found
     """
     palindrome_count = 0
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         # Skip header
-        f.seek(6)  # Skip magic(4) + version(2)
+        f.seek(8)  # Skip magic(4) + version(2)
         l_bytes = f.read(2)
-        k = struct.unpack('<H', l_bytes)[0]
-        l_bytes = f.read(2)
-        half_k = struct.unpack('<H', l_bytes)[0]
-        byte_to_format = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-        byte_size = struct.unpack('<B', f.read(1))[0]
+        half_k = struct.unpack("<H", l_bytes)[0]
+        byte_to_format = {1: "B", 2: "H", 4: "I", 8: "Q"}
+        byte_size = struct.unpack("<B", f.read(1))[0]
         byte_format = byte_to_format[byte_size]
-        counter_size = struct.unpack('<B', f.read(1))[0]
+        counter_size = struct.unpack("<B", f.read(1))[0]
         counter_byte_format = byte_to_format[counter_size]
         total_null = 0
         complement_index_dict = generate_complement_index_dict(half_k)
@@ -157,12 +86,14 @@ def retrieve_palindrome_stats(filename):
                 index_bytes = f.read(byte_size)
                 if len(index_bytes) < byte_size:
                     break
-                v1 = struct.unpack(f'<{byte_format}', index_bytes)[0]
+                v1 = struct.unpack(f"<{byte_format}", index_bytes)[0]
                 v1_comp = complement_index_dict[v1]
                 nullomer_count_bytes = f.read(counter_size)
                 if len(nullomer_count_bytes) < counter_size:
                     break
-                nullomer_count = struct.unpack(f'<{counter_byte_format}', nullomer_count_bytes)[0]
+                nullomer_count = struct.unpack(
+                    f"<{counter_byte_format}", nullomer_count_bytes
+                )[0]
                 total_null += nullomer_count
                 # Skip v2 indices (nullomer IDs)
                 total_bytes = nullomer_count * byte_size
@@ -170,23 +101,24 @@ def retrieve_palindrome_stats(filename):
                 while i < nullomer_count:
                     nullomer_byte = f.read(byte_size)
                     total_bytes -= byte_size
-                    v2_index = struct.unpack(f'<{byte_format}', nullomer_byte)[0]
+                    v2_index = struct.unpack(f"<{byte_format}", nullomer_byte)[0]
                     if v2_index == v1_comp:
                         palindrome_count += 1
-                        f.seek(total_bytes,1)
+                        f.seek(total_bytes, 1)
                         break
-                    i += 1                
+                    i += 1
         except (struct.error, OSError):
             pass
         try:
-            palindrome_relative = (palindrome_count/total_null) * 100
+            palindrome_relative = (palindrome_count / total_null) * 100
         except ZeroDivisionError:
             palindrome_relative = 0
     palindrome_stats = {
         "count": palindrome_count,
-        "relative_fraction": palindrome_relative
+        "relative_fraction": palindrome_relative,
     }
     return palindrome_stats
+
 
 def generate_homopolymer_array(half_k):
     """Generates an array containing all homopolymer indexes for given half_k

@@ -1,4 +1,5 @@
 """Module for automatic genome NCBI download."""
+
 import os
 import requests
 import time
@@ -26,7 +27,9 @@ def download_genome_bioentrez(accessions, out):
             print("No valid links found for the provided accessions.")
             return
         else:
-            print(f"Some accessions could not be found. Check the log file (data/logs/entrez.log) for details.")
+            print(
+                f"Some accessions could not be found. Check the log file (data/logs/entrez.log) for details."
+            )
 
     # Makes sure output directory exists
     if not os.path.exists(out):
@@ -40,7 +43,7 @@ def download_genome_bioentrez(accessions, out):
     directories = []
     try:
         for organism, link in links.items():
-            file_name = organism.replace('.', '_')
+            file_name = organism.replace(".", "_")
             # Initiate download
             response = requests.get(link, stream=True)
             if response.status_code == 200:
@@ -52,7 +55,7 @@ def download_genome_bioentrez(accessions, out):
             else:
                 print(f"Error during download of {organism}: {response.status_code}")
             progress_bar(cont, len(links), start=start)
-            cont+=1
+            cont += 1
     except Exception as e:
         print(f"Error during download process: {e}")
         sys.exit(1)

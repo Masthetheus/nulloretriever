@@ -1,7 +1,5 @@
 """Functions aimed at composition analysis of nullomeric sequences from bit files"""
 
-import struct
-
 
 def calculate_gc_index(index, half_k):
     """Calculate nullomeric gc content for each relative index
@@ -13,7 +11,7 @@ def calculate_gc_index(index, half_k):
     """
     gc = 0
     for i in range(half_k):
-        gc += (index >> (2*i) & 1)
+        gc += index >> (2 * i) & 1
     return gc
 
 
@@ -29,4 +27,3 @@ def generate_gc_dict(half_k):
         gc = calculate_gc_index(index, half_k)
         gc_dict[index] = gc
     return gc_dict
-
