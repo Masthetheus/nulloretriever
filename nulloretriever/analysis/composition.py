@@ -18,7 +18,7 @@ def calculate_gc_index(index, half_k):
 def generate_gc_dict(half_k):
     """Generate a dict pairing each possible index to it's total GC count
     Args:
-        half_k(int): size of the k-mer original sequence
+        half_k(int): size of half k-mer from the original sequence
     Returns:
         gc_dict(dict): dictionary with pairs index:gc_count for all possible k-mers sequence of lenght half_k
     """

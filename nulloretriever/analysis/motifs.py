@@ -3,35 +3,34 @@
 import struct
 
 
-def calculate_cpg_index(index, half_k):
+def calculate_cpg_index(index, k):
     """Calculate cpg occurrence, last and first base of each index sequence
     Args:
         index(int): index of sequence to be analyzed
-        half_k(int): original size of the k-mer sequence
+        k(int): original size of the k-mer sequence
     Returns:
-        cpg(int): total count of tuples consisting in C nucleotides directly followed by G nucleotides in the index original sequence
-        c(bool): marks if given sequence ends in a C nucleotide
-        g(bool): marks if given sequence starts in a G nucleotide
+        cpg(int): total count of tuples consisting in C nucleotides directly followed by G nucleotides
     """
     cpg = 0
-    for i in range(half_k - 1):
-        shift = (half_k - i - 2) * 2
+    for i in range(k - 1):
+        shift = (k - i - 2) * 2
         pair = (index >> shift) & 15
         if pair == 6:
             cpg += 1
     return cpg
 
 
-def generate_cpg_dict(half_k):
+def generate_cpg_dict(k):
     """Generates a dict with cpg informations by sequence indexes
     Args:
-        half_k(int): original k-mer size
+        k(int): original k-mer size
     Returns:
-        cpg_dict(dict): dict contaning for each possible index for all k-mers with size half_k it's total cpg count, if it starts with G or ends in C
+        cpg_dict(dict): dict contaning, for each possible index from sequences sized k"
+        "it's total cpg count."
     """
     cpg_dict = []
-    for index in range(4**half_k):
-        cpg = calculate_cpg_index(index, half_k)
+    for index in range(4**k):
+        cpg = calculate_cpg_index(index, k)
         cpg_dict.append(cpg)
     return cpg_dict
 
@@ -58,66 +57,6 @@ def generate_complement_index_dict(half_k):
             comp_index += base * (4 ** (half_k - i - 1))
         complement_index_dict[number] = comp_index
     return complement_index_dict
-
-
-def retrieve_palindrome_stats(filename):
-    """Retrieve palindromic sequences statistics from a nullomer bit file
-    Args:
-        filename(str): path of nullomer bit file
-    Returns:
-        palindrome_count(int): total of found nullomers that are palindromic
-        palindrome_relative(float): relation between palindromic nullomers and non palindromic nullomers found
-    """
-    palindrome_count = 0
-    with open(filename, "rb") as f:
-        # Skip header
-        f.seek(8)  # Skip magic(4) + version(2)
-        l_bytes = f.read(2)
-        half_k = struct.unpack("<H", l_bytes)[0]
-        byte_to_format = {1: "B", 2: "H", 4: "I", 8: "Q"}
-        byte_size = struct.unpack("<B", f.read(1))[0]
-        byte_format = byte_to_format[byte_size]
-        counter_size = struct.unpack("<B", f.read(1))[0]
-        counter_byte_format = byte_to_format[counter_size]
-        total_null = 0
-        complement_index_dict = generate_complement_index_dict(half_k)
-        try:
-            while True:
-                index_bytes = f.read(byte_size)
-                if len(index_bytes) < byte_size:
-                    break
-                v1 = struct.unpack(f"<{byte_format}", index_bytes)[0]
-                v1_comp = complement_index_dict[v1]
-                nullomer_count_bytes = f.read(counter_size)
-                if len(nullomer_count_bytes) < counter_size:
-                    break
-                nullomer_count = struct.unpack(
-                    f"<{counter_byte_format}", nullomer_count_bytes
-                )[0]
-                total_null += nullomer_count
-                # Skip v2 indices (nullomer IDs)
-                total_bytes = nullomer_count * byte_size
-                i = 0
-                while i < nullomer_count:
-                    nullomer_byte = f.read(byte_size)
-                    total_bytes -= byte_size
-                    v2_index = struct.unpack(f"<{byte_format}", nullomer_byte)[0]
-                    if v2_index == v1_comp:
-                        palindrome_count += 1
-                        f.seek(total_bytes, 1)
-                        break
-                    i += 1
-        except (struct.error, OSError):
-            pass
-        try:
-            palindrome_relative = (palindrome_count / total_null) * 100
-        except ZeroDivisionError:
-            palindrome_relative = 0
-    palindrome_stats = {
-        "count": palindrome_count,
-        "relative_fraction": palindrome_relative,
-    }
-    return palindrome_stats
 
 
 def generate_homopolymer_array(half_k):
