@@ -1,3 +1,4 @@
+fasta_extension: ""
 c_script: scripts/c/src/main.c
 genomes: ../examples/data/
 k:

@@ -25,6 +25,7 @@ def get_previous_k_input(wildcards):
     smaller_k = bigger_k - 1
     return f"results/k{smaller_k}/{wildcards.organism}/null_bit_format"
 
+ext = config["fasta_extension"]
 organisms = config["organisms"]
 ks = config["k"]
 paths = list(config["paths"].values())
@@ -75,7 +76,7 @@ rule extract_nullomers:
     input:
         "results/k{k}/{organism}/.results_directories_created",
         bin =  "scripts/c/bin/kmer_extractor",
-        genome = lambda wildcards: config["genomes"] + wildcards.organism
+        genome = lambda wildcards: config["genomes"] + wildcards.organism + ext
     output:
         "results/k{k}/{organism}/null_bit_format"
     params:
