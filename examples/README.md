@@ -1,77 +1,60 @@
-# Examples Suite
+# Minimal Working Example
 
-## Overview
+This directory contains a minimal working example of the Nulloretriever pipeline
+using the Bacillus subtilis ASM904v1 reference genome, under GCF_000009045.1.
 
-This directory contains base examples for the **NulloRetriever** project. Each
-is designed to supply a minimal reproducible example of each optional script
-and of the complete snakemake pipeline.
+## Structure
 
-## Directory Structure
+examples/
+├── README.md
+├── data
+│   ├── GCF_000009045_1        # B. subtilis genome in FASTA format
+│   ├── config.yaml            # Configuration file for the current example
+├── results                    # Contains the results after running the example
+└── workflow                   # Place for .snakemake, that stores example info
 
-Each example folder is organized to mirror it's actual project usage and
-implementation. For any script, there is a corresponding example file
-prefixed with `example_`.
+## Requirements
 
--   `examples/opt-scripts/test_script_name.py` will upply an example to `opt-scripts/script_name.py`.
+- Conda environment with all dependencies installed (see root environment.yaml)
+- Snakemake installed (included in the Conda environment)
+- C compiler (gcc) for building the C k-mer extractor (done automatically)
 
-## Types of Minimal Reproducible Example
+Running the example
 
-In the current structure, we group the examples in two groups: single and suite.
-Singles consist on the isolated file of certain optional script or
-pipeline modular script. In this sense, the output refer directly only to it's
-scope. In the other hand, suites aim to integrate the maximum scripts possible,
-in their folder ambient, and thus supply a streamlined example of execution.
+1. Make sure the conda environment is active:
 
-**Observation: You can differentiate both groups by their file names, since
-suites are always preceded by the term itself.**
+```
+conda activate nulloretriever
+```
 
-## How to Run a Minimal Reproducible Example
+2. From the repository root, run:
 
-### Prerequisites
+```
+snakemake -s workflow/Snakefile --configfile examples/config.yaml --cores 2
 
-Ensure that all project dependencies are correctly installed in your system,
-ideally inside a virtual environment or a conda environment.
+```
 
-**Observation: Given the extension of the project, it is highly advised to**
-**fully configure the environment, with all needed dependencies, not only** 
-**those related to the current example. Please check the**
-**[Installation guide](../README.md#installation) for further instructions.**
+This will:
+- Compile the C binary (if not already built)
+- Process the B. subtilis for nullomers on k=12
+- Generate output files in examples/results/
 
-- Make sure the NulloRetriever environment is running, or activate it by:
+## Output
 
-    ```sh
-    conda activate nulloretriever
-    ```
+After successful execution, you will find:
 
-- Change to the desired examples folder or export it to your PATH before executing the scripts:
+- examples/results/k12/GCF_000009045_1/null_bit_format – nullomer data in binary format
+- examples/results/nullomer_statistics.csv – retrieved statistics from the null file
+- examples/results/nullomer_statistics_summarized.csv - sums different organisms statistics
+- examples/results/checked/ - stores non conformant genomes files
+- examples/benchmarks/k12/ - stores time and memory benchmarks for the snakemake run
 
-    ```sh
-    cd desired-folder
+## Customizing
 
-    # or
+To change k-values or use a different genome, edit config.yaml. Base directories and fasta extension can also be changed. For further information, refer to the README about config files.
 
-    export PATH=$PATH:/path/of/desired/folder
-    ```
+## Notes
 
-**Observation: Detailed information on the execution proccess and available examples can be found in each folder's relative README file.**
-
-### Execution
-
-The majority of examples cases can be executed in two ways:
-
-1. Directly running the script file or calling it with flags in the terminal, for example:
-
-    ```sh
-    python example_script.py positional_arg --flag1 --arg1 arg
-    ```
-    
-2. By running the Full Example Suite, if available:
-
-   ```sh
-   python full_example_suite --flag1 --arg1 arg
-   ```
-
-## Contributing
-
-If some example of your interest don't has an available script, or you would
-like a certain suite structure, please submit a issue.
+- The C binary is compiled automatically by Snakemake.
+- If you are not at the repository root, path resolution shall fail.
+- For more details, refer to the main README in the repository root.

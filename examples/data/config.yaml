@@ -1,17 +1,17 @@
 fasta_extension: ""
-c_script: scripts/c/src/main.c
-genomes: ../examples/data/
+c_script: workflow/scripts/c/src/main.c
+genomes: examples/data/
 k:
-- 10
+- 12
 organisms:
 - GCF_000009045_1
 paths:
-  bench: benchmarks/
-  checked: results/checked/
-  final: runs/
-  genomes: ../examples/data/
-  log: logs/
-  results: ../examples/results/
+  bench: examples/benchmarks
+  checked: examples/results/checked
+  final: examples/runs
+  genomes: examples/data
+  log: logs
+  results: examples/results
 statistics:
 - composition
 - trivial 

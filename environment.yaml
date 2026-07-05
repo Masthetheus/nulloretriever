@@ -1,4 +1,4 @@
-name: nullomer-env
+name: nulloretriever
 channels:
   - bioconda
   - conda-forge

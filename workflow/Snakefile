@@ -1,6 +1,15 @@
 configfile: "config/config.yaml"
 import re
 
+ext = config["fasta_extension"]
+organisms = config["organisms"]
+ks = config["k"]
+paths = list(config["paths"].values())
+results_path = config["paths"]["results"]
+c_script = config["c_script"]
+stats = config["statistics"]
+benchmark = config["paths"]["bench"].rstrip('/')
+
 def needed_threads_k_value(wildcards):
     try:
         k = int(wildcards.k)
@@ -23,20 +32,13 @@ def get_previous_k_input(wildcards):
     if bigger_k <= min_k:
         return []
     smaller_k = bigger_k - 1
-    return f"results/k{smaller_k}/{wildcards.organism}/null_bit_format"
-
-ext = config["fasta_extension"]
-organisms = config["organisms"]
-ks = config["k"]
-paths = list(config["paths"].values())
-c_script = config["c_script"]
-stats = config["statistics"]
-benchmark = config["paths"]["bench"].rstrip('/')
+    final_path = results_path + "/k{k}/{organism}/null_bit_format"
+    return final_path
 
 rule all:
     input:
-        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms),
-        "results/nullomer_statistics_summarized.csv"
+        expand(results_path + "/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms),
+        results_path + "/nullomer_statistics_summarized.csv"
     benchmark:
         "{}/complete_snakemake_pipeline_benchmark.txt".format(benchmark)
 
@@ -66,19 +68,19 @@ rule create_results_directories:
 
 rule generate_c_binaries:
     input:
-        c_source = "scripts/c/src/main.c"
+        c_source = c_script
     output:
         "scripts/c/bin/kmer_extractor"
     shell:
-        "make -C scripts/c/"
+        "make -C workflow/scripts/c/"
 
 rule extract_nullomers:
     input:
         "results/k{k}/{organism}/.results_directories_created",
-        bin =  "scripts/c/bin/kmer_extractor",
+        bin =  "workflow/scripts/c/bin/kmer_extractor",
         genome = lambda wildcards: config["genomes"] + wildcards.organism + ext
     output:
-        "results/k{k}/{organism}/null_bit_format"
+        results_path + "/k{k}/{organism}/null_bit_format"
     params:
         k_val = lambda wildcards: wildcards.k
     benchmark:
@@ -89,10 +91,10 @@ rule extract_nullomers:
 
 rule retrieve_nullomer_statistics:
     input:
-        current = "results/k{k}/{organism}/null_bit_format",
+        current = results_path + "/k{k}/{organism}/null_bit_format",
         previous = get_previous_k_input
     output:
-        "results/k{k}/{organism}/nullomer_statistics.csv"
+        results_path + "/k{k}/{organism}/nullomer_statistics.csv"
     params:
         stats = config["statistics"]
     benchmark:
@@ -103,9 +105,9 @@ rule retrieve_nullomer_statistics:
 
 rule summarize_nullomer_statistics:
     input:
-        expand("results/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms)
+        expand(results_path + "/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms)
     output:
-        "results/nullomer_statistics_summarized.csv"
+        results_path + "/nullomer_statistics_summarized.csv"
     params:
         organisms = config['organisms']
     script:
