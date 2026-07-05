@@ -3,6 +3,9 @@
 This directory contains a minimal working example of the Nulloretriever pipeline
 using the Bacillus subtilis ASM904v1 reference genome, under GCF_000009045.1.
 
+**Citation:**
+Kunst, F., Ogasawara, N., Moszer, I., et al. (1997). The complete genome sequence of the gram-positive bacterium Bacillus subtilis. *Nature*, 390(6657), 249–256.
+
 ## Structure
 
 examples/
