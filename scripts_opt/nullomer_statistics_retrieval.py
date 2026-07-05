@@ -89,7 +89,6 @@ def main():
     counter = bigger_trie.count_kmers()
 
     if counter > 0:
-        print("Gathering trivial information")
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
         dispatch_table = {
             "composition": bigger_trie.count_gc(),
