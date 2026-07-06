@@ -22,7 +22,7 @@ examples/
 - Snakemake installed (included in the Conda environment)
 - C compiler (gcc) for building the C k-mer extractor (done automatically)
 
-Running the example
+## Running the example
 
 1. Make sure the conda environment is active:
 
@@ -33,15 +33,13 @@ conda activate nulloretriever
 2. From the repository root, run:
 
 ```
-snakemake -s workflow/Snakefile --configfile examples/config.yaml --cores 2
-
+snakemake -s workflow/Snakefile --configfile examples/data/config.yaml --cores 2
 ```
 
 This will:
 - Compile the C binary (if not already built)
 - Process the B. subtilis for nullomers on k=12
 - Generate output files in examples/results/
-
 ## Output
 
 After successful execution, you will find:
