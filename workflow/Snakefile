@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 import os
 import re
 
@@ -97,10 +97,10 @@ rule extract_nullomers:
     params:
         k_val = lambda wildcards: wildcards.k
     benchmark:
-        os.path.join(BENCHMARK_DIR, f"k{wildcards.k}", "{organism}", "extract_nullomers_benchmark.txt")
+        os.path.join(BENCHMARK_DIR, "k{k}", "{organism}", "extract_nullomers_benchmark.txt")
     threads: needed_threads_k_value
     script:
-        "workflow/scripts/python/nullomer_extraction.py"
+        "scripts/python/nullomer_extraction.py"
 
 rule retrieve_nullomer_statistics:
     input:
@@ -111,10 +111,10 @@ rule retrieve_nullomer_statistics:
     params:
         stats = STATISTICS
     benchmark:
-        os.path.join(BENCHMARK_DIR, f"k{wildcards.k}", "{organism}", "retrieve_nullomers_statistics_benchmark.txt")
+        os.path.join(BENCHMARK_DIR, "k{k}", "{organism}", "retrieve_nullomers_statistics_benchmark.txt")
     threads: 1
     script:
-        "workflow/scripts/python/nullomer_statistics_retrieval.py"
+        "scripts/python/nullomer_statistics_retrieval.py"
 
 rule summarize_nullomer_statistics:
     input:
@@ -125,4 +125,4 @@ rule summarize_nullomer_statistics:
     params:
         organisms = ORGANISMS
     script:
-        "workflow/scripts/python/nullomer_statistics_summary.py"
+        "scripts/python/nullomer_statistics_summary.py"

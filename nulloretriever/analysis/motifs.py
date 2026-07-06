@@ -42,7 +42,7 @@ def generate_complement_index_dict(half_k):
         complement_index_dict(dict): dictionary pairing indexes that represent complementary k-mer sequences
     """
     m = 4**half_k
-    mask = int(2 * half_k, 2)
+    mask = (1 << (2 * half_k)) - 1
     complement_index_dict = {}
 
     for number in range(m):
