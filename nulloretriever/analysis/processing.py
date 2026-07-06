@@ -12,25 +12,15 @@ def json_to_csv_mapping(df_json, df_csv):
     df_json.columns = df_json.columns.str.lower()
     df_json.columns = df_json.columns.str.replace(" ", "_")
     columns_to_add = list(df_json)
-    print(f"COLUMNS TO ADD:")
-    print(columns_to_add)
-    print(f"COLUMNS JSON:")
-    print(df_json.columns)
-    print(f"COLUMNS CSV:")
-    print(df_csv.columns)
     for column in columns_to_add:
-        print(column)
-        print("========== INICIO ==========")
-        print(df_json.columns)
-        print(df_csv.columns)
         try:
             mapping = df_json[column]
             print("\n")
             df_csv[column] = df_csv["organism"].map(mapping)
             print(df_csv[column])
         except Exception as e:
-            print(f"Column {column} Nao foi")
-            print(f"Razão {e} e motivo {type(e).__name__}")
+            print(f"Column {column} found an error.")
+            print(f"Exception {e} with type {type(e).__name__}")
             print("\n")
             continue
     return df_csv
@@ -63,7 +53,6 @@ def mount_trie_from_bitfile(filename):
                     break
                 v1 = struct.unpack(f"<{byte_format}", index_bytes)[0]
                 v1_bits = tuple((v1 >> (i * 2)) & 3 for i in shift_ranges)
-                i = half_k - 1
                 nullomer_count_bytes = f.read(counter_size)
                 if len(nullomer_count_bytes) < counter_size:
                     break

@@ -1,7 +1,5 @@
 """Functions aimed at motifs analysis of nullomeric sequences from bit files"""
 
-import struct
-
 
 def calculate_cpg_index(index, k):
     """Calculate cpg occurrence, last and first base of each index sequence
@@ -34,6 +32,7 @@ def generate_cpg_dict(k):
         cpg_dict.append(cpg)
     return cpg_dict
 
+
 def generate_complement_index_dict(half_k):
     """Generates a dict of complementary indexes
 
@@ -42,7 +41,7 @@ def generate_complement_index_dict(half_k):
     Returns:
         complement_index_dict(dict): dictionary pairing indexes that represent complementary k-mer sequences
     """
-    m = 4 ** half_k
+    m = 4**half_k
     mask = int(2 * half_k, 2)
     complement_index_dict = {}
 
@@ -56,6 +55,7 @@ def generate_complement_index_dict(half_k):
         complement_index_dict[number] = rev
 
     return complement_index_dict
+
 
 def generate_homopolymer_array(half_k):
     """Generates an array containing all homopolymer indexes for given half_k

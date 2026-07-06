@@ -28,7 +28,7 @@ def download_genome_bioentrez(accessions, out):
             return
         else:
             print(
-                f"Some accessions could not be found. Check the log file (data/logs/entrez.log) for details."
+                "Some accessions could not be found. Check the log file (data/logs/entrez.log) for details."
             )
 
     # Makes sure output directory exists

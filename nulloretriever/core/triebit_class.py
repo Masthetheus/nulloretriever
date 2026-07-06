@@ -333,7 +333,6 @@ class TrieBit:
             return
 
         for v1 in common_idxs:
-            v2s = self.retrieve_v2_list(v1)
             second_v2s = second_trie.retrieve_v2_list(v1)
             self.traverse_till_custom(target_idx=v1, callback=change_v2_set)
         v1_only_self_idxs = list(v1_only_self.search(bitarray("1")))

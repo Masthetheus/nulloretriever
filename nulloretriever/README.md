@@ -92,7 +92,8 @@ return motifs_results
 
 - **ncbiapidata.py**
 
-* read_accession_list(filepath, column=None): reads NCBI accessions from a csv, tsv or txt file.
+* read_accession_txt(filepath): reads NCBI accessions from simple txt format.
+* read_accession_list(filepath, column=None): reads NCBI accessions from a csv, tsv or txt file(invoking the function above).
 * get_accession_summary_data(acc): returns xml summary data for given NCBI accession code.
 * get_genome_download_link(accessions): gather the list of Entrez genome links for given assembly accessions.
 * get_genome_metadata(accessions, params=None): gather metadata for one accession code.
