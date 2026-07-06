@@ -3,7 +3,7 @@
 This package provides the core functionality for nullomer and MAW discovery, used by the Snakemake workflow. It contains modules for trie-based k-mer storage, statistical analysis, and data utilities.
 
 ## Structure
-
+```
 nulloretriever
 ├── README.md
 ├── analysis
@@ -23,7 +23,7 @@ nulloretriever
     ├── snakemake_path_tools.py
     ├── test_file_tools.py
     └── validation.py
-
+```
 ## Installation
 
 The package is installed automatically with the Conda environment. For development:
