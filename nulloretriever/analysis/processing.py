@@ -5,27 +5,6 @@ import struct
 from nulloretriever.core.triebit_class import TrieBit
 
 
-def json_to_csv_mapping(df_json, df_csv):
-    """Add all json columns to a csv df."""
-    df_json.index = df_json.index.str.replace(".", "_", regex=False)
-    print(df_json)
-    df_json.columns = df_json.columns.str.lower()
-    df_json.columns = df_json.columns.str.replace(" ", "_")
-    columns_to_add = list(df_json)
-    for column in columns_to_add:
-        try:
-            mapping = df_json[column]
-            print("\n")
-            df_csv[column] = df_csv["organism"].map(mapping)
-            print(df_csv[column])
-        except Exception as e:
-            print(f"Column {column} found an error.")
-            print(f"Exception {e} with type {type(e).__name__}")
-            print("\n")
-            continue
-    return df_csv
-
-
 def mount_trie_from_bitfile(filename):
     """Mounts in memory a trie from a nullomer bit file."""
     with open(filename, "rb") as f:

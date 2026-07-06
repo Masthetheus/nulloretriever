@@ -85,7 +85,6 @@ return motifs_results
 
 3. **processing.py**
 
-* json_to_csv_mapping(df_json, df_csv): adds organisms.json columns to a dataframe for further analysis.
 * mount_trie_from_bitfile(filename): creates a TrieBit object from one bit nullomer file.
 
 ### Data Modules:

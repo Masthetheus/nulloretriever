@@ -1,15 +1,5 @@
-c_script: scripts/c
-genomes: data/genomes/
 k:
-- 8
-- 9
 - 10
-- 11
-- 12
-- 13
-- 14
-- 15
-- 16
 organisms:
 - GCF_000001405_40
 - GCF_000181295_1
@@ -41,13 +31,15 @@ organisms:
 - GCF_047675955_1
 - GCF_028885655_2
 paths:
-  bench: benchmarks/
-  checked: results/checked/
-  final: runs/
-  genomes: data/genomes/
-  log: logs/
-  results: results/
+  bench: workflow/benchmarks
+  checked: workflow/results/checked
+  final: workflow/runs
+  genomes: workflow/data/genomes
+  log: workflow/logs
+  results: workflow/results
+  c: workflow/scripts/c
 statistics:
 - composition
 - counter
 - motifs
+fasta_extension: ""

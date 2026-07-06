@@ -1,21 +1,34 @@
-configfile: "config/config.yaml"
+# -*- coding: utf-8 -*-
+import os
 import re
 
-ext = config["fasta_extension"]
-organisms = config["organisms"]
-ks = config["k"]
-paths = list(config["paths"].values())
-results_path = config["paths"]["results"]
-c_script = config["c_script"]
-stats = config["statistics"]
-benchmark = config["paths"]["bench"].rstrip('/')
+configfile: "workflow/config/config.yaml"
 
+# config reading and variable setting
+K_VALUES = config.get("k", [])
+ORGANISMS = config.get("organisms", [])
+PATHS = config.get("paths", {})
+STATISTICS = config.get("statistics", ["composition", "counter", "motifs"])
+EXT = config.get("fasta_extension", "")
+
+# pathing 
+GENOMES_DIR = PATHS.get("genomes", "workflow/data/genomes/")
+RESULTS_PATH = PATHS.get("results", "workflow/results/")
+BENCHMARK_DIR = PATHS.get("bench", "workflow/benchmarks/").rstrip('/')
+LOG_DIR = PATHS.get("log", "workflow/logs/")
+CHECKED_DIR = PATHS.get("checked", "workflow/results/checked/")
+FINAL_DIR = PATHS.get("final", "workflow/runs/")
+C_SCRIPT_DIR = PATHS.get("c", "workflow/scripts/c/")
+
+# directories that need to exist
+ALL_DIRS = [GENOMES_DIR, RESULTS_PATH, BENCHMARK_DIR, LOG_DIR, CHECKED_DIR, FINAL_DIR, C_SCRIPT_DIR]
+
+# aux functions
 def needed_threads_k_value(wildcards):
     try:
         k = int(wildcards.k)
     except ValueError:
         return 4
-
     if k <= 12:
         return 1
     elif k <= 14:
@@ -27,26 +40,26 @@ def needed_threads_k_value(wildcards):
 
 def get_previous_k_input(wildcards):
     bigger_k = int(wildcards.k)
-    min_k = int(ks[0])
-
+    min_k = int(K_VALUES[0]) if K_VALUES else 0
     if bigger_k <= min_k:
         return []
     smaller_k = bigger_k - 1
-    final_path = results_path + "/k{k}/{organism}/null_bit_format"
-    return final_path
+    return os.path.join(RESULTS_PATH, f"k{smaller_k}", wildcards.organism, "null_bit_format")
 
+# main pipeline
 rule all:
     input:
-        expand(results_path + "/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms),
-        results_path + "/nullomer_statistics_summarized.csv"
+        expand(os.path.join(RESULTS_PATH, "k{k}", "{organism}", "nullomer_statistics.csv"),
+               k=K_VALUES, organism=ORGANISMS),
+        os.path.join(RESULTS_PATH, "nullomer_statistics_summarized.csv")
     benchmark:
-        "{}/complete_snakemake_pipeline_benchmark.txt".format(benchmark)
+        os.path.join(BENCHMARK_DIR, "complete_snakemake_pipeline_benchmark.txt")
 
 rule create_base_directories:
     output:
-        expand("{dir}.directories_created", dir = paths)
+        expand("{dir}.directories_created", dir=ALL_DIRS)
     params:
-        dirs = paths
+        dirs = ALL_DIRS
     shell:
         """
         mkdir -p {params.dirs}
@@ -55,11 +68,11 @@ rule create_base_directories:
 
 rule create_results_directories:
     input:
-        lambda wildcards: config["paths"]["results"] + ".directories_created"
+        os.path.join(RESULTS_PATH, ".directories_created")
     output:
-        "results/k{k}/{organism}/.results_directories_created"
+        os.path.join(RESULTS_PATH, "k{k}", "{organism}", ".results_directories_created")
     params:
-        dirs = lambda wildcards: 'results/k' + wildcards.k + '/' + wildcards.organism
+        dirs = lambda wildcards: os.path.join(RESULTS_PATH, f"k{wildcards.k}", wildcards.organism)
     shell:
         """
         mkdir -p {params.dirs}
@@ -68,47 +81,48 @@ rule create_results_directories:
 
 rule generate_c_binaries:
     input:
-        c_source = c_script
+        c_source = os.path.join(C_SCRIPT_DIR, "src")  # to trigger compilation
     output:
-        "scripts/c/bin/kmer_extractor"
+        os.path.join(C_SCRIPT_DIR, "bin", "kmer_extractor")
     shell:
-        "make -C workflow/scripts/c/"
+        "make -C {C_SCRIPT_DIR}"
 
 rule extract_nullomers:
     input:
-        "results/k{k}/{organism}/.results_directories_created",
-        bin =  "workflow/scripts/c/bin/kmer_extractor",
-        genome = lambda wildcards: config["genomes"] + wildcards.organism + ext
+        os.path.join(RESULTS_PATH, "k{k}", "{organism}", ".results_directories_created"),
+        bin = os.path.join(C_SCRIPT_DIR, "bin", "kmer_extractor"),
+        genome = lambda wildcards: os.path.join(GENOMES_DIR, f"{wildcards.organism}{EXT}")
     output:
-        results_path + "/k{k}/{organism}/null_bit_format"
+        os.path.join(RESULTS_PATH, "k{k}", "{organism}", "null_bit_format")
     params:
         k_val = lambda wildcards: wildcards.k
     benchmark:
-        f"{benchmark}/k" + "{k}/{organism}/extract_nullomers_benchmark.txt"
+        os.path.join(BENCHMARK_DIR, f"k{wildcards.k}", "{organism}", "extract_nullomers_benchmark.txt")
     threads: needed_threads_k_value
     script:
-        "scripts/python/nullomer_extraction.py"
+        "workflow/scripts/python/nullomer_extraction.py"
 
 rule retrieve_nullomer_statistics:
     input:
-        current = results_path + "/k{k}/{organism}/null_bit_format",
+        current = os.path.join(RESULTS_PATH, "k{k}", "{organism}", "null_bit_format"),
         previous = get_previous_k_input
     output:
-        results_path + "/k{k}/{organism}/nullomer_statistics.csv"
+        os.path.join(RESULTS_PATH, "k{k}", "{organism}", "nullomer_statistics.csv")
     params:
-        stats = config["statistics"]
+        stats = STATISTICS
     benchmark:
-        f"{benchmark}/k" + "{k}/{organism}/retrieve_nullomers_statistics_benchmark.txt"
+        os.path.join(BENCHMARK_DIR, f"k{wildcards.k}", "{organism}", "retrieve_nullomers_statistics_benchmark.txt")
     threads: 1
     script:
-        "scripts/python/nullomer_statistics_retrieval.py"
+        "workflow/scripts/python/nullomer_statistics_retrieval.py"
 
 rule summarize_nullomer_statistics:
     input:
-        expand(results_path + "/k{k}/{organism}/nullomer_statistics.csv", k=ks, organism=organisms)
+        expand(os.path.join(RESULTS_PATH, "k{k}", "{organism}", "nullomer_statistics.csv"),
+               k=K_VALUES, organism=ORGANISMS)
     output:
-        results_path + "/nullomer_statistics_summarized.csv"
+        os.path.join(RESULTS_PATH, "nullomer_statistics_summarized.csv")
     params:
-        organisms = config['organisms']
+        organisms = ORGANISMS
     script:
-        "scripts/python/nullomer_statistics_summary.py"
+        "workflow/scripts/python/nullomer_statistics_summary.py"

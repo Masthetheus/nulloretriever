@@ -1,5 +1,4 @@
 #include "../include/kmer_extraction.h"
-#include "../include/chained_bitarray.h"
 #include "../include/kmer_encoding.h"
 #include "../include/kmerio.h"
 #include <inttypes.h>
