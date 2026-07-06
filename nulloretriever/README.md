@@ -71,26 +71,26 @@ return motifs_results
 
 ### Analysis Modules:
 
-- **composition.py**
+1. **composition.py**
 
 * calculate_gc_index(index, half_k): returns GC count for given sequence index.
 * generate_dc_dict(half_k): returns python dictionary with pairs index: gc count.
 
-- **motifs.py**
+2. **motifs.py**
 
 * calculate_cpg_index(index, k): returns count of C directly followed by G occurences.
 * generate_cpg_dict(k): returns python dictionary with pairs index: CpG count.
 * generate_complement_index_dict(half_k): returns python dictionary with pairs idx: idx to form palindrome.
 * generate_homopolymer_array(half_k): returns array of homopolymer indexes for given k value.
 
-- **processing.py**
+3. **processing.py**
 
 * json_to_csv_mapping(df_json, df_csv): adds organisms.json columns to a dataframe for further analysis.
 * mount_trie_from_bitfile(filename): creates a TrieBit object from one bit nullomer file.
 
 ### Data Modules:
 
-- **ncbiapidata.py**
+1. **ncbiapidata.py**
 
 * read_accession_txt(filepath): reads NCBI accessions from simple txt format.
 * read_accession_list(filepath, column=None): reads NCBI accessions from a csv, tsv or txt file(invoking the function above).
@@ -100,27 +100,27 @@ return motifs_results
 * get_genome_length(metadata): searches organism metadata for it's length.
 * get_taxonomy_metadata(metadata): searches for organism TaxID informations on NCBI db.
 
-- **ncbidownload.py**
+2. **ncbidownload.py**
 
 * download_genome_bioentrez(accessions, out): download the accessions genomes from NCBI with Bio.Entrez.
 
 ### Utils Modules:
 
-- **integrity.py**
+1. **integrity.py**
 
 * unzip_fasta_file(gzip_path): auxiliary for genome decompressing after API download.
 * casplock_file(target_file): capitalizes the entire file.
 * check_genome_integrity(genome): checks if the genome is comprised only by A, T, C and G.
 * check_multiple_genomes_integrity(genomes): checks if an array of genomes passes integrity test.
 
-- **paths.py**
+2. **paths.py**
 
 * gather_files_names(location): gather all files names from given directory.
 * gather_files_paths(location): gather the specific path of all files inside location.
 
-- **progress_bar.py**: progress_bar(current, total, start, size=30): custom progress_bar for genome download.
+3. **progress_bar.py**: progress_bar(current, total, start, size=30): custom progress_bar for genome download.
 
-- **validation.py**
+4. **validation.py**
 
 * get_valid_email(): prompts for NCBI-registered email.
 * get_valid_tool(): prompts for tool name.
