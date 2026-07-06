@@ -37,6 +37,7 @@ def json_to_csv_mapping(df_json, df_csv):
 
 
 def mount_trie_from_bitfile(filename):
+    """Mounts in memory a trie from a nullomer bit file."""
     with open(filename, "rb") as f:
         # Skip header
         f.seek(6)  # Skip magic(4) + version(2)

@@ -8,31 +8,6 @@ import xml.etree.ElementTree as ET
 from Bio import Entrez
 
 
-def read_accession_txt(filepath):
-    """Read a text file containing a list of NCBI accession numbers.
-
-    Each line should contain a valid accession number, starting with "GCF_" or "GCA_".
-    Ignores empty lines and comments (lines starting with "#").
-
-    Args:
-        filepath (str): Path to the text file.
-
-    Returns:
-        list: List of valid accession numbers found in the file.
-    """
-    accessions = set()
-    with open(filepath) as f:
-        for line in f:
-            acc = line.strip()
-            if not acc or acc.startswith("#"):
-                continue
-            if not acc.startswith(("GCF_", "GCA_")):
-                print(f"Warning: strange code found in: '{acc}', ignored.")
-                continue
-            accessions.add(acc)
-    return list(accessions)
-
-
 def read_accession_list(filepath, column=None):
     """Read a list of NCBI accession numbers from a file.
 
@@ -75,7 +50,7 @@ def read_accession_list(filepath, column=None):
     return accessions
 
 
-def get_accesion_summary_data(acc):
+def get_accession_summary_data(acc):
     """Return xml summary data for given accession.
 
     Args:
@@ -132,7 +107,7 @@ def get_genome_download_link(accessions):
     try:
         for accession in accessions:
             # Obtain the xml data for given accession code
-            summary = get_accesion_summary_data(accession)
+            summary = get_accession_summary_data(accession)
             if not summary:
                 print("Vai quebrar")
                 break
@@ -186,7 +161,7 @@ def get_genome_metadata(accessions, params=None):
     metadata = {}
     try:
         for acc in accessions:
-            summary, gc_tot = get_accesion_summary_data(acc)
+            summary, gc_tot = get_accession_summary_data(acc)
             if not summary:
                 continue
             data = {}

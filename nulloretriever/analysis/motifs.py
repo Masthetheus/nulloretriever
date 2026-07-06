@@ -34,30 +34,28 @@ def generate_cpg_dict(k):
         cpg_dict.append(cpg)
     return cpg_dict
 
-
 def generate_complement_index_dict(half_k):
     """Generates a dict of complementary indexes
+
     Args:
         half_k(int): original k-mer sequence size
     Returns:
-        complement_index_dict(dict): dictionary pairing indexes that represent complimentary k-mer sequences
+        complement_index_dict(dict): dictionary pairing indexes that represent complementary k-mer sequences
     """
-    complement = {0: 1, 1: 0, 2: 3, 3: 2}
+    m = 4 ** half_k
+    mask = int(2 * half_k, 2)
     complement_index_dict = {}
-    m = 4**half_k
-    for number in range(m):
-        temp = number
-        bases = []
-        for _ in range(half_k):
-            bases.append(temp % 4)
-            temp //= 4
-        comp_bases = [complement[base] for base in bases]
-        comp_index = 0
-        for i, base in enumerate(comp_bases):
-            comp_index += base * (4 ** (half_k - i - 1))
-        complement_index_dict[number] = comp_index
-    return complement_index_dict
 
+    for number in range(m):
+        comp = number ^ mask
+        rev = 0
+        temp = comp
+        for _ in range(half_k):
+            rev = (rev << 2) | (temp & 3)
+            temp >>= 2
+        complement_index_dict[number] = rev
+
+    return complement_index_dict
 
 def generate_homopolymer_array(half_k):
     """Generates an array containing all homopolymer indexes for given half_k
