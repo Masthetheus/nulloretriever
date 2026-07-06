@@ -1,1 +1,0 @@
-# Bugs scripts .py
