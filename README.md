@@ -171,6 +171,16 @@ Here we have adapted workflow scripts, intended to manual modular execution of s
 
 For further information, refer to the optional scripts [README](scripts_opt/README.md)
 
+## Snakemake Workflow scripts
+
+The scripts tailored for snakemake usage can be found inside workflow/scripts/python/. They adhere exclusively to snakemake conventions.
+
+- **nulomer_extraction.py**: Obtain all nullomeric sequences for given genome in certain k value. Outputs exclusively in binary mode.
+- **nullomer_statistics_retrieval.py**: Mounts a trie from it's bit file and retrieve certain statistics, outputting them in csv.
+- **nullomer_statistics.summary.py**: Joins multiple nullomer statistics csv into a single file.
+
+For further information, refer to the scripts  [README](workflow/scripts/python/README.md)
+
 ## Dependencies
 
 All dependencies are managed via Conda (environment.yaml) or pip (requirements.txt). The main packages are:

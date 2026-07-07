@@ -7,8 +7,6 @@ This directory contains the Python scripts called by the Snakemake rules in the 
 1. nullomer_extraction.py
 2. nullomer_statistics_retrieval.py
 3. nullomer_statistics_summary.py
-4. genome_checking.py
-5. path_checking.py
 
 
 1. nullomer_extraction.py
