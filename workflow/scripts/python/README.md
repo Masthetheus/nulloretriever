@@ -114,40 +114,7 @@ Notes:
 - The script ignores missing files (prints a warning and continues) – this is useful if some runs failed.
 - The output CSV has the same columns as the individual CSVs, with rows from all organisms and k values.
 
-4. genome_checking.py
-
-Purpose:
-- A standalone script (not called directly by Snakemake) to check the integrity of a genome FASTA file.
-- It capitalizes the genome and verifies that all bases are valid (A, C, G, T).
-
-Usage (command line):
-python genome_checking.py --genome <fasta_file> --out <output_prefix>
-
-Arguments:
-- --genome: path to the genome FASTA file.
-- --out: prefix for the output files. If integrity check passes, <out>_ok is created; otherwise <out>_nok.
-
-Behaviour:
-- Calls capslock_file(genome) – note: this function is NOT imported in the script.
-- Calls check_genome_integrity(genome) from nulloretriever.utils.integrity.
-- Writes an approval or rejection file based on the result.
-
-Current Bug:
-- The script uses capslock_file(genome) but does not import it. This will raise a NameError.
-- To fix, add: from nulloretriever.utils.integrity import capslock_file, check_genome_integrity.
-
-Dependencies:
-- argparse, sys (standard library)
-- nulloretriever.utils.integrity.check_genome_integrity (and should import capslock_file)
-
-Integration with Snakemake:
-- Not currently used in the main workflow. It can be run manually or as a preprocessing step.
-
-Notes:
-- The script is incomplete due to the missing import. It is recommended to fix it if used for genome validation.
-
-
-5. path_checking.py
+4. path_checking.py
 
 Purpose:
 - A utility script to verify that all paths defined in a YAML configuration file exist on the filesystem.
