@@ -1,0 +1,14 @@
+testing/data/*
+testing/misc/__pycache__
+testing/for_benchmark
+nulloretriever.egg-info
+__pycache__/
+testing/module-testing/data/*
+*.snakemake
+*.tsv
+workflow/data/genomes/*
+*.directories_created
+*.results_directories_created
+benchmarking/data/genomes/*
+*.fasta
+kmers_*

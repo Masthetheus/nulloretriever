@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nulloretriever"
+version = "0.1.0"
+description = "Scalable Snakemake workflow for nullomer and MAW discovery"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    {name = "Matheus", email = "seu.email@dominio.com"}
+]
+dependencies = [
+    "biopython==1.85",
+    "bitarray==3.4.2",
+    "numpy==2.5.1",
+    "pandas==3.0.3",
+    "pyyaml==6.0.3",
+    "requests==2.34.2",
+    "snakemake==9.23.1",
+]
+
+[project.optional-dependencies]
+analysis = [
+    "matplotlib==3.11.0",
+    "seaborn==0.13.2",
+    "scipy==1.18.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Masthetheus/nulloretriever"
+Repository = "https://github.com/Masthetheus/nulloretriever.git"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nulloretriever*"]
+exclude = ["tests*", "examples*", "workflow*", "scripts_opt*", "experimental*"]

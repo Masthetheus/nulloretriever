@@ -1,3 +1,44 @@
+k: [10, 11]
 organisms:
-k:
-imp: false
+- GCF_000001405_40
+- GCF_000181295_1
+- GCF_018350175_1
+- GCF_000002985_6
+- GCF_016699485_2
+- GCF_002263795_3
+- GCF_037993035_2
+- GCF_049354715_1
+- GCF_006542625_1
+- GCF_029281585_2
+- GCF_041296265_1
+- GCF_035594765_1
+- GCF_002007445_2
+- GCF_036323735_1
+- GCF_000164805_1
+- GCF_000146045_2
+- GCF_049306965_1
+- GCF_048771995_1
+- GCF_007565055_1
+- GCA_000003025_7
+- GCF_040939455_1
+- GCF_028858775_2
+- GCF_000001635_27
+- GCF_000001215_4
+- GCF_011100685_1
+- GCF_029289425_2
+- GCF_049350105_2
+- GCF_047675955_1
+- GCF_028885655_2
+paths:
+  bench: workflow/benchmarks
+  checked: workflow/results/checked
+  final: workflow/runs
+  genomes: workflow/data/genomes
+  log: workflow/logs
+  results: workflow/results
+  c: workflow/scripts/c
+statistics:
+- composition
+- counter
+- motifs
+fasta_extension: ""
