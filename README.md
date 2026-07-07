@@ -12,7 +12,7 @@ Nulloretriever integrates C, Python, and Snakemake to efficiently process genome
 - Optional utilities: download genomes via NCBI API, generate configuration files, and retrieve statistics.
 
 ## Repository Structure
-
+```
 nulloretriever/
 ├── config/
 │   └── config.yaml           # Main configuration file
@@ -37,7 +37,7 @@ nulloretriever/
 ├── environment.yaml          # Conda environment
 ├── pyproject.toml            # Python package metadata
 └── requirements.txt          # Pip dependencies
-
+```
 ## Installation
 
 Via Conda or Mamba (recommended):
@@ -135,10 +135,10 @@ The pipeline will automatically process all listed organisms for all specified k
 ## C Compilation
 
 The C binary (kmer_extractor) is compiled automatically by Snakemake. If you need to compile manually:
-
+```
 cd workflow/scripts/c/
 make
-
+```
 The binary will be placed in workflow/scripts/c/bin/kmer_extractor.
 The current installation intermediate files can be removed, in case of erros, with:
 ```
