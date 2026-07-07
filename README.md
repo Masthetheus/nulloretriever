@@ -73,7 +73,7 @@ pip install -e .
 
 A minimal working example using the Bacillus subtilis genome (k=15) is provided in examples/. From the repository root:
 ```
-snakemake -s workflow/Snakefile --configfile examples/config.yaml --cores 2
+snakemake -s workflow/Snakefile --configfile examples/data/config.yaml --cores 2
 ```
 This will:
 1. Compile the C binary (if not already built).
