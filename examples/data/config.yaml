@@ -1,8 +1,5 @@
-fasta_extension: ""
-c_script: workflow/scripts/c/src/main.c
-genomes: examples/data/
 k:
-- 12
+- 15
 organisms:
 - GCF_000009045_1
 paths:
@@ -12,7 +9,9 @@ paths:
   genomes: examples/data
   log: logs
   results: examples/results
+  c: workflow/scripts/c
 statistics:
 - composition
 - trivial 
 - motifs
+fasta_extension: ""

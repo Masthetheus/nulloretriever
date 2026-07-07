@@ -57,9 +57,9 @@ rule all:
 
 rule create_base_directories:
     output:
-        expand("{dir}.directories_created", dir=ALL_DIRS)
+        expand(os.path.join("{dir}", ".directories_created"), dir=ALL_DIRS)
     params:
-        dirs = ALL_DIRS
+        dirs = " ".join(ALL_DIRS)  # <--- AGORA É UMA STRING
     shell:
         """
         mkdir -p {params.dirs}
