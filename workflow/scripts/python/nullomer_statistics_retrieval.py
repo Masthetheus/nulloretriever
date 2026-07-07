@@ -46,7 +46,7 @@ def main():
     k_val = snakemake.wildcards.k
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
-    if counter > 0 and int(k_val)<= 13 and smaller_null_file != '':
+    if counter > 0 and smaller_null_file != '':
         print("Pegando trivial")
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
         dispatch_table = {

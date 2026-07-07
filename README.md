@@ -145,6 +145,31 @@ The current installation intermediate files can be removed, in case of erros, wi
 make clean
 ```
 Followed by make to try and solve any found errors.
+For further information about the extractor, refer to it's [README.md](workflow/scripts/c/README.md)
+
+## Python scripts
+
+Python scripts in the current project revolves around three maing groups: optional, manual and workflow adherent.
+
+### Optional scripts
+
+Scripts that are entirely optional, aiming to help with file generation and organisms processing.
+
+- **create_organism_db.py**: Creates a JSON file containing metadata for the organisms inside given config.yaml.
+- **genomes_utilities.py**: Download and capitalizes a serie of NCBI accession codes. Can also be used only for capitalization, since it's required by the workflow.
+- **snakemake_config_generation.py**: Generates a custom config file for usage with the snakemake pipeline.
+
+For further information, refer to it's specific [README](scripts_opt/README.md)
+
+## Manual scripts
+
+Here we have adapted workflow scripts, intended to manual modular execution of some pipeline process, for any given reason. They are usually considered alongisde optional scripts, since aren't necessary for pipeline execution, not adhering to snakemake conventions.
+
+- **nulomer_extraction.py**: Derived from the nullomer extraction rule. Obtain the genome nullomers in bit, sequence or compact txt format for any organism and k value.
+- **nullomer_statistics_retrieval.py**: Derived from the nullomer statistics rule. Given a nullomer bit file, retrieve statistics such as GC composition and palindromes occurence.
+- **prime_nullomer_finder.py**: Planned to be added to the snakemake workflow in the future. Given a set of nullomer bit files, searches for prime nullomeric sequences and outputs them.
+
+For further information, refer to the optional scripts [README](scripts_opt/README.md)
 
 ## Dependencies
 
