@@ -73,7 +73,7 @@ pip install -e .
 
 A minimal working example using the Bacillus subtilis genome (k=15) is provided in examples/. From the repository root:
 ```
-snakemake -s workflow/Snakefile --configfile examples/config.yaml --cores 2
+snakemake -s workflow/Snakefile --configfile examples/data/config.yaml --cores 2
 ```
 This will:
 1. Compile the C binary (if not already built).
@@ -85,7 +85,7 @@ For more details, see [examples](examples/README.md).
 ## Configuration
 
 All pipeline parameters are defined in a YAML configuration file. A template is provided in config/config.yaml:
-
+```
 k: [8, 9, 10, 11, 12, 13, 14, 15, 16]
 organisms:
   - GCF_000001405_40
@@ -103,7 +103,7 @@ statistics:
   - trivial
   - motifs
 fasta_extension: ""
-*
+```
 **Key parameters:**
 
 - k: List of k-mer sizes to analyze.
@@ -170,6 +170,16 @@ Here we have adapted workflow scripts, intended to manual modular execution of s
 - **prime_nullomer_finder.py**: Planned to be added to the snakemake workflow in the future. Given a set of nullomer bit files, searches for prime nullomeric sequences and outputs them.
 
 For further information, refer to the optional scripts [README](scripts_opt/README.md)
+
+## Snakemake Workflow scripts
+
+The scripts tailored for snakemake usage can be found inside workflow/scripts/python/. They adhere exclusively to snakemake conventions.
+
+- **nulomer_extraction.py**: Obtain all nullomeric sequences for given genome in certain k value. Outputs exclusively in binary mode.
+- **nullomer_statistics_retrieval.py**: Mounts a trie from it's bit file and retrieve certain statistics, outputting them in csv.
+- **nullomer_statistics.summary.py**: Joins multiple nullomer statistics csv into a single file.
+
+For further information, refer to the scripts  [README](workflow/scripts/python/README.md)
 
 ## Dependencies
 

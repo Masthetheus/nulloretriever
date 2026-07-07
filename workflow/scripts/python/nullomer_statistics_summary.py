@@ -1,7 +1,7 @@
 """Nullomer CSV summary generation."""
 import pandas as pd
 
-from snakemake.script import snakemake
+from snakemake.script import Snakemake
 
 
 def main():

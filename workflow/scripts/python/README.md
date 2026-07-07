@@ -7,8 +7,6 @@ This directory contains the Python scripts called by the Snakemake rules in the 
 1. nullomer_extraction.py
 2. nullomer_statistics_retrieval.py
 3. nullomer_statistics_summary.py
-4. genome_checking.py
-5. path_checking.py
 
 
 1. nullomer_extraction.py
@@ -114,94 +112,22 @@ Notes:
 - The script ignores missing files (prints a warning and continues) – this is useful if some runs failed.
 - The output CSV has the same columns as the individual CSVs, with rows from all organisms and k values.
 
-4. genome_checking.py
+**All dependencies are listed in the root environment.yaml and pyproject.toml.**
 
-Purpose:
-- A standalone script (not called directly by Snakemake) to check the integrity of a genome FASTA file.
-- It capitalizes the genome and verifies that all bases are valid (A, C, G, T).
-
-Usage (command line):
-python genome_checking.py --genome <fasta_file> --out <output_prefix>
-
-Arguments:
-- --genome: path to the genome FASTA file.
-- --out: prefix for the output files. If integrity check passes, <out>_ok is created; otherwise <out>_nok.
-
-Behaviour:
-- Calls capslock_file(genome) – note: this function is NOT imported in the script.
-- Calls check_genome_integrity(genome) from nulloretriever.utils.integrity.
-- Writes an approval or rejection file based on the result.
-
-Current Bug:
-- The script uses capslock_file(genome) but does not import it. This will raise a NameError.
-- To fix, add: from nulloretriever.utils.integrity import capslock_file, check_genome_integrity.
-
-Dependencies:
-- argparse, sys (standard library)
-- nulloretriever.utils.integrity.check_genome_integrity (and should import capslock_file)
-
-Integration with Snakemake:
-- Not currently used in the main workflow. It can be run manually or as a preprocessing step.
-
-Notes:
-- The script is incomplete due to the missing import. It is recommended to fix it if used for genome validation.
-
-
-5. path_checking.py
-
-Purpose:
-- A utility script to verify that all paths defined in a YAML configuration file exist on the filesystem.
-- Can check paths for Snakemake (paths) or for scripts (py_scripts, c_scripts) or both.
-
-Usage (command line):
-python path_checking.py --config <config.yaml> --output <not_found.txt> --checklist <mode>
-
-Arguments:
-- --config: path to the YAML config file (default: ../../config/config.yaml).
-- --output: file to write the list of missing paths (default: not_found.txt).
-- --checklist: which section to check – "snakemake" (paths), "scripts" (py_scripts, c_scripts), or "all" (both).
-
-Behaviour:
-- Parses the config file.
-- For each key in the selected sections, it checks if the path exists.
-- Writes the missing paths to the output file (one per line).
-
-Dependencies:
-- argparse, sys (standard library)
-- nulloretriever.utils.snakemake_path_tools.check_config_paths_existence
-
-Integration with Snakemake:
-- Not called by Snakemake. It is a standalone diagnostic tool for developers and users to verify configuration.
-
-Notes:
-- The default config path assumes the script is run from within the workflow/scripts/python/ directory.
-- The script writes only missing paths; if all exist, the output file is empty.
-
-
-Common Dependencies
-
-- Python >= 3.8
-- pandas (for nullomer_statistics_summary.py)
-- The nulloretriever package (for core modules: triebit_class, processing, integrity, snakemake_path_tools)
-- Snakemake runtime (for scripts that use snakemake.script.snakemake)
-
-All dependencies are listed in the root environment.yaml and pyproject.toml.
-
-Integration with Snakemake Workflow
+## Integration with Snakemake Workflow
 
 - nullomer_extraction.py is called by the extract_nullomers rule.
 - nullomer_statistics_retrieval.py is called by the retrieve_nullomer_statistics rule.
 - nullomer_statistics_summary.py is called by the summarize_nullomer_statistics rule.
-- genome_checking.py and path_checking.py are optional utilities not used in the main pipeline.
 
 The scripts rely on the snakemake object, which is automatically injected by Snakemake when using the script directive. This object provides input, output, params, and wildcards attributes.
 
 Maintenance Notes
 
 - If you add a new statistic, update the STATISTICS list in the config.yaml and ensure the dispatch_table in nullomer_statistics_retrieval.py includes it.
-- The trivial extension logic only applies for k <= 13 and requires a previous .bit file (k-1).
+- The trivial extension logic requires a previous .bit file (k-1).
 - The nullomer_extraction.py script assumes the C binary outputs exactly bytes_per_sequence bytes per k-mer. Any deviation will cause decoding errors.
-- For large genomes and high k, the TrieBit structure may use significant memory; consider adjusting the m parameter if needed.
+- For large genomes and high k, the TrieBit structure may use significant memory, being capped by the number of unique sequences present, that being the number of v1's that do happen on the genome.
 
 License
 

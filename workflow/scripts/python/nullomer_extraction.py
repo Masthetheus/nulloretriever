@@ -2,7 +2,7 @@
 import subprocess
 
 from nulloretriever.core.triebit_class import TrieBit
-from snakemake.script import snakemake
+from snakemake.script import Snakemake
 
 
 def main():

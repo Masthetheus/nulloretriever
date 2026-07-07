@@ -1,6 +1,7 @@
-Nullomer Trie-Bit, name in debate, provides a pipeline approach to nullomer detection via snakemake.
-With C and Python scripts, aims to find all possible nullomers in any given genome in a memory and time
-efficient way. Provides the output in a compact txt format.
+Nulloretriever provides a pipeline approach to nullomer detection via snakemake.
+Combining a C script for k-mer extraction and Python scripts for downstream processing,
+it aims to find all possible nullomers in any given genome in a memory and time
+efficient way. Provides the output in a bit file, compact txt format or complete sequences.
 
 Copyright (C) 2025  Laboratory of Molecular and Cellular Biology (LBCM) - University of Rio Grande do Sul (UFRGS)
 

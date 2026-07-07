@@ -3,7 +3,7 @@
 import csv
 
 from nulloretriever.analysis.processing import mount_trie_from_bitfile
-from snakemake.script import snakemake
+from snakemake.script import Snakemake
 
 
 def motif_wrapper(trie):
