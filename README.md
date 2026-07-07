@@ -85,7 +85,7 @@ For more details, see [examples](examples/README.md).
 ## Configuration
 
 All pipeline parameters are defined in a YAML configuration file. A template is provided in config/config.yaml:
-
+```
 k: [8, 9, 10, 11, 12, 13, 14, 15, 16]
 organisms:
   - GCF_000001405_40
@@ -103,7 +103,7 @@ statistics:
   - trivial
   - motifs
 fasta_extension: ""
-*
+```
 **Key parameters:**
 
 - k: List of k-mer sizes to analyze.
