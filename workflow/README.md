@@ -3,7 +3,7 @@
 This directory contains the Snakemake workflow definition for the Nulloretriever pipeline. It orchestrates the entire process from genome input to nullomer and MAW discovery.
 
 ## Structure
-
+```
 workflow/
 ├── Snakefile                 # Main workflow definition
 ├── config/
@@ -20,7 +20,7 @@ workflow/
 │       ├── nullomer_statistics_retrieval.py
 │       └── nullomer_statistics_summary.py
 └── (data/ and results/ directories are defined in config.yaml)
-
+```
 ## Running the Workflow
 
 From the repository root:
