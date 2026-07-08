@@ -90,21 +90,6 @@ class TrieBit:
 
     def insert(self, v1, v2):
         node = self.root
-        count = 0
-        for value in v1:
-            count += 1
-            if node.children[value] is None:
-                if count != self.half_k:
-                    node.children[value] = TrieBitNode()
-                else:
-                    node.children[value] = TrieBitLeaf(self.m)
-            if count == self.half_k:
-                node.children[value].v2_set[v2] = 1
-            else:
-                node = node.children[value]
-
-    def insert(self, v1, v2):
-        node = self.root
         half_k = self.half_k
         for shift in range(half_k - 1, 0, -1):
             base = (v1 >> (shift * 2)) & 3
