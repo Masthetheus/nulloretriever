@@ -11,17 +11,11 @@ def main():
     genome_path = snakemake.input.genome
     k_str = str(snakemake.params.k_val)
     k = int(snakemake.params.k_val)
-    if k % 2 == 0:
-        half_k = int(k/2)
-        m = 4**half_k
-        k_mask = (2**k) - 1
-        v1_size = v2_size = half_k
-    else:
-        half_k = int(k/2) + 1
-        m = 4**(half_k-1)
-        k_mask = (2**(k-1)) - 1
-        v1_size = half_k
-        v2_size = k - half_k
+    is_odd = k % 2
+    half_k = (k // 2) + is_odd
+    m = 4 ** (half_k - is_odd)
+    v2_size = k - half_k
+    k_mask = (1 << (v2_size * 2)) - 1
     trie = TrieBit(m, k, half_k)
     proc = subprocess.Popen(
         [snakemake.input.bin,
@@ -49,19 +43,10 @@ def main():
         sequences_received += 1
         v1 = kmer_idx >> (v2_size*2)
         v2 = kmer_idx & k_mask
-        if v2 == 256 and k == 8:
-            print("HERE")
-            print(k, half_k, m)
-        v1_bits = []
-        i = half_k - 1
-        while i >= 0:
-            v1_bits.append(v1 >> (i*2) & 3)
-            i -= 1
-        trie.insert(tuple(v1_bits), v2)
+        trie.insert(v1, v2)
         total += 1
     proc.wait()
     trie.write_bit_format(out_path)
-    expected = 4**k
 
 
 if __name__ == "__main__":

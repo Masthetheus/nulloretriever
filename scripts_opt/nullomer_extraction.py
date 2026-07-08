@@ -70,7 +70,6 @@ def main():
         bytes_per_sequence = (k * 2 + 7) // 8
         wasted_space = (bytes_per_sequence * 8) - (k * 2)
         mask = (4**k) - 1
-        kmers = set()
         print(
             f"DEBUG: Variables in use:\n"
             f"bytes_per_sequence: {bytes_per_sequence}"
@@ -84,16 +83,10 @@ def main():
                 break
             kmer_idx = int.from_bytes(kmer_bytes, byteorder="big")
             kmer_idx = (kmer_idx) & (mask)
-            kmers.add(kmer_idx)
             sequences_received += 1
             v1 = kmer_idx >> (v2_size * 2)
             v2 = kmer_idx & k_mask
-            v1_bits = []
-            i = half_k - 1
-            while i >= 0:
-                v1_bits.append(v1 >> (i * 2) & 3)
-                i -= 1
-            trie.insert(tuple(v1_bits), v2)
+            trie.insert(v1, v2)
             total += 1
         proc.wait()
         write_dict = {

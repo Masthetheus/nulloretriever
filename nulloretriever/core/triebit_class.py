@@ -1,6 +1,7 @@
 """Defines the TrieBit class for nullomer retrieving pipeline"""
 
 from bitarray import bitarray
+import array
 import struct
 
 from nulloretriever.analysis.composition import generate_gc_dict
@@ -16,6 +17,8 @@ class TrieBitNode:
     Regular node of a Bit Trie class, representing one of the four nucleotides.
     Each node is composed of up to four referenced children nodes.
     """
+
+    __slots__ = ('children',)
 
     def __init__(self):
         self.children = [None] * 4
@@ -37,6 +40,8 @@ class TrieBitLeaf:
     that represents the possible sequences indexes for given k value.
     All bits start at 0, representing absence of such sequences.
     """
+
+    __slots__ = ('v2_set',)
 
     def __init__(self, m):
         self.v2_set = bitarray(m)
@@ -98,20 +103,22 @@ class TrieBit:
             else:
                 node = node.children[value]
 
-    def insert_from_bit(self, v1, v2s):
+    def insert(self, v1, v2):
         node = self.root
-        count = 0
-        for value in v1:
-            count += 1
-            if node.children[value] is None:
-                if count != self.half_k:
-                    node.children[value] = TrieBitNode()
-                else:
-                    node.children[value] = TrieBitLeaf(self.m)
-            if count == self.half_k:
-                list(map(node.children[value].v2_set.__setitem__, v2s, [1] * len(v2s)))
-            else:
-                node = node.children[value]
+        half_k = self.half_k
+        for shift in range(half_k - 1, 0, -1):
+            base = (v1 >> (shift * 2)) & 3
+            child = node.children[base]
+            if child is None:
+                child = TrieBitNode()
+                node.children[base] = child
+            node = child
+        base = v1 & 3
+        leaf = node.children[base]
+        if leaf is None:
+            leaf = TrieBitLeaf(self.m)
+            node.children[base] = leaf
+        leaf.v2_set[v2] = 1
 
     def iterate(self):
         yield from self.root.iterate([])
@@ -394,65 +401,44 @@ class TrieBit:
         return range(init_idx, init_idx + abs_idx)
 
     def write_bit_format(self, output):
-        """Saves TrieBit to a compact binary format.
-        Format: [header][nodes...]
-        Header: b'TRIE'[4] + version(2) + half_k(2) + format_code(1)
-        Args:
-            self(TrieBit): TrieBit object to be saved in compact binary
-            output(str): path to save the file
-        Returns:
-            file: all nullomers sequences in binary format, where:
-                v1(int): index of the first half of the sequence, with size
-                half_k (k/2).
-                v2_set size(int): count of v2 for the given v1
-                v2(array): indexes of the second half of the sequence,
-                    calculated with half_k (k/2), that are directly connected
-                    to the previous v1 value
-        """
         with open(output, "wb") as f:
-            f.write(b"TRIE")  # Magic number
+            f.write(b"TRIE")
             version = 1
-            # version, half_k, byte_size
-            f.write(
-                struct.pack(
-                    "<HHHBB",
-                    version,
-                    self.k,
-                    self.half_k,
-                    self.format_code,
-                    self.counter_code,
-                )
-            )
+            f.write(struct.pack("<HHHBB", version, self.k, self.half_k,
+                               self.format_code, self.counter_code))
+
+            # Map your format codes to array types
+            type_map = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+            arr_type = type_map[self.format_code]
+            cnt_type = type_map[self.counter_code]
 
             def collect_nodes(node, path):
                 if len(path) == self.half_k:
                     nullomers = node.v2_set.search(bitarray("0"))
-                    null_count = node.v2_set.count(bitarray("0"))
-                    if nullomers and null_count > 0:
-                        buffer = bytearray()
-                        index = sum(
-                            base * (4 ** (self.half_k - i - 1))
-                            for i, base in enumerate(path)
-                        )
-                        buffer.extend(struct.pack(f"{self.index_format}", index))
-                        buffer.extend(struct.pack(f"{self.counter_format}", null_count))
-                        for v2_index in node.v2_set.search(bitarray("0")):
-                            buffer.extend(struct.pack(f"{self.index_format}", v2_index))
-                        f.write(buffer)
+                    if nullomers:
+                        null_count = len(nullomers)
+                        index = sum(base * (4 ** (self.half_k - i - 1))
+                                   for i, base in enumerate(path))
+
+                        # Use array.array for fast C-level conversion
+                        result = array.array(arr_type, [index])
+                        count_arr = array.array(cnt_type, [null_count])
+                        v2_arr = array.array(arr_type, nullomers)
+
+                        f.write(result.tobytes())
+                        f.write(count_arr.tobytes())
+                        f.write(v2_arr.tobytes())
                     return
+
                 for child_value, child_node in enumerate(node.children):
                     if child_node is not None:
                         collect_nodes(child_node, path + [child_value])
                     else:
                         for missing_idx in self.missing_path_idx(path + [child_value]):
-                            buffer = bytearray()
-                            buffer.extend(
-                                struct.pack(f"{self.index_format}", missing_idx)
-                            )
-                            buffer.extend(struct.pack(f"{self.counter_format}", 0))
-                            f.write(buffer)
-
-            collect_nodes(self.root, [])
+                            result = array.array(arr_type, [missing_idx])
+                            count_arr = array.array(cnt_type, [0])
+                            f.write(result.tobytes())
+                            f.write(count_arr.tobytes())
 
     def idx_to_seq(self, idx, k):
         DECODE = {0: "A", 1: "C", 2: "T", 3: "G"}
