@@ -425,14 +425,6 @@ class TrieBit:
                             f.write(result.tobytes())
                             f.write(count_arr.tobytes())
 
-    def idx_to_seq(self, idx, k):
-        DECODE = {0: "A", 1: "C", 2: "T", 3: "G"}
-        bases = []
-        for _ in range(k):
-            bases.append(DECODE[idx & 3])
-            idx >>= 2
-        return "".join(reversed(bases))
-
     def write_sequences(self, filepath):
         results = []
 
@@ -468,35 +460,3 @@ class TrieBit:
         with open(filepath, "w") as f:
             f.write("\n".join(results))
 
-    def write_txt_format(self, output):
-        """Writes a trie paths and relative v2 values in a compact txt format
-        Args:
-            self(TrieBit): TrieBit object to be saved in compact binary
-            output(str): path to save the file
-        Returns:
-            file: compact .txt file as below:
-                >(char): v1 delimiter, for further automation of file
-                reading and processing
-                v1_index(int)
-                v2_values(array): comma separated v2 index values for the
-                                previous v1
-        """
-        with open(output, "w") as f:
-
-            def dfs(node, path):
-                if len(path) == self.half_k:
-                    nullomers = [i for i, bit in enumerate(node.v2_set) if bit]
-                    if nullomers:
-                        v1_index = sum(
-                            base * (4 ** (self.half_k - i - 1))
-                            for i, base in enumerate(path)
-                        )
-                        f.write(f">{v1_index}\n")
-                        v2_values = ",".join(str(i) for i in nullomers)
-                        f.write(f"{v2_values}\n")
-                    return
-                for child_value, child_node in enumerate(node.children):
-                    if child_node is not None:
-                        dfs(child_node, path + [child_value])
-
-            dfs(self.root, [])
