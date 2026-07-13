@@ -436,10 +436,32 @@ class TrieBit:
     def write_sequences(self, filepath):
         results = []
 
+        def _decoding_table(v1 = None, v2 = None):
+            if v1:
+                seq_len = self.half_k
+            elif v2:
+                seq_len = self.k - self.half_k
+            else:
+                return None
+            m = 4 ** (seq_len)
+            seq = []
+            decoder = []
+            DECODE = {0: "A", 1: "C", 2: "T", 3: "G"}
+            for i in range(m):
+                idx = i
+                for _ in range(seq_len):
+                    seq.append(DECODE[idx & 3])
+                    idx >>= 2
+                decoder.append("".join(reversed(seq)))
+                seq = []
+            return decoder
+
+        v1_decode = _decoding_table(1)
+        v2_decode = _decoding_table(0,1)
         def collect(node, v1_idx):
+            seq_v1 = v1_decode[v1_idx]
             for v2 in node.v2_set.search(1):
-                seq_v1 = self.idx_to_seq(v1_idx, self.half_k)
-                seq_v2 = self.idx_to_seq(v2, self.k - self.half_k)
+                seq_v2 = v2_decode[v2]
                 results.append(seq_v1 + seq_v2)
 
         self.traverse_till_half_k(callback=collect)
