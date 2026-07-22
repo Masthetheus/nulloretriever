@@ -393,7 +393,7 @@ class TrieBit:
                                self.format_code, self.counter_code))
 
             # Map your format codes to array types
-            type_map = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+            type_map = {0: 'B', 2: 'H', 4: 'I', 8: 'Q'}
             arr_type = type_map[self.format_code]
             cnt_type = type_map[self.counter_code]
 
@@ -452,7 +452,7 @@ class TrieBit:
         v2_decode = _decoding_table(0,1)
         def collect(node, v1_idx):
             seq_v1 = v1_decode[v1_idx]
-            for v2 in node.v2_set.search(1):
+            for v2 in node.v2_set.search(0):
                 seq_v2 = v2_decode[v2]
                 results.append(seq_v1 + seq_v2)
 

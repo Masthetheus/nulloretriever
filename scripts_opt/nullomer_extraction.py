@@ -26,7 +26,7 @@ def setup_argparser() -> argparse.ArgumentParser:
         "trie indexes, complete txt format with full sequences or binary"
         "format."
         " Default = binary.",
-        choices=["binary", "idx", "sequence"],
+        choices=["binary", "sequence"],
         default="binary",
     )
     parser.add_argument(
@@ -91,7 +91,6 @@ def main():
         proc.wait()
         write_dict = {
             "binary": trie.write_bit_format,
-            "idx": trie.write_txt_format,
             "sequence": trie.write_sequences,
         }
         write_dict[mode](out_path)
