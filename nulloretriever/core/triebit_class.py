@@ -105,6 +105,28 @@ class TrieBit:
             node.children[base] = leaf
         leaf.v2_set[v2] = 1
 
+    def insert_v2_list(self, v1, v2_list):
+        """Insert a list of v2 indices for a single v1 prefix.
+        Creates the leaf if it doesn't exist, then sets all bits in v2_list to 1.
+        """
+        node = self.root
+        # Traverse to the leaf position
+        for shift in range(self.half_k - 1, 0, -1):
+            base = (v1 >> (shift * 2)) & 3
+            child = node.children[base]
+            if child is None:
+                child = TrieBitNode()
+                node.children[base] = child
+            node = child
+        base = v1 & 3
+        leaf = node.children[base]
+        if leaf is None:
+            leaf = TrieBitLeaf(self.m)
+            node.children[base] = leaf
+        # Set all bits in bulk
+        for v2 in v2_list:
+            leaf.v2_set[v2] = 1
+
     def iterate(self):
         yield from self.root.iterate([])
 
@@ -392,20 +414,18 @@ class TrieBit:
             f.write(struct.pack("<HHHBB", version, self.k, self.half_k,
                                self.format_code, self.counter_code))
 
-            # Map your format codes to array types
-            type_map = {0: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+            type_map = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
             arr_type = type_map[self.format_code]
             cnt_type = type_map[self.counter_code]
 
             def collect_nodes(node, path):
                 if len(path) == self.half_k:
-                    nullomers = node.v2_set.search(bitarray("0"))
+                    nullomers = list(node.v2_set.search(bitarray("0")))
                     if nullomers:
                         null_count = len(nullomers)
                         index = sum(base * (4 ** (self.half_k - i - 1))
                                    for i, base in enumerate(path))
 
-                        # Use array.array for fast C-level conversion
                         result = array.array(arr_type, [index])
                         count_arr = array.array(cnt_type, [null_count])
                         v2_arr = array.array(arr_type, nullomers)
@@ -424,6 +444,7 @@ class TrieBit:
                             count_arr = array.array(cnt_type, [0])
                             f.write(result.tobytes())
                             f.write(count_arr.tobytes())
+            collect_nodes(self.root,[])
 
     def write_sequences(self, filepath):
         results = []

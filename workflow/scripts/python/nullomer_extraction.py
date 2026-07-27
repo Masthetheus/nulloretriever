@@ -46,6 +46,15 @@ def main():
         trie.insert(v1, v2)
         total += 1
     proc.wait()
+    kmers_inserted = trie.count_kmers()
+    expected = 4**k
+    null_count = expected - kmers_inserted
+    print(
+        f"{trie.count_kmers()} were inserted into the trie."
+        f"\n{expected} total were expected."
+        f"An total of {null_count} nullomers were found "
+        f"for a k of {k}."
+    )
     trie.write_bit_format(out_path)
 
 
