@@ -110,7 +110,6 @@ class TrieBit:
         Creates the leaf if it doesn't exist, then sets all bits in v2_list to 1.
         """
         node = self.root
-        # Traverse to the leaf position
         for shift in range(self.half_k - 1, 0, -1):
             base = (v1 >> (shift * 2)) & 3
             child = node.children[base]
@@ -123,7 +122,6 @@ class TrieBit:
         if leaf is None:
             leaf = TrieBitLeaf(self.m)
             node.children[base] = leaf
-        # Set all bits in bulk
         for v2 in v2_list:
             leaf.v2_set[v2] = 1
 

@@ -49,11 +49,17 @@ def main():
     if counter > 0 and smaller_null_file != '':
         print("Pegando trivial")
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
-        dispatch_table = {
-            "composition": bigger_trie.count_gc(),
-            "trivial": bigger_trie.find_trivial_ext(smaller_trie),
-            "motifs": motif_wrapper(bigger_trie)
-        }
+        if smaller_trie.count_kmers() != 0:
+            dispatch_table = {
+                "composition": bigger_trie.count_gc(),
+                "trivial": bigger_trie.find_trivial_ext(smaller_trie),
+                "motifs": motif_wrapper(bigger_trie)
+            }
+        else:
+                dispatch_table = {
+                    "composition": bigger_trie.count_gc(),
+                    "motifs": motif_wrapper(bigger_trie)
+                }
     else:
         dispatch_table = {
             "composition": bigger_trie.count_gc(),
