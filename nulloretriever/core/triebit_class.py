@@ -156,7 +156,7 @@ class TrieBit:
     def traverse_till_custom(self, callback, target_idx, v2=None):
         def walk(node, depth, idx_acc):
             if depth == self.half_k:
-                if v2:
+                if v2 is not None:
                     return callback(node, idx_acc, v2)
                 else:
                     return callback(node, idx_acc)
@@ -366,7 +366,7 @@ class TrieBit:
 
         def search_trivial(node, v1_idx):
             nonlocal trivial, smaller_mask, found
-            v2_idxs = node.v2_set.search(1)
+            v2_idxs = list(node.v2_set.search(1))
             for v2 in v2_idxs:
                 idx = (v1_idx << (self.half_k * 2)) | v2
                 for possibility in (idx >> 2, idx & mask):
