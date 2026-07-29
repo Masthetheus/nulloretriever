@@ -47,9 +47,9 @@ def main():
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
     if counter > 0 and smaller_null_file != '':
-        print("Pegando trivial")
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
         if smaller_trie.count_kmers() != 0:
+            print("Pegando trivial")
             dispatch_table = {
                 "composition": bigger_trie.count_gc(),
                 "trivial": bigger_trie.find_trivial_ext(smaller_trie),
@@ -71,6 +71,8 @@ def main():
     for stat in stats:
         try:
             retrieved_stats[stat] = dispatch_table[stat]
+            if stat == "trivial":
+                print(retrieved_stats[stat])
         except Exception as e:
             print(f"Stat {stat} no available for this organism")
     base_dict = {}

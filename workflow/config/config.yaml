@@ -250,6 +250,6 @@ paths:
   c: workflow/scripts/c
 statistics:
 - composition
-- counter
+- trivial
 - motifs
 fasta_extension: ""

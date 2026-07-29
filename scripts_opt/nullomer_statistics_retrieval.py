@@ -88,22 +88,32 @@ def main():
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
 
-    if counter > 0:
+    if counter > 0 and smaller_null_file != "":
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
+        if smaller_trie.count_kmers() != 0:
+            dispatch_table = {
+                "composition": bigger_trie.count_gc(),
+                "trivial": bigger_trie.find_trivial_ext(smaller_trie),
+                "motifs": motif_wrapper(bigger_trie),
+            }
+        else:
+            dispatch_table = {
+                "composition": bigger_trie.count_gc(),
+                "motifs": motif_wrapper(bigger_trie)
+            }
+    else:
         dispatch_table = {
             "composition": bigger_trie.count_gc(),
-            "trivial": bigger_trie.find_trivial_ext(smaller_trie),
-            "motifs": motif_wrapper(bigger_trie),
+            "motifs": motif_wrapper(bigger_trie)
         }
-    else:
         print("No nullomers found in the given bit file.")
-        return
 
     retrieved_stats = {}
     retrieved_stats["counter"] = counter
 
     for stat in stats:
         try:
+            print(f"Processing {stat}.")
             retrieved_stats[stat] = dispatch_table[stat]
         except Exception as e:
             print(f"Stat {stat} no available for this organism")
