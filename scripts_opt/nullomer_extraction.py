@@ -57,7 +57,7 @@ def main():
         trie = TrieBit(m, k, half_k)
         proc = subprocess.Popen(
             [
-                "../workflow/scripts/c/bin/kmer_extractor",
+                "workflow/scripts/c/bin/kmer_extractor",
                 genome_path,
                 k_values[0],
             ],

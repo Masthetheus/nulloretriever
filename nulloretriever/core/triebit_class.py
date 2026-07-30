@@ -469,13 +469,41 @@ class TrieBit:
 
         v1_decode = _decoding_table(1)
         v2_decode = _decoding_table(0,1)
+
         def collect(node, v1_idx):
             seq_v1 = v1_decode[v1_idx]
             for v2 in node.v2_set.search(0):
                 seq_v2 = v2_decode[v2]
                 results.append(seq_v1 + seq_v2)
 
-        self.traverse_till_half_k(callback=collect)
+        def gather_none_nodes_idx(depth, curr_idx):
+            if depth != self.half_k:
+                for i in range(4):
+                    prox_idx = (curr_idx << 2) | i
+                    gather_none_nodes_idx(depth+1, prox_idx)
+            else:
+                seq_v1 = v1_decode[curr_idx]
+                for v2 in range(self.m):
+                    seq_v2 = v2_decode[v2]
+                    results.append(seq_v1 + seq_v2)
+                return
+
+        def custom_traverse(self, callback):
+            def walk(node, depth, idx_acc):
+                if depth == self.half_k:
+                    callback(node, idx_acc)
+                    return
+                for child_value, child_node in enumerate(node.children):
+                    if child_node is not None:
+                        next_idx = (idx_acc << 2) | child_value
+                        walk(child_node, depth + 1, next_idx)
+                    else:
+                        missing_prefix = (idx_acc << 2) | child_value
+                        gather_none_nodes_idx(depth+1,idx_acc)
+
+            walk(self.root, 0, 0)
+
+        custom_traverse(self,callback=collect)
         with open(filepath, "w") as f:
             f.write("\n".join(results))
 
