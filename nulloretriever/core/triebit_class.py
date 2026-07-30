@@ -444,7 +444,7 @@ class TrieBit:
                             f.write(count_arr.tobytes())
             collect_nodes(self.root,[])
 
-    def write_sequences(self, filepath):
+    def write_sequences(self, filepath, identifier):
         results = []
 
         def _decoding_table(v1 = None, v2 = None):
@@ -471,8 +471,10 @@ class TrieBit:
         v2_decode = _decoding_table(0,1)
 
         def collect(node, v1_idx):
+            nonlocal identifier
+            identifier = int(identifier)
             seq_v1 = v1_decode[v1_idx]
-            for v2 in node.v2_set.search(0):
+            for v2 in node.v2_set.search(identifier):
                 seq_v2 = v2_decode[v2]
                 results.append(seq_v1 + seq_v2)
 

@@ -93,7 +93,11 @@ def main():
             "binary": trie.write_bit_format,
             "sequence": trie.write_sequences,
         }
-        write_dict[mode](out_path)
+        if mode == "sequence":
+            identifier = 0
+            write_dict[mode](out_path, identifier)
+        else:
+            write_dict[mode](out_path)
         kmers_inserted = trie.count_kmers()
         expected = 4**k
         null_count = expected - kmers_inserted
