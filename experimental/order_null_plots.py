@@ -49,7 +49,7 @@ ORDER_NAMES = {
 }
 
 # ── carrega e filtra ──────────────────────────────────────────────────────────
-df = pd.read_csv("treated_final_results.csv")
+df = pd.read_csv("workflow/results/filtered_nullomer_statistics_summarized.csv")
 
 # phylum_id pode vir como int ou float dependendo do pandas
 df["phylum_id"] = pd.to_numeric(df["phylum_id"], errors="coerce")
@@ -114,13 +114,13 @@ def fig_genome_vs_trivial():
         sub = df_k_f[df_k_f[GROUP_COL] == o]
         # borda: tracejada pra basidio, sólida pra asco
         ec = "#5204AA" if order_phylum.get(o) == 5204 else "none"
-        ax.scatter(sub["genome_length"], sub["trivial_porc"],
+        ax.scatter(sub["Genome length"], sub["trivial_porc"],
                    color=PALETTE[o], edgecolors=ec, linewidths=0.5,
                    alpha=0.75, s=50, label=label(o))
     ax.set_xscale("log")
     ax.set_xlabel("Genome length (bp, log scale)", fontsize=11)
     ax.set_ylabel(f"Trivial nullomers (%, k={K_FOCUS})", fontsize=11)
-    ax.set_title(spearman_label(df_k_f["genome_length"], df_k_f["trivial_porc"]),
+    ax.set_title(spearman_label(df_k_f["Genome length"], df_k_f["trivial_porc"]),
                  fontsize=10, color="gray")
     legend_outside(ax, n_ord)
     sns.despine(ax=ax)
@@ -145,15 +145,15 @@ def fig_trivial_by_k():
 
 # ── fig 3 — resíduo após controle por tamanho ────────────────────────────────
 def fig_residuals():
-    sub = df_k_f.dropna(subset=["genome_length", "trivial_porc"]).copy()
-    log_g = np.log10(sub["genome_length"])
+    sub = df_k_f.dropna(subset=["Genome length", "trivial_porc"]).copy()
+    log_g = np.log10(sub["Genome length"])
     slope, intercept, *_ = stats.linregress(log_g, sub["trivial_porc"])
     sub["residual"] = sub["trivial_porc"] - (slope * log_g + intercept)
 
     fig, ax = plt.subplots(figsize=(9, 6))
     for o in orders:
         s = sub[sub[GROUP_COL] == o]
-        ax.scatter(s["genome_length"], s["residual"],
+        ax.scatter(s["Genome length"], s["residual"],
                    color=PALETTE[o], alpha=0.75, edgecolors="none",
                    s=50, label=label(o))
     ax.axhline(0, color="gray", linewidth=0.8, linestyle="--")

@@ -20,9 +20,10 @@ PALETTE = {
 }
 
 # ── carrega e filtra ─────────────────────────────────────────────────────────
-df = pd.read_csv("treated_final_results.csv")
+df = pd.read_csv("workflow/results/filtered_nullomer_statistics_summarized.csv")
 
 # filtra só asco e basidio — adapta o nome da coluna de filo se necessário
+print(df.columns)
 print(df["phylum_id"])
 df_fungi = df[df["phylum_id"].isin(
     PHYLUM_FILTER["Ascomycota"] + PHYLUM_FILTER["Basidiomycota"]
@@ -49,13 +50,13 @@ def fig_genome_vs_trivial():
         sub = df_k[df_k["phylum_id"].isin([phylum])].copy()
         print(f"Sub = {sub}")
         ax.scatter(
-            sub["genome_length"], sub["trivial_porc"],
+            sub["Genome length"], sub["trivial_porc"],
             color=color, alpha=0.6, edgecolors="none", s=40, label=phylum
         )
     ax.set_xscale("log")
     ax.set_xlabel("Genome length (bp, log scale)", fontsize=11)
     ax.set_ylabel(f"Trivial nullomers (%, k={K_FOCUS})", fontsize=11)
-    ax.set_title(spearman_label(df_k["genome_length"], df_k["trivial_porc"]),
+    ax.set_title(spearman_label(df_k["Genome length"], df_k["trivial_porc"]),
                  fontsize=10, color="gray")
     ax.legend(frameon=False)
     sns.despine(ax=ax)
@@ -82,15 +83,15 @@ def fig_trivial_by_k():
 
 # ── figura 3 — resíduo após controle por tamanho ─────────────────────────────
 def fig_residuals():
-    sub = df_k.dropna(subset=["genome_length", "trivial_porc"]).copy()
-    log_genome = np.log10(sub["genome_length"])
+    sub = df_k.dropna(subset=["Genome length", "trivial_porc"]).copy()
+    log_genome = np.log10(sub["Genome length"])
     slope, intercept, *_ = stats.linregress(log_genome, sub["trivial_porc"])
     sub["residual"] = sub["trivial_porc"] - (slope * log_genome + intercept)
 
     fig, ax = plt.subplots(figsize=(7, 5))
     for phylum, color in PALETTE.items():
         s = sub[sub["phylum_id"] == phylum]
-        ax.scatter(s["genome_length"], s["residual"],
+        ax.scatter(s["Genome length"], s["residual"],
                    color=color, alpha=0.6, edgecolors="none", s=40, label=phylum)
     ax.axhline(0, color="gray", linewidth=0.8, linestyle="--")
     ax.set_xscale("log")
