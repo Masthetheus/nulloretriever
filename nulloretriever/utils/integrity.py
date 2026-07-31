@@ -54,7 +54,7 @@ def check_genome_integrity(genome):
     return True
 
 
-def check_multiple_genomes_integrity(genomes):
+def check_multiple_genomes_integrity(genomes, location):
     """Checks an array of genomes for file integrity
     Given certain genome, checks:
         composition: if it is composed only by A, T, C and G (further work shall include user guided filter to include also other standard code as R, Y, etc)
@@ -65,13 +65,12 @@ def check_multiple_genomes_integrity(genomes):
     """
     app_organisms = []
     napp_organisms = []
-    for path, organisms in genomes.items():
-        path = Path(path)
-        for organism in organisms:
-            full_path = path / organism
-            integrity = check_genome_integrity(full_path)
-            if integrity:
-                app_organisms.append(organism)
-            else:
-                napp_organisms.append(organism)
+    for organisms in genomes:
+        path = Path(location)
+        full_path = path / organism
+        integrity = check_genome_integrity(full_path)
+        if integrity:
+            app_organisms.append(organism)
+        else:
+            napp_organisms.append(organism)
     return app_organisms, napp_organisms

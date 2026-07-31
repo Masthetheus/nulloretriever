@@ -9,7 +9,9 @@ K_VALUES = config.get("k", [])
 ORGANISMS = config.get("organisms", [])
 PATHS = config.get("paths", {})
 STATISTICS = config.get("statistics", ["composition", "counter", "motifs"])
-EXT = config.get("fasta_extension", "")
+EXT = config.get("fasta_extension","")
+print(f"DEBUG: EXT = '{EXT}'")  # What does this print?
+print(f"DEBUG: Full config = {config["fasta_extension"]}")  # See what's actually in config
 
 # pathing 
 GENOMES_DIR = PATHS.get("genomes", "workflow/data/genomes/")
