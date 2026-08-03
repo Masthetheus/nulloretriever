@@ -500,8 +500,10 @@ class TrieBit:
                         next_idx = (idx_acc << 2) | child_value
                         walk(child_node, depth + 1, next_idx)
                     else:
-                        missing_prefix = (idx_acc << 2) | child_value
-                        gather_none_nodes_idx(depth+1,idx_acc)
+                        # Checks if trie is from kmer seq
+                        if identifier == 0:
+                            missing_prefix = (idx_acc << 2) | child_value
+                            gather_none_nodes_idx(depth+1,idx_acc)
 
             walk(self.root, 0, 0)
 
