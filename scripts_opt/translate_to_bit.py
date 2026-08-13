@@ -58,14 +58,14 @@ def main():
     if filename and k_values:
         if len(k_values) == 1:
             full_out_path = f"{filename}_bit_k{k_values[0]}"
-            write_bit_file(filename, full_out_path, k_values[0])
+            write_bit_file(filename, full_out_path, int(k_values[0]))
             print("Sequence file converted to its binary compact format.")
         else:
             for k in k_values:
                 try:
                     dir_k = f"{dir_input}/k{k}/{filename}"
                     full_out_path = f"{dir_output}/{filename}_bit_k{k}"
-                    write_bit_file(dir_k, full_out_path, k)
+                    write_bit_file(dir_k, full_out_path, int(k))
                 except Exception as e:
                     print(f"Something went wrong. Check the pathing inputs. Error: {e}")
             print("All files correctly outputted in compact binary format.")
@@ -77,7 +77,7 @@ def main():
                     if file.is_file():
                         print(f"Writing file {file.stem} for k {k}.")
                         full_out_path = f"{dir_output}/{file.stem}_bit_format_k{k}"
-                        write_bit_file(file, full_out_path, k)
+                        write_bit_file(file, full_out_path, int(k))
             except Exception as e:
                 print(f"Failure writing the binary output. Please check if the informed path exists. Error: {e}.")
                 break

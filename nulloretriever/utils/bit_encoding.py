@@ -10,8 +10,8 @@ def generate_sub_indexes(idx, k):
     half_k_v2 = k//2
     m = 4**(k//2)
 
-    v1 = (idx >> (half_k*2)) & ((1 << (half_k + 1)) - 1)
-    v2 = idx & ((1 << (half_k_v2 + 1)) - 1)
+    v1 = (idx >> (half_k_v2*2)) & ((1 << ((2*half_k))) - 1)
+    v2 = idx & ((1 << (half_k_v2 * 2)) - 1)
 
     return v1, v2
 
@@ -24,7 +24,6 @@ def encode_to_bit(filename, k):
     with open(filename,"r") as f:
         for line in f:
             sequence = line.rstrip("\n")
-            print(f"Sequence : {sequence}")
             count = 0
             idx = 0
             while count < k:
@@ -43,7 +42,6 @@ def write_bit_file(filename, output, k):
     m = 4**(k//2)
 
     nullomers = encode_to_bit(filename, k)
-
     byte_to_format = {1: "B", 2: "H", 4: "I", 8: "Q"}
     if half_k < 4:
         idx_sz, cnt_sz = 1, 1

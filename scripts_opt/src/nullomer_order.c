@@ -86,7 +86,7 @@ void precompute_combinations(int k, int d, int **combos, int *num_combos){
         *combos = data;
 }
 
-bool seen_countains(uint64_t idx, char *seen){
+bool seen_contains(uint64_t idx, char *seen){
         size_t byte = idx/8;
         int bit = idx%8;
         if ((seen[byte]&(1 << (bit))) != 0){
@@ -125,7 +125,7 @@ bool all_neighbors_exist(uint64_t kmer, int d, const int *combos, int num_combos
 
                         if (!valid) continue;
 
-                        if (!seen_countains(neighbor, seen)){
+                        if (!seen_contains(neighbor, seen)){
                                 return false;
                         }
 
@@ -168,6 +168,7 @@ int main(int argc, char *argv[]){
 
         uint64_t total = 1ULL << (2*k);
         char *seen = calloc((total+7) / 8, 1);
+        if (!seen) { perror("calloc failed"); exit(1); }
 
         uint64_t v1 = 0;
         while (1) {
@@ -184,7 +185,7 @@ int main(int argc, char *argv[]){
                 for (size_t i = 0; i < null_count; i++) {
                         uint64_t v2 = 0;
                         memcpy(&v2, null_collection + i * byte_size, byte_size);
-                        uint64_t idx = (v1 << ((uint64_t) half_k * 2)) | v2;
+                        uint64_t idx = (v1 << ((uint64_t) (k - half_k) * 2)) | v2;
 
                         size_t byte = idx/8;
                         int bit = idx%8;

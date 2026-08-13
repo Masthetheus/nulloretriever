@@ -136,8 +136,15 @@ Arguments:
   <order>         (required) Up limit of order to calculate.
 
 Example:
+  Compile the bin:
+  ```
+    cd scripts-opt/
+    make null_order
+  ```
   Obtain nullomers pertaining to order 1 and order 2:
-  ./scripts-opt/bin/null_order results/ecoli_k15.bit 2
+  ```
+    ./scripts-opt/bin/null_order results/ecoli_k15.bit 2
+  ```
 
 Output:
 One TXT file per order with at least one sequence, containing all sequences, one per line, of such order. 
