@@ -26,7 +26,7 @@ def setup_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-i",
         "--input",
-        help="Input directory with sequence files to converto to compact bit format. Default = workflow/results",
+        help="Input directory with sequence files to convert to compact bit format. Default = workflow/results",
         default = "workflow/results",
     )
     parser.add_argument(
