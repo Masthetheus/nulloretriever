@@ -77,18 +77,19 @@ def main():
     else:
         stats = [stats]
     bigger_null_file = args.null1
+
     if stats == "all" or "trivial" in stats:
-        if not args.null2:
-            print(
-                "Invalid null2 argument given. For trivial analysis the bit"
-                "null file for k-1 from the same organism is needed."
-            )
-            return
-        smaller_null_file = args.null2
+        try:
+            smaller_null_file = args.null2
+        except Exception:
+            smaller_null_file = ""
+
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
 
-    if counter > 0 and smaller_null_file != "":
+    if counter > 0 and smaller_null_file != "" and smaller_null_file != None:
+        print("ENTROU LOOP ERRADO")
+        print(smaller_null_file)
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
         if smaller_trie.count_kmers() != 0:
             dispatch_table = {
@@ -106,7 +107,6 @@ def main():
             "composition": bigger_trie.count_gc(),
             "motifs": motif_wrapper(bigger_trie)
         }
-        print("No nullomers found in the given bit file.")
 
     retrieved_stats = {}
     retrieved_stats["counter"] = counter

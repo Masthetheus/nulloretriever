@@ -35,7 +35,7 @@ print("="*60)
 
 # ---- 1. CARREGAR DADOS ----
 print("\n[1] Carregando dados...")
-df = pd.read_csv("workflow/results/filtered_nullomer_statistics_summarized.csv")
+df = pd.read_csv("workflow/shuffled_results/filtered_nullomer_statistics_summarized.csv")
 print(f"Total de linhas no CSV: {len(df)}")
 
 # Verifica colunas obrigatórias

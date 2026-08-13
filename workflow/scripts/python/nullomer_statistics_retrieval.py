@@ -44,10 +44,12 @@ def main():
     smaller_null_file = str(snakemake.input.get("previous", None))
     organism = snakemake.wildcards.organism
     k_val = snakemake.wildcards.k
+    print(f"SMALLER NULL: {smaller_null_file} for k {k_val}")
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
     if counter > 0 and smaller_null_file != '':
         smaller_trie = mount_trie_from_bitfile(smaller_null_file)
+        print(f"Smaller trie loaded with {smaller_trie.count_kmers()} nulls")
         if smaller_trie.count_kmers() != 0:
             print("Pegando trivial")
             dispatch_table = {
@@ -71,8 +73,6 @@ def main():
     for stat in stats:
         try:
             retrieved_stats[stat] = dispatch_table[stat]
-            if stat == "trivial":
-                print(retrieved_stats[stat])
         except Exception as e:
             print(f"Stat {stat} no available for this organism")
     base_dict = {}
