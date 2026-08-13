@@ -96,7 +96,7 @@ bool seen_countains(uint64_t idx, char *seen){
         }
 }
 
-bool all_neighbors_exist(uint64_t kmer, int k, int d, const int *combos, int num_combos, char *seen){
+bool all_neighbors_exist(uint64_t kmer, int d, const int *combos, int num_combos, char *seen){
 
         for (int c = 0; c < num_combos; c++){
                 int posicoes[d];
@@ -149,11 +149,9 @@ int main(int argc, char *argv[]){
         }
         int order = atoi(argv[2]);
 
-        char seq[MAX_SEQ];
         uint64_t *nullomers = NULL;
         size_t count = 0;
         size_t capacity = 0;
-        uint64_t clean_idx = 0;
 
         fseek(f, 6, SEEK_SET);
 
@@ -227,8 +225,8 @@ int main(int argc, char *argv[]){
                 size_t passed_count = 0;
                 size_t passed_cap = 0;
 
-                for (int j = 0; j < cand_count; j++){
-                        if (all_neighbors_exist(candidates[j], k, i, combos_d, num_combos_d, seen)){
+                for (size_t j = 0; j < cand_count; j++){
+                        if (all_neighbors_exist(candidates[j], i, combos_d, num_combos_d, seen)){
                                 if (passed_count == passed_cap){
                                         passed_cap = (passed_cap ==0) ? 256 : passed_cap * 2;
                                         uint64_t *tmp = realloc(passed, passed_cap * sizeof(uint64_t));
@@ -255,13 +253,13 @@ int main(int argc, char *argv[]){
                 
 
                 FILE *out;
-                char buffer[25];
+                char buffer[30];
 
                 snprintf(buffer, sizeof(buffer), "organism_order_%d.txt", i);
 
                 out = fopen(buffer,"w");
                 char *seq = malloc((k+1) * sizeof(char));
-                for(int m = 0; m < cand_count; m++){
+                for(size_t m = 0; m < cand_count; m++){
                         decode_kmer(candidates[m], k, seq);
                         fprintf(out, "%s\n", seq);
                 }
