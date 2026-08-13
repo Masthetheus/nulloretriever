@@ -36,6 +36,7 @@ def setup_argparser() -> argparse.ArgumentParser:
         default="workflow/data",
     )
     parser.add_argument("-g", "--genome", help="Genome to be analyzed")
+    parser.add_argument("-c", "--c_script", help = "Path to c kmer extraction binary.", default = "workflow/scripts/c/bin/kmer_extractor")
     return parser
 
 
@@ -43,6 +44,7 @@ def main():
     """K-mer extraction and nullomer trie generation."""
     parser = setup_argparser()
     args = parser.parse_args()
+    c_bin = args.c_script
     k_values = args.kvalues
     mode = args.mode
     out_path = args.output + "_result"
@@ -57,9 +59,9 @@ def main():
         trie = TrieBit(m, k, half_k)
         proc = subprocess.Popen(
             [
-                "workflow/scripts/c/bin/kmer_extractor",
+                c_bin,
                 genome_path,
-                k_values[0],
+                str(k),
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
@@ -93,7 +95,11 @@ def main():
             "binary": trie.write_bit_format,
             "sequence": trie.write_sequences,
         }
-        write_dict[mode](out_path)
+        if mode == "sequence":
+            identifier = 0
+            write_dict[mode](out_path, identifier)
+        else:
+            write_dict[mode](out_path)
         kmers_inserted = trie.count_kmers()
         expected = 4**k
         null_count = expected - kmers_inserted

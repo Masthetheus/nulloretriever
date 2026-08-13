@@ -24,12 +24,11 @@ def gather_files_paths(location):
     Args:
         location(str): path to search for files
     Returns:
-        files_paths(dict): dict containing the full path to all files
+        files_paths(arr): list containing the full path to all files
     """
     try:
         loc_iter = Path(location)
-        files_paths = {}
-        files_paths[location] = [f.name for f in loc_iter.iterdir() if f.is_file()]
+        files_paths = [f.name for f in loc_iter.iterdir() if f.is_file()]
         return files_paths
     except OSError as e:
         print(f"Unable to gather file path, error {e}")

@@ -3,7 +3,7 @@ from Bio.Seq import Seq
 from Bio.SeqUtils import gc_fraction
 import numpy as np
 
-file_primes = "prime_null_all"
+file_primes = str(input())
 with open(file_primes, "r") as f:
     primes = [line.strip() for line in f]
 k = 13

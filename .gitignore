@@ -6,6 +6,7 @@ __pycache__/
 testing/module-testing/data/*
 *.snakemake
 *.tsv
+*.csv
 workflow/data/genomes/*
 *.directories_created
 *.results_directories_created

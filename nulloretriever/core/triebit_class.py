@@ -382,6 +382,46 @@ class TrieBit:
         self.traverse_till_half_k(callback=search_trivial)
         return trivial
 
+    def build_maw_trie(self, small_trie, output):
+        counter = 0
+        smaller_k = self.k - 1
+        is_odd = smaller_k % 2
+        smaller_hk = (smaller_k // 2) + is_odd
+        smaller_mask = (1 << ((smaller_hk - is_odd) * 2)) - 1
+        mask = (1 << ((self.k * 2) - 2)) - 1
+
+        maw_trie = TrieBit(self.m, self.k, self.half_k)
+
+        def is_in_trie(node, target_idx, v2):
+            return node.v2_set[v2]
+
+        def search_trivial(node, v1_idx):
+            nonlocal counter, smaller_mask, maw_trie
+            found = 0
+            v2_idxs = list(node.v2_set.search(1))
+            for v2 in v2_idxs:
+                idx = (v1_idx << (self.half_k * 2)) | v2
+                loop = 0
+                for possibility in (idx >> 2, idx & mask):
+                    v1 = possibility >> ((smaller_hk - is_odd) * 2)
+                    v2_loop = possibility & smaller_mask
+                    found = small_trie.traverse_till_custom(
+                        target_idx=v1, callback=is_in_trie, v2=v2_loop
+                    )
+
+                    if found:
+                        break
+
+                    loop += 1
+                    if loop == 2:
+                        maw_trie.insert(v1_idx, v2)
+                        counter += 1
+
+        self.traverse_till_half_k(callback=search_trivial)
+        maw_trie.write_maw_bit_format(output)
+        print(counter)
+        return
+
     def find_root_v2(self):
         v2s = bitarray(self.m)
 
@@ -402,7 +442,6 @@ class TrieBit:
             base * (4 ** (self.half_k - i - 1)) for i, base in enumerate(path)
         )
         abs_idx = 4 ** (self.half_k - len(path))
-        print(f"abs: {abs_idx}")
         return range(init_idx, init_idx + abs_idx)
 
     def write_bit_format(self, output):
@@ -444,7 +483,44 @@ class TrieBit:
                             f.write(count_arr.tobytes())
             collect_nodes(self.root,[])
 
-    def write_sequences(self, filepath):
+    def write_maw_bit_format(self, output):
+        with open(output, "wb") as f:
+            f.write(b"TRIE")
+            version = 1
+            f.write(struct.pack("<HHHBB", version, self.k, self.half_k,
+                               self.format_code, self.counter_code))
+
+            type_map = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+            arr_type = type_map[self.format_code]
+            cnt_type = type_map[self.counter_code]
+
+            def collect_nodes(node, path):
+                if len(path) == self.half_k:
+                    nullomers = list(node.v2_set.search(bitarray("1")))
+                    if nullomers:
+                        null_count = len(nullomers)
+                        index = sum(base * (4 ** (self.half_k - i - 1))
+                                   for i, base in enumerate(path))
+
+                        result = array.array(arr_type, [index])
+                        count_arr = array.array(cnt_type, [null_count])
+                        v2_arr = array.array(arr_type, nullomers)
+
+                        f.write(result.tobytes())
+                        f.write(count_arr.tobytes())
+                        f.write(v2_arr.tobytes())
+                    return
+
+                for child_value, child_node in enumerate(node.children):
+                    if child_node is not None:
+                        collect_nodes(child_node, path + [child_value])
+                    else:
+                        continue
+            collect_nodes(self.root,[])
+
+
+
+    def write_sequences(self, filepath, identifier):
         results = []
 
         def _decoding_table(v1 = None, v2 = None):
@@ -471,8 +547,10 @@ class TrieBit:
         v2_decode = _decoding_table(0,1)
 
         def collect(node, v1_idx):
+            nonlocal identifier
+            identifier = int(identifier)
             seq_v1 = v1_decode[v1_idx]
-            for v2 in node.v2_set.search(0):
+            for v2 in node.v2_set.search(identifier):
                 seq_v2 = v2_decode[v2]
                 results.append(seq_v1 + seq_v2)
 
@@ -498,8 +576,10 @@ class TrieBit:
                         next_idx = (idx_acc << 2) | child_value
                         walk(child_node, depth + 1, next_idx)
                     else:
-                        missing_prefix = (idx_acc << 2) | child_value
-                        gather_none_nodes_idx(depth+1,idx_acc)
+                        # Checks if trie is from kmer seq
+                        if identifier == 0:
+                            missing_prefix = (idx_acc << 2) | child_value
+                            gather_none_nodes_idx(depth+1,idx_acc)
 
             walk(self.root, 0, 0)
 

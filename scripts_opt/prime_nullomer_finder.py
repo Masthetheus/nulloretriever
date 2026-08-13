@@ -150,7 +150,8 @@ def main():
                 if group_id == "N/A":
                     group_id = "not_found"
 
-                anchor_trie.write_sequences(f"{output}/prime_null_{group_id}_{k}")
+                identifier = 1
+                anchor_trie.write_sequences(f"{output}/prime_null_{group_id}_{k}",identifier)
             k += 1
     if all_stats:
         file_name = f"prime_{k_range[0]}_to_{k-1}.csv"
