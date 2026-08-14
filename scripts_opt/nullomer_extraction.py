@@ -68,7 +68,6 @@ def main():
             bufsize=65536,
         )
         sequences_received = 0
-        total = 0
         bytes_per_sequence = (k * 2 + 7) // 8
         wasted_space = (bytes_per_sequence * 8) - (k * 2)
         mask = (4**k) - 1
@@ -79,18 +78,39 @@ def main():
             f"\nk_mask: {k_mask}"
             f"\nmask: {bin(mask)}"
         )
+
+        v2_buffer = [[] for _ in range(1 << (2 * half_k))]
+        buffered_count = 0
+        FLUSH_LIMIT = 1_000_000
+
         while True:
             kmer_bytes = proc.stdout.read(bytes_per_sequence)
+
             if len(kmer_bytes) < bytes_per_sequence:
                 break
+
             kmer_idx = int.from_bytes(kmer_bytes, byteorder="big")
             kmer_idx = (kmer_idx) & (mask)
             sequences_received += 1
+
             v1 = kmer_idx >> (v2_size * 2)
             v2 = kmer_idx & k_mask
-            trie.insert(v1, v2)
-            total += 1
+
+            v2_buffer[v1].append(v2)
+            buffered_count += 1
+
+            if buffered_count >= FLUSH_LIMIT:
+                for v1, v2_list in enumerate(v2_buffer):
+                    if v2_list:
+                        trie.insert_v2_list(v1,v2_list)
+                        v2_buffer[v1] = []
+                buffered_count = 0
         proc.wait()
+
+        for v1, v2_list in enumerate(v2_buffer):
+            if v2_list:
+                trie.insert_v2_list(v1, v2_list)
+
         write_dict = {
             "binary": trie.write_bit_format,
             "sequence": trie.write_sequences,
