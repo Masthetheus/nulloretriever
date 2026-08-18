@@ -717,11 +717,11 @@ organisms:
 paths:
   bench: workflow/benchmarks
   c: workflow/scripts/c
-  checked: workflow/shuffled_results/checked
+  checked: workflow/results/checked
   final: workflow/runs
-  genomes: workflow/data/shuffled_genomes/
+  genomes: workflow/data/shuffled_genomes
   log: workflow/logs
-  results: workflow/shuffled_results/
+  results: workflow/shuffled_results
 statistics:
 - composition
 - trivial
