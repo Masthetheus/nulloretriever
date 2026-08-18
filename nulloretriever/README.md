@@ -1,27 +1,25 @@
 # Nulloretriever Python Package
 
-This package provides the core functionality for nullomer and MAW discovery, used by the Snakemake workflow. It contains modules for trie-based k-mer storage, statistical analysis, and data utilities.
+This package contains the shared Python code used by the Nulloretriever workflow and optional scripts. It provides the trie representation for nullomer bitfiles, genome download helpers, analysis helpers, and common utilities such as path and integrity checks.
 
 ## Structure
 ```
-nulloretriever
+nulloretriever/
 ├── README.md
 ├── analysis
 │   ├── composition.py
 │   ├── motifs.py
-│   ├── processing.py
+│   └── processing.py
 ├── core
 │   └── triebit_class.py
 ├── data
 │   ├── ncbiapidata.py
 │   └── ncbidownload.py
 └── utils
-    ├── csv_manipulation.py
+    ├── bit_encoding.py
     ├── integrity.py
     ├── paths.py
     ├── progress_bar.py
-    ├── snakemake_path_tools.py
-    ├── test_file_tools.py
     └── validation.py
 ```
 ## Installation
@@ -39,8 +37,9 @@ This installs the package in editable mode, so changes to the source code are re
 
 The main class is TrieBit, which implements a compressed trie for k-mer storage.
 
-**Example**
+**Examples**
 
+Basic scripts operation consists of:
 ```
 from nulloretriever.core.triebit_class import TrieBit
 # Initialize a TrieBit object
@@ -48,6 +47,23 @@ from nulloretriever.core.triebit_class import TrieBit
 # information can be found in the main README file
 trie = TrieBit(m, k, half_k)
 
+# Insert a kmer split in v1/v2 into the trie
+trie.insert(v1,v2)
+
+# Insert a v1 with multiple v2s
+trie.insert_v2_list(v1,v2s)
+
+# Write final trie into a compact binary file
+trie.write_bit_format(ouput_path)
+
+# If full sequence output is desired, use:
+# Where identifier relates to the origin of the trie
+# If from genome, use 0, if mounted from bit file, use 1
+trie.write_sequences(output_path, identifier)
+```
+
+The retrieval of statistiscs or operation on the saved bit file can be made with:
+```
 # Load a bit file into a trie object
 # Trie parameters are inside the bit file
 mount_trie_from_bitfile(null_bit_file)
@@ -124,7 +140,13 @@ return motifs_results
 * get_valid_email(): prompts for NCBI-registered email.
 * get_valid_tool(): prompts for tool name.
 
-Usage in Snakemake
+5. **bit_encoding.py**
+
+* generate_sub_indexes(idx, k): Calculates v1 and v2 from given idx.
+* encode_to_bit(filename, k): Reads a sequence nullomer file and retrieve the nullomer set in bit format.
+* write_bit_file(filename, output, k): Writes the retrieved nullomer set in bit format to output.
+
+### Usage in Snakemake
 
 Most functions are designed to be called from Snakemake and optional scripts, receiving input and output files during script execution. Even though not being designed for standalone use, each module provides functions that accept explicit file paths and allow such.
 

@@ -1,8 +1,6 @@
 # Nulloretriever
 
-A scalable Snakemake workflow for discovery of nullomers and Minimal Absent Words (MAWs) in complete genomes.
-
-Nulloretriever integrates C, Python, and Snakemake to efficiently process genomes with k > 14, using significantly less memory and time than existing tools.
+Nulloretriever is a Snakemake workflow for discovering the complete nullomer set from different sized genomes. The repository combines a C k-mer extractor aligned with a Python downstream analysis, both wrapped via Snakemake rules to produce compact nullomer bit files and per-sample statistics.
 
 ## Features
 
@@ -14,30 +12,27 @@ Nulloretriever integrates C, Python, and Snakemake to efficiently process genome
 ## Repository Structure
 ```
 nulloretriever/
-├── config/
-│   └── config.yaml           # Main configuration file
-├── examples/
-│   ├── data/                 # Example genome (B. subtilis)
-│   └── config.yaml           # Configuration for the example
-├── experimental/             # Scripts under development (not stable)
-├── nulloretriever/           # Python package (core modules)
-│   ├── analysis/
-│   ├── core/
-│   ├── data/
-│   └── utils/
-├── scripts_opt/              # Optional utilities (download, etc.) and standalone scripts
-├── workflow/
-│   ├── scripts/
-│   │   ├── c/                # C source code and Makefile
-│   │   └── python/           # Python scripts called by Snakemake
-│   └── Snakefile             # Main workflow definition
-├── .gitignore
-├── LICENSE
 ├── README.md
-├── environment.yaml          # Conda environment
-├── pyproject.toml            # Python package metadata
-└── requirements.txt          # Pip dependencies
+├── environment.yaml        # Conda/Mamba environment for the workflow
+├── pyproject.toml          # Python package metadata
+├── requirements.txt        # Pip dependencies
+├── examples/               # Minimal working example and sample config/data
+├── experimental/           # Unstable exploratory scripts
+├── nulloretriever/         # Python package used by the workflow and scripts
+├── scripts_opt/            # Optional standalone utilities
+└── workflow/               # Snakemake workflow, config, Python and C scripts
 ```
+
+## Stack
+
+- **Language(s):** Python, C
+- **Workflow/runtime:** Snakemake + Conda/Mamba
+- **Notable libraries:** Biopython, PyYAML, bitarray, requests, struct
+
+## How it works
+
+The main pipeline lives in `workflow/Snakefile`. It compiles the C extractor in `workflow/scripts/c/`, runs in correct order the Python workflow scripts in `workflow/scripts/python/` and stores outputs in the locations defined by the inputted config. The Python package under `nulloretriever/` provides shared trie, analysis, download, and validation utilities used across the workflow and optional scripts.
+
 ## Installation
 
 Via Conda or Mamba (recommended):
@@ -71,7 +66,7 @@ pip install -e .
 ```
 ## Quick Start
 
-A minimal working example using the Bacillus subtilis genome (k=15) is provided in examples/. From the repository root:
+A minimal working example using the Bacillus subtilis genome (k=12) is provided in examples/. From the repository root:
 ```
 snakemake -s workflow/Snakefile --configfile examples/data/config.yaml --cores 2
 ```
@@ -165,9 +160,14 @@ For further information, refer to it's specific [README](scripts_opt/README.md)
 
 Here we have adapted workflow scripts, intended to manual modular execution of some pipeline process, for any given reason. They are usually considered alongisde optional scripts, since aren't necessary for pipeline execution, not adhering to snakemake conventions.
 
+- **create_organism_db.py** — creates a JSON file with metadata for a given organism list using NCBI API lookups.
+- **genomes_utilities.py** — downloads genomes from NCBI and can also capitalize existing FASTA files.
+- **nullomer_order.c** — retrieves nullomeric order from a compact bit file.
+- **prime_nullomer_finder.py** — compares multiple organisms’ nullomer sets to identify prime nullomers and write summary outputs.
+- **snakemake_config_generation.py** — generates a workflow config file from genome inputs and k-value choices.
+- **translate_to_bit.py** — converts nullomer sequence files into compact bitfiles.
 - **nulomer_extraction.py**: Derived from the nullomer extraction rule. Obtain the genome nullomers in bit, sequence or compact txt format for any organism and k value.
 - **nullomer_statistics_retrieval.py**: Derived from the nullomer statistics rule. Given a nullomer bit file, retrieve statistics such as GC composition and palindromes occurence.
-- **prime_nullomer_finder.py**: Planned to be added to the snakemake workflow in the future. Given a set of nullomer bit files, searches for prime nullomeric sequences and outputs them.
 
 For further information, refer to the optional scripts [README](scripts_opt/README.md)
 
@@ -189,12 +189,12 @@ All dependencies are managed via Conda (environment.yaml) or pip (requirements.t
 - Snakemake >= 8.0
 - Biopython
 - bitarray
-- numpy, pandas 
+- numpy
 - pyyaml, requests, psutil
 
 ## How to Cite
 
-If you use Nulloretriever in your research, please cite:
+If you use Nulloretriever in your research, please cite the main repository. Further information shall be added in the future.
 
 
 ## License
