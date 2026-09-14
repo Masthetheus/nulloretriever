@@ -1,7 +1,7 @@
 #!/bin/bash
 
-FILE_DIR="../workflow/shuffled_results/"
-BIN="../scripts_opt/bin/null_order"          # adjust relative path as needed
+FILE_DIR="workflow/results_shuffled/"
+BIN="scripts_opt/bin/null_order"          # adjust relative path as needed
 
 shopt -s extglob
 
@@ -23,12 +23,15 @@ do
     echo "Processing: $file"
     $BIN "$file" 4
     ((count++))
+    [[ -d order_results ]] || mkdir order_results
     for order_file in *.txt
     do
         order="${order_file: (-5):1}"
         [[ -f "$order_file" ]] || continue
-        echo -n "$organism","$k","$order",3, >> total_order.csv
+        echo -n "$organism","$k","$order",0, >> total_order.csv
         wc -l < "$order_file" >> total_order.csv
+        #[[ -d order_results/"$k"/"$organism" ]] || mkdir -p order_results/"$k"/"$organism"
+        #mv "$order_file" order_results/"$k"/"$organism"/"$order_file"
         rm "$order_file"
     done
 done

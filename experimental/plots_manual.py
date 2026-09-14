@@ -6,7 +6,7 @@ from sklearn.metrics import r2_score
 K_FOCUS = 12
 ORDER_COL = "order_id"
 
-file = "workflow/results/filtered_nullomer_statistics_summarized.csv"
+file = "workflow/results_asco_basidio/filtered_nullomer_statistics_summarized.csv"
 
 df = pd.read_csv(file)
 df = df[df["k"] == K_FOCUS].copy()

@@ -8,7 +8,7 @@ from scipy import stats
 import os
 
 # ── configuração ─────────────────────────────────────────────────────────────
-GRAPH_OUTPUT = "workflow/results/graphs/by_order"
+GRAPH_OUTPUT = "workflow/results_asco_basidio/graphs/by_order"
 K_FOCUS      = 11
 MIN_N        = 3       # ordens com n < MIN_N descartadas
 GROUP_COL    = "order_id"
@@ -49,7 +49,7 @@ ORDER_NAMES = {
 }
 
 # ── carrega e filtra ──────────────────────────────────────────────────────────
-df = pd.read_csv("workflow/results/filtered_nullomer_statistics_summarized.csv")
+df = pd.read_csv("workflow/results_asco_basidio/filtered_nullomer_statistics_summarized.csv")
 
 # phylum_id pode vir como int ou float dependendo do pandas
 df["phylum_id"] = pd.to_numeric(df["phylum_id"], errors="coerce")

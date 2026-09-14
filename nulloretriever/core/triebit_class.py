@@ -352,6 +352,10 @@ class TrieBit:
             self.traverse_till_custom(target_idx=v1, callback=zero_v2_set)
         return
 
+    def find_maws(self):
+        mask = (1 << ((self.k * 2) - 2)) - 1
+
+
     def find_trivial_ext(self, small_trie):
         trivial = 0
         found = 0
@@ -522,6 +526,14 @@ class TrieBit:
 
     def write_sequences(self, filepath, identifier):
         results = []
+        f = open(filepath, "w")
+        print(f)
+
+        def flush():
+            if results:
+                print("Writing results.")
+                f.write("\n".join(results) + "\n")
+                results.clear()
 
         def _decoding_table(v1 = None, v2 = None):
             if v1:
@@ -580,10 +592,12 @@ class TrieBit:
                         if identifier == 0:
                             missing_prefix = (idx_acc << 2) | child_value
                             gather_none_nodes_idx(depth+1,idx_acc)
+                    if len(results) > 65536:
+                        flush()
 
             walk(self.root, 0, 0)
 
         custom_traverse(self,callback=collect)
-        with open(filepath, "w") as f:
-            f.write("\n".join(results))
+        flush()
+        f.close()
 

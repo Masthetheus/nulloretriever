@@ -129,6 +129,7 @@ def main():
             f"An total of {null_count} nullomers were found "
             "for a k of {k}."
         )
+        print(sequences_received)
 
 
 if __name__ == "__main__":

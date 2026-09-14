@@ -23,7 +23,7 @@ warnings.filterwarnings('ignore')
 # ---- CONFIGURAÇÃO ----
 K_FOCUS = 12
 ORDER_COL = "order_id"
-OUTPUT_DIR = "workflow/results"
+OUTPUT_DIR = "workflow/results_asco_basidio"
 GRAPH_DIR = f"{OUTPUT_DIR}/graphs"
 TABLE_DIR = OUTPUT_DIR
 os.makedirs(GRAPH_DIR, exist_ok=True)
@@ -35,7 +35,7 @@ print("="*60)
 
 # ---- 1. CARREGAR DADOS ----
 print("\n[1] Carregando dados...")
-df = pd.read_csv("workflow/shuffled_results/filtered_nullomer_statistics_summarized.csv")
+df = pd.read_csv("workflow/results_asco_basidio/filtered_nullomer_statistics_summarized.csv")
 print(f"Total de linhas no CSV: {len(df)}")
 
 # Verifica colunas obrigatórias

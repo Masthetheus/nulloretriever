@@ -225,11 +225,19 @@ def get_taxonomy_metadata(metadata):
         )
         data = Entrez.read(fetch)
         fetch.close()
+
         taxonomy_data = {d["Rank"]: d["TaxId"] for d in data[0]["LineageEx"]}
+        lineage_names = data[0]["Lineage"].split("; ")
+        rank_to_name = {}
+        for item, name in zip(data[0]["LineageEx"], lineage_names):
+            rank_to_name[item["Rank"]] = name
+
         family_id = taxonomy_data.get("family", "N/A")
         phylum_id = taxonomy_data.get("phylum", "N/A")
         genus_id = taxonomy_data.get("genus", "N/A")
         order_id = taxonomy_data.get("order", "N/A")
+        phylum_name = rank_to_name.get("phylum", "N/A")
+
         if family_id is not None:
             metadata[organism]["family_id"] = family_id
         if phylum_id is not None:
@@ -238,4 +246,7 @@ def get_taxonomy_metadata(metadata):
             metadata[organism]["genus_id"] = genus_id
         if order_id is not None:
             metadata[organism]["order_id"] = order_id
+        metadata[organism]["phylum_name"] = phylum_name
+
     return metadata
+
