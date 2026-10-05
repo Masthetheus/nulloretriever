@@ -38,16 +38,6 @@ def setup_argparser() -> argparse.ArgumentParser:
     return parser
 
 
-def motif_wrapper(trie):
-    """Calls all functions related to motif statistics."""
-    motifs_results = {
-        "cpg": trie.retrieve_nullomers_cpg_stats(),
-        "palindromy": trie.retrieve_palindrome_stats(),
-        "homopolymers": trie.retrieve_homopolymer_stats(),
-    }
-    return motifs_results
-
-
 def dict_flattener(full_dict, final_dict=None, parent_key=""):
     if final_dict is None:
         final_dict = {}
@@ -76,48 +66,38 @@ def main():
         stats = ["composition", "trivial", "motifs"]
     else:
         stats = [stats]
+
     bigger_null_file = args.null1
-
-    if stats == "all" or "trivial" in stats:
-        try:
-            smaller_null_file = args.null2
-        except Exception:
-            smaller_null_file = ""
-
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
 
-    if counter > 0 and smaller_null_file != "" and smaller_null_file != None:
-        print("ENTROU LOOP ERRADO")
-        print(smaller_null_file)
-        smaller_trie = mount_trie_from_bitfile(smaller_null_file)
-        if smaller_trie.count_kmers() != 0:
-            dispatch_table = {
-                "composition": bigger_trie.count_gc(),
-                "trivial": bigger_trie.find_trivial_ext(smaller_trie),
-                "motifs": motif_wrapper(bigger_trie),
+    retrieved_stats = {"counter": counter}
+
+    if "composition" in stats or "motifs" in stats:
+        print("Processing composition and motifs.")
+        gc_percent, cpg_stats, palindrome_stats = (
+            bigger_trie.retrieve_composition_and_motifs()
+        )
+        if "composition" in stats:
+            retrieved_stats["composition"] = gc_percent
+        if "motifs" in stats:
+            retrieved_stats["motifs"] = {
+                "cpg": cpg_stats,
+                "palindromy": palindrome_stats,
+                "homopolymers": bigger_trie.retrieve_homopolymer_stats(),
             }
+
+    if "trivial" in stats:
+        smaller_null_file = args.null2
+        if counter > 0 and smaller_null_file:
+            smaller_trie = mount_trie_from_bitfile(smaller_null_file)
+            if smaller_trie.count_kmers() != 0:
+                print("Processing trivial.")
+                retrieved_stats["trivial"] = smaller_trie.find_trivial_ext()
+            else:
+                print("Stat trivial not available: smaller trie is empty.")
         else:
-            dispatch_table = {
-                "composition": bigger_trie.count_gc(),
-                "motifs": motif_wrapper(bigger_trie)
-            }
-    else:
-        dispatch_table = {
-            "composition": bigger_trie.count_gc(),
-            "motifs": motif_wrapper(bigger_trie)
-        }
-
-    retrieved_stats = {}
-    retrieved_stats["counter"] = counter
-
-    for stat in stats:
-        try:
-            print(f"Processing {stat}.")
-            retrieved_stats[stat] = dispatch_table[stat]
-        except Exception as e:
-            print(f"Stat {stat} no available for this organism")
-            print(f"Exception= {e}.")
+            print("Stat trivial not available: no -n2 file provided.")
 
     base_dict = {}
     final_stats = dict_flattener(retrieved_stats, base_dict)

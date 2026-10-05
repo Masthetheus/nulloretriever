@@ -4,7 +4,7 @@ from bitarray import bitarray
 import array
 import struct
 
-from nulloretriever.analysis.composition import generate_gc_dict
+from nulloretriever.analysis.composition import generate_gc_dict, generate_cg_lists
 from nulloretriever.analysis.motifs import (
     generate_cpg_dict,
     generate_complement_index_dict,
@@ -168,6 +168,132 @@ class TrieBit:
 
         return walk(self.root, 0, 0)
 
+    def retrieve_composition_and_motifs(self):
+        cpg_dict = generate_cpg_dict(self.k//2)
+        gc_dict = generate_gc_dict(self.k//2)
+        c_list, g_list = generate_cg_lists(self.k//2)
+        complement_index_dict = generate_complement_index_dict(self.half_k)
+
+        n_v1 = 4 ** self.half_k
+        cpg_v1_cache = [0] * n_v1
+        c_v1_cache = [0] * n_v1
+        g_v1_cache = [0] * n_v1
+
+        for idx in range(n_v1):
+            cpg = 0
+            c = 0
+            g = 0
+            for i in range(self.half_k - 1):
+                shift = (self.half_k - i - 2) * 2
+                if ((idx >> shift) & 15) == 7:
+                    cpg += 1
+                base = (idx >> (2 * i)) & 3
+                c += (base == 1)
+                g += (base == 3)
+            base = (idx >> (2 * (self.half_k - 1))) & 3
+            c += (base == 1)
+            g += (base == 3)
+            cpg_v1_cache[idx] = cpg
+            c_v1_cache[idx] = c
+            g_v1_cache[idx] = g
+
+        # variables for GC
+        gc_tot = 0
+        null_count = 0
+
+        #variables for CpG
+        cpg_tot = 0
+        null_with_cpg = 0
+        half_k_cpg = (self.k // 2)
+        v2_shift = (half_k_cpg - 1) * 2
+        v1_c = 0
+        v1_g = 0
+
+        #variables palindrome
+        palindrome_count = 0
+        total_null = 0
+
+        def compute_metrics(node, idx_acc):
+            nonlocal cpg_tot, null_with_cpg, gc_tot, palindrome_count, total_null, v1_c, v1_g
+
+            v1_cpg = cpg_v1_cache[idx_acc]
+            c_local = c_v1_cache[idx_acc]
+            g_local = g_v1_cache[idx_acc]
+            v1_gc = c_local + g_local
+
+            v1_last = idx_acc & 3
+
+            if self.k % 2 == 0:
+                v1_comp = complement_index_dict[idx_acc]
+                if node.v2_set[v1_comp]:
+                    palindrome_count += 1
+
+            v2_idxs = list(node.v2_set.search(1))
+            v2_len = len(v2_idxs)
+            total_null += v2_len
+
+            leaf_c = sum(map(c_list.__getitem__, v2_idxs))
+            leaf_g = sum(map(g_list.__getitem__, v2_idxs))
+
+            v1_c += c_local * v2_len + leaf_c
+            v1_g += g_local * v2_len + leaf_g
+
+            for v2 in v2_idxs:
+                v2_first = v2 >> v2_shift
+                has_cpg = (v1_cpg != 0)
+                if cpg_dict[v2] != 0:
+                    cpg_tot += cpg_dict[v2]
+                    has_cpg = True
+                if v1_last == 1 and v2_first == 3:
+                    cpg_tot += 1
+                    has_cpg = True
+                if has_cpg:
+                    null_with_cpg += 1
+
+            gc_tot += leaf_c + leaf_g + (v2_len * v1_gc)
+            cpg_tot += v1_cpg * v2_len
+        self.traverse_till_half_k(callback=compute_metrics)
+        null_count = total_null
+
+        # for GC
+        tot_bases = null_count * self.k
+        if tot_bases > 0:
+            gc_percent = (gc_tot / tot_bases) * 100
+        else:
+            gc_percent = 0
+        # for CpG
+        try:
+            cpg_count_mean = cpg_tot / null_with_cpg
+        except ZeroDivisionError:
+            cpg_count_mean = 0
+        try:
+            cpg_global_mean = (null_with_cpg / null_count) * 100
+        except ZeroDivisionError:
+            cpg_global_mean = 0
+        try:
+            obs_exp_cpg = (cpg_tot * tot_bases)/(v1_c * v1_g)
+        except ZeroDivisionError:
+            obs_exp_cpg = 0
+        cpg_stats = {
+            "total": cpg_tot,
+            "nullomers_with_cpg": null_with_cpg,
+            "global_mean": cpg_global_mean,
+            "mean_nullomers_with_cpg": cpg_count_mean,
+            "formula_cpg": obs_exp_cpg,
+        }
+
+        # for palindromy
+        try:
+            palindrome_relative = (palindrome_count / null_count) * 100
+        except ZeroDivisionError:
+            palindrome_relative = 0
+        palindrome_stats = {
+            "count": palindrome_count,
+            "relative_fraction": palindrome_relative,
+        }
+        return gc_percent, cpg_stats, palindrome_stats
+
+
     def count_gc(self):
         """Count percentage of GC of organism nullomers.
         Args:
@@ -182,14 +308,15 @@ class TrieBit:
 
         def count_gc(node, v1_idx):
             nonlocal gc_tot, null_count
-            v2_idxs = node.v2_set.search(1)
+            v2_idxs = list(node.v2_set.search(1))
             for v2 in v2_idxs:
-                gc_tot += gc_dict[v2]
-            v2_count = node.v2_set.count(bitarray("1"))
+                c, g = gc_dict[v2]
+                gc_tot += c + g
+            v2_count = len(v2_idxs)
             null_count += v2_count
             v1_gc = 0
-            for _ in range(self.half_k):
-                v1_gc += v1_idx >> (2 * 1) & 1
+            for i in range(self.half_k):
+                v1_gc += v1_idx >> (2 * i) & 1
             gc_tot += v1_gc * v2_count
             return
 
@@ -215,23 +342,21 @@ class TrieBit:
             for i in range(self.half_k - 1):
                 shift = (self.half_k - i - 2) * 2
                 pair = (idx_acc >> shift) & 15
-                if pair == 6:
+                if pair == 7:
                     v1_cpg += 1
             v1_last = idx_acc & 3
             v2_idxs = node.v2_set.search(1)
             v2_count = 0
             for v2 in v2_idxs:
+                v2_count += 1
                 v2_first = v2 >> v2_shift
-                has_cpg = False
+                has_cpg = (v1_cpg !=0)
                 if cpg_dict[v2] != 0:
                     cpg_tot += cpg_dict[v2]
                     has_cpg = True
-                    v2_count += 1
                 if v1_last == 1 and v2_first == 3:
                     cpg_tot += 1
                     has_cpg = True
-                    if cpg_dict[v2] == 0 and v1_cpg == 0:
-                        v2_count += 1
                 if has_cpg:
                     null_with_cpg += 1
             cpg_tot += v1_cpg * v2_count
@@ -263,7 +388,7 @@ class TrieBit:
 
         def check_palindromy(node, idx_acc):
             nonlocal palindrome_count, total_null
-            v1_adjusted = idx_acc >> 2
+            v1_adjusted = idx_acc
             v1_comp = complement_index_dict[v1_adjusted]
             total_null += node.v2_set.count(bitarray("1"))
             try:
@@ -356,35 +481,23 @@ class TrieBit:
         mask = (1 << ((self.k * 2) - 2)) - 1
 
 
-    def find_trivial_ext(self, small_trie):
-        trivial = 0
-        found = 0
-        smaller_k = self.k - 1
-        is_odd = smaller_k % 2
-        smaller_hk = (smaller_k // 2) + is_odd
-        smaller_mask = (1 << ((smaller_hk - is_odd) * 2)) - 1
-        mask = (1 << ((self.k * 2) - 2)) - 1
-
-        def is_in_trie(node, target_idx, v2):
-            return node.v2_set[v2]
+    def find_trivial_ext(self):
+        v2_bits = 2 * (self.k - self.half_k)
+        shift = 2 * self.k
+        trivial_bit = bitarray(4 ** (self.k+1))
+        trivial_bit.setall(0)
 
         def search_trivial(node, v1_idx):
-            nonlocal trivial, smaller_mask, found
-            v2_idxs = list(node.v2_set.search(1))
-            for v2 in v2_idxs:
-                idx = (v1_idx << (self.half_k * 2)) | v2
-                for possibility in (idx >> 2, idx & mask):
-                    v1 = possibility >> ((smaller_hk - is_odd) * 2)
-                    v2_loop = possibility & smaller_mask
-                    found = small_trie.traverse_till_custom(
-                        target_idx=v1, callback=is_in_trie, v2=v2_loop
-                    )
-                    if found:
-                        trivial += 1
-                        break
+            base_idx = v1_idx << v2_bits
+            for v2 in node.v2_set.search(1):
+                w = base_idx | v2
+                wa = w << 2
+                for a in range(4):
+                    trivial_bit[wa | a] = 1
+                    trivial_bit[(a << shift) | w] = 1
 
         self.traverse_till_half_k(callback=search_trivial)
-        return trivial
+        return trivial_bit.count(1)
 
     def build_maw_trie(self, small_trie, output):
         counter = 0
@@ -600,4 +713,5 @@ class TrieBit:
         custom_traverse(self,callback=collect)
         flush()
         f.close()
+
 

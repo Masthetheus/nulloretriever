@@ -9,10 +9,14 @@ def calculate_gc_index(index, half_k):
     Returns:
         gc(int): number of occurences of G or C nucleotides on the sequence representend by the given index
     """
-    gc = 0
+    base_gc = 0
+    v1_c = 0
+    v1_g = 0
     for i in range(half_k):
-        gc += index >> (2 * i) & 1
-    return gc
+        base_gc = index >> (2 * i) & 3
+        v1_c += (base_gc == 1)
+        v1_g += (base_gc == 3)
+    return v1_c, v1_g
 
 
 def generate_gc_dict(half_k):
@@ -24,6 +28,19 @@ def generate_gc_dict(half_k):
     """
     gc_dict = {}
     for index in range(4**half_k):
-        gc = calculate_gc_index(index, half_k)
-        gc_dict[index] = gc
+        v1_c, v1_g = calculate_gc_index(index, half_k)
+        gc_dict[index] = (v1_c, v1_g)
     return gc_dict
+
+def generate_cg_lists(half_k):
+    c_list = []
+    g_list = []
+    for i in range(4 ** half_k):
+        c = g = 0
+        for j in range(half_k):
+            base = (i >> (2 * j)) & 3
+            c += (base == 1)
+            g += (base == 3)
+        c_list.append(c)
+        g_list.append(g)
+    return c_list, g_list
