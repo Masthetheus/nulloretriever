@@ -65,7 +65,7 @@ def main():
             smaller_counter = smaller_trie.count_kmers()
             print(f"Smaller trie loaded with {smaller_counter} nulls")
             if smaller_counter != 0:
-                retrieved_stats["trivial"] = bigger_trie.find_trivial_ext()
+                retrieved_stats["trivial"] = smaller_trie.find_trivial_ext()
             else:
                 print("Stat trivial not available: smaller trie is empty.")
         else:
