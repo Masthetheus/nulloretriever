@@ -38,7 +38,6 @@ def setup_argparser() -> argparse.ArgumentParser:
         type=int,
         default=[10, 12],
     )
-
     parser.add_argument(
         "-g",
         "--group_by",
@@ -46,6 +45,13 @@ def setup_argparser() -> argparse.ArgumentParser:
         choices=["none", "phylum_id", "order_id", "family_id", "genus_id"],
         default="none",
     )
+    parser.add_argument(
+        "-r",
+        "--results_path",
+        help="Path with final nullomer files.",
+        default="workflow/results",
+    )
+
 
     return parser
 
@@ -67,6 +73,33 @@ def dict_flattener(full_dict, final_dict=None, parent_key=""):
 def normalize_accession(acc):
     return acc.replace(".", "_").replace("-", "_")
 
+def retrieve_stats(trie, stats):
+    """Retrieve statistics of a prime nullomer trie.
+    Args:
+        trie: prime nullomer trie for the current k.
+        stats: list with any of "composition", "motifs", "trivial".
+        smaller_trie: prime nullomer trie of the same group at k-1. Needed
+            only for the trivial extension stat.
+    Returns:
+        dict with the requested statistics (nested, to be flattened).
+    """
+    retrieved = {}
+
+    if "composition" in stats or "motifs" in stats:
+        gc_percent, cpg_stats, palindrome_stats = (
+            trie.retrieve_composition_and_motifs()
+        )
+        if "composition" in stats:
+            retrieved["composition"] = gc_percent
+        if "motifs" in stats:
+            retrieved["motifs"] = {
+                "cpg": cpg_stats,
+                "palindromy": palindrome_stats,
+                "homopolymers": len(trie.retrieve_homopolymer_stats()),
+            }
+
+    return retrieved
+
 
 def main():
     """Search for nullomer primes.
@@ -82,6 +115,8 @@ def main():
     parser = setup_argparser()
     args = parser.parse_args()
     output = args.output
+    results_path = args.results_path
+    stats = ["composition", "motifs"]
     with open("workflow/data/organisms.json", "r") as f:
         org_data = json.load(f)
     group = args.group_by
@@ -113,14 +148,14 @@ def main():
         while k <= k_range[1]:
             print(f"======{k}======")
             anchor_trie = mount_trie_from_bitfile(
-                f"workflow/results/k{k}/{group_genomes[0]}/null_bit_format"
+                f"{results_path}/k{k}/{group_genomes[0]}/null_bit_format"
             )
             orgs_analyzed = len(group_genomes)
 
             for genome in group_genomes[1:]:
                 try:
                     trie2 = mount_trie_from_bitfile(
-                        f"workflow/results/k{k}/{genome}/null_bit_format"
+                        f"{results_path}/k{k}/{genome}/null_bit_format"
                     )
                     anchor_trie.retrieve_prime_null(trie2)
                     print(anchor_trie.count_kmers())
@@ -135,10 +170,10 @@ def main():
                 retrieved_stats = {
                     "counter": count,
                     "org_count": orgs_analyzed,
-                    "gc": anchor_trie.count_gc(),
-                    "cpg_stats": anchor_trie.retrieve_nullomers_cpg_stats(),
-                    "palindrome_stats": anchor_trie.retrieve_palindrome_stats(),
                 }
+                retrieved_stats.update(
+                    retrieve_stats(anchor_trie, stats)
+                )
                 base_dict = {
                     "k": k,
                     "group_id": group_id,
@@ -151,7 +186,7 @@ def main():
                     group_id = "not_found"
 
                 identifier = 1
-                anchor_trie.write_sequences(f"{output}/prime_null_{group_id}_{k}",identifier)
+                anchor_trie.write_bit_format(f"{output}/prime_null_{group_id}_{k}",identifier)
             k += 1
     if all_stats:
         file_name = f"prime_{k_range[0]}_to_{k-1}.csv"

@@ -433,6 +433,7 @@ class TrieBit:
     def retrieve_v1_list(self):
         m = 4**self.half_k
         v1s = bitarray(m)
+        v1s.setall(0)
 
         def gather_v1s(node, idx_acc):
             nonlocal v1s
@@ -467,6 +468,7 @@ class TrieBit:
 
         def zero_v2_set(node, idx_acc, v2=None):
             node.v2_set = bitarray(len(node.v2_set))
+            node.v2_set.setall(0)
             return
 
         for v1 in common_idxs:

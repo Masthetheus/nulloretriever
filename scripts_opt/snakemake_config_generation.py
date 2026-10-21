@@ -60,6 +60,14 @@ def setup_argparser() -> argparse.ArgumentParser:
         help="""Specifies which fasta extension is to be expected on genomes files.
         Default ="".""",
     )
+    parser.add_argument(
+        "-r",
+        "--results",
+        type=str,
+        default="workflow/results" ,
+        help="""Specifies the path to the pipeline results.
+        Default = workflow/results""",
+    )
 
     return parser
 
@@ -71,6 +79,7 @@ def main():
     args = parser.parse_args()
     out_path = args.out + args.name
     genomes_path = args.genomes
+    results_path = args.results
     kvalues = args.kvalues
     log = args.log
     statistics = args.statistics
@@ -116,8 +125,8 @@ def main():
 
     yaml_dump["k"] = kvalues
     yaml_dump["paths"] = {
-        "genomes": "workflow/data/genomes",
-        "results": "workflow/results",
+        "genomes": f"{genomes_path}",
+        "results": f"{results_path}",
         "final": "workflow/runs",
         "log": "workflow/logs",
         "bench": "workflow/benchmarks",

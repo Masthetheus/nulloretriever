@@ -7,9 +7,11 @@ from snakemake.script import Snakemake
 def main():
     """Return single csv with all nullomer statistics data."""
     out = snakemake.output[0]
+    orgs = snakemake.params.organisms
+    tot_concluded = len(orgs)
     input_files = snakemake.input
     df_list = []
-    for file_path in input_files:
+    for file_path in input_files[tot_concluded:]:
         try:
             df = pd.read_csv(file_path, index_col=None, header=0)
             df_list.append(df)

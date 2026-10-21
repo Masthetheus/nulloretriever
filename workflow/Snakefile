@@ -1,130 +1,60 @@
 # -*- encoding: utf-8 -*-
 import os
-import re
 
 configfile: "workflow/config/config.yaml"
 
-# config reading and variable setting
-K_VALUES = config.get("k", [])
+K_VALUES = sorted(int(k) for k in config.get("k", []))
 ORGANISMS = config.get("organisms", [])
 PATHS = config.get("paths", {})
 STATISTICS = config.get("statistics", ["composition", "counter", "motifs"])
-EXT = config.get("fasta_extension","")
-print(f"DEBUG: EXT = '{EXT}'")  # What does this print?
-print(f"DEBUG: Full config = {config["fasta_extension"]}")  # See what's actually in config
+EXT = config.get("fasta_extension", "")
 
-# pathing 
 GENOMES_DIR = PATHS.get("genomes", "workflow/data/genomes/")
 RESULTS_PATH = PATHS.get("results", "workflow/results/")
-BENCHMARK_DIR = PATHS.get("bench", "workflow/benchmarks/").rstrip('/')
-LOG_DIR = PATHS.get("log", "workflow/logs/")
-CHECKED_DIR = PATHS.get("checked", "workflow/results/checked/")
-FINAL_DIR = PATHS.get("final", "workflow/runs/")
+BENCHMARK_DIR = PATHS.get("bench", "workflow/benchmarks/").rstrip("/")
 C_SCRIPT_DIR = PATHS.get("c", "workflow/scripts/c/")
 
-# directories that need to exist
-ALL_DIRS = [GENOMES_DIR, RESULTS_PATH, BENCHMARK_DIR, LOG_DIR, CHECKED_DIR, FINAL_DIR, C_SCRIPT_DIR]
+# --- padrões de caminho: fonte única da verdade ---
+K_DIR   = os.path.join(RESULTS_PATH, "{organism}", "k{k}")
+BIT     = os.path.join(K_DIR, "null_bit_format")
+CSV     = os.path.join(K_DIR, "nullomer_statistics.csv")
+SUMMARY = os.path.join(RESULTS_PATH, "nullomer_statistics_summarized.csv")
+BINARY  = os.path.join(C_SCRIPT_DIR, "bin", "kmer_extractor")
 
-# aux functions
-def needed_threads_k_value(wildcards):
-    try:
-        k = int(wildcards.k)
-    except ValueError:
-        return 4
-    if k <= 12:
-        return 1
-    elif k <= 14:
-        return 2
-    elif k < 16:
-        return 6
-    else:
-        return 8
-
-def get_previous_k_input(wildcards):
-    bigger_k = int(wildcards.k)
-    min_k = int(K_VALUES[0]) if K_VALUES else 0
-    if bigger_k <= min_k:
-        return []
-    smaller_k = bigger_k - 1
-    return os.path.join(RESULTS_PATH, f"k{smaller_k}", wildcards.organism, "null_bit_format")
-
-# main pipeline
 rule all:
-    input:
-        expand(os.path.join(RESULTS_PATH, "k{k}", "{organism}", "nullomer_statistics.csv"),
-               k=K_VALUES, organism=ORGANISMS),
-        os.path.join(RESULTS_PATH, "nullomer_statistics_summarized.csv")
-    benchmark:
-        os.path.join(BENCHMARK_DIR, "complete_snakemake_pipeline_benchmark.txt")
-
-rule create_base_directories:
-    output:
-        expand(os.path.join("{dir}", ".directories_created"), dir=ALL_DIRS)
-    params:
-        dirs = " ".join(ALL_DIRS)  # <--- AGORA É UMA STRING
-    shell:
-        """
-        mkdir -p {params.dirs}
-        touch {output}
-        """
-
-rule create_results_directories:
-    input:
-        os.path.join(RESULTS_PATH, ".directories_created")
-    output:
-        os.path.join(RESULTS_PATH, "k{k}", "{organism}", ".results_directories_created")
-    params:
-        dirs = lambda wildcards: os.path.join(RESULTS_PATH, f"k{wildcards.k}", wildcards.organism)
-    shell:
-        """
-        mkdir -p {params.dirs}
-        touch {output}
-        """
+    input: SUMMARY
 
 rule generate_c_binaries:
     input:
-        c_source = os.path.join(C_SCRIPT_DIR, "src")  # to trigger compilation
+        c_source = os.path.join(C_SCRIPT_DIR, "src")
     output:
-        os.path.join(C_SCRIPT_DIR, "bin", "kmer_extractor")
+        BINARY
     shell:
         "make -C {C_SCRIPT_DIR}"
 
 rule extract_nullomers:
     input:
-        os.path.join(RESULTS_PATH, "k{k}", "{organism}", ".results_directories_created"),
-        bin = os.path.join(C_SCRIPT_DIR, "bin", "kmer_extractor"),
-        genome = lambda wildcards: os.path.join(GENOMES_DIR, f"{wildcards.organism}{EXT}")
+        bin    = BINARY,
+        genome = lambda wc: os.path.join(GENOMES_DIR, f"{wc.organism}{EXT}"),
     output:
-        os.path.join(RESULTS_PATH, "k{k}", "{organism}", "null_bit_format")
+        # k enumerado, organism continua wildcard (por isso {{organism}})
+        bits = expand(BIT, k=K_VALUES, allow_missing=True),
+        csvs = expand(CSV, k=K_VALUES, allow_missing=True),
     params:
-        k_val = lambda wildcards: wildcards.k
+        k_list = K_VALUES,
+        stats  = STATISTICS,
     benchmark:
-        os.path.join(BENCHMARK_DIR, "k{k}", "{organism}", "extract_nullomers_benchmark.txt")
-    threads: needed_threads_k_value
+        os.path.join(BENCHMARK_DIR, "{organism}", "extract_nullomers.txt")
+    threads: 2
     script:
-        "scripts/python/nullomer_extraction.py"
-
-rule retrieve_nullomer_statistics:
-    input:
-        current = os.path.join(RESULTS_PATH, "k{k}", "{organism}", "null_bit_format"),
-        previous = get_previous_k_input
-    output:
-        os.path.join(RESULTS_PATH, "k{k}", "{organism}", "nullomer_statistics.csv")
-    params:
-        stats = STATISTICS
-    benchmark:
-        os.path.join(BENCHMARK_DIR, "k{k}", "{organism}", "retrieve_nullomers_statistics_benchmark.txt")
-    threads: 1
-    script:
-        "scripts/python/nullomer_statistics_retrieval.py"
+        "scripts/python/nullomer_complete.py"
 
 rule summarize_nullomer_statistics:
     input:
-        expand(os.path.join(RESULTS_PATH, "k{k}", "{organism}", "nullomer_statistics.csv"),
-               k=K_VALUES, organism=ORGANISMS)
+        csvs = expand(CSV, organism=ORGANISMS, k=K_VALUES),
     output:
-        os.path.join(RESULTS_PATH, "nullomer_statistics_summarized.csv")
+        SUMMARY
     params:
-        organisms = ORGANISMS
+        organisms=ORGANISMS
     script:
         "scripts/python/nullomer_statistics_summary.py"
