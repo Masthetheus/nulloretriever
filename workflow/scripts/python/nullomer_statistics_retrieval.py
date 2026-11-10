@@ -39,6 +39,7 @@ def main():
 
     bigger_trie = mount_trie_from_bitfile(bigger_null_file)
     counter = bigger_trie.count_kmers()
+    print(f"BIG COUNTER IS {counter}")
 
     retrieved_stats = {"counter": counter}
 
