@@ -69,7 +69,7 @@ def main():
     if not config and  not directory:
         print("Please inform a filename or a directory with the files to be analyzed")
         sys.exit(1)
-    else:
+    elif config and not directory:
         with open(config, "r") as f:
             config_data = yaml.safe_load(f)
             try:
@@ -86,6 +86,16 @@ def main():
                     final_out=f"{output}/fullseq_k{k}_{org}"
                     print(f"{org} and count {trie.count_kmers()}")
                     trie.write_sequences(final_out, 1) #1 means null are considered as paths with bit set to 1
+    else:
+        dir = Path(directory)
+        for file in dir.iterdir():
+            if file.is_file():
+                if file.suffix == ".csv":
+                    continue
+                print(file)
+                trie = mount_trie_from_bitfile(file)
+                final_out = f"{output}/fullseq_{file.stem}"
+                trie.write_sequences(final_out, 1) #  1 means null are considered as paths with bit set to 1
 
 if __name__ == "__main__":
     main()

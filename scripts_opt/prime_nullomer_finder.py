@@ -185,8 +185,8 @@ def main():
                 if group_id == "N/A":
                     group_id = "not_found"
 
-                identifier = 1
-                anchor_trie.write_bit_format(f"{output}/prime_null_{group_id}_{k}",identifier)
+                #identifier = 1
+                anchor_trie.write_maw_bit_format(f"{output}/prime_null_{group_id}_{k}")
             k += 1
     if all_stats:
         file_name = f"prime_{k_range[0]}_to_{k-1}.csv"
